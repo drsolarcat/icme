@@ -14,7 +14,8 @@ int main() {
   const char eventQuality = 'g';
   Config config; // config object, holds config for all events
 
-  // read the config data from the file to the config object and then filter it
+  // read the config data from the file to the config object and then
+  // filter it
   config.readFile(configPath).filter(eventQuality);
 
   // start iterating through the events that should be analyzed
