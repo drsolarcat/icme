@@ -12,12 +12,10 @@ using namespace std;
 class Time {
     int t_year, t_month, t_day, t_hour, t_minute, t_second;
     int t_doy; // day of year
-    int t_unixtime, t_mysqltime;
+    int t_unixtime;
     double t_matlabtime;
     string t_stringtime;
     int t_local_utc_shift; // shift between local and UTC time in hours
-    tm c_tm;
-    time_t c_unixtime;
   public:
     // constructors
     Time(); // initialize object with current time
@@ -29,12 +27,11 @@ class Time {
     Time(string); // initialize object with time string, the default format is
                   // yyyy-mm-dd HH:MM:SS
 
-    Time(int, string); // initialize object with Unix, Matlab or
-                       // MySQL timestamp
+    Time(int, string); // initialize object with Unix timestamp
+    Time(double, string); // initialize object with Matlab timestamp
     // other methods
-    int unixtime() const {return t_unixtime;} // return unixtime
+    int unixtime() const {return t_unixtime;} // return Unix time
     double matlabtime() const {return t_matlabtime;} // return Matlab time
-    int mysqltime() const {return t_mysqltime;} // return MySQL time
     string stringtime() const {return t_stringtime;} // return formatted
                                                      // string time
     int year() const {return t_year;} // return current year
@@ -53,10 +50,7 @@ class Time {
     Time& add(int, string); // add some time to the Time object
   private:
     void initLocalUtcShift(); // initialize shift between local and UTC time
-    void initTm(); // initialize ctime strucure
-    // calculate Matlab time from ctime strucure and Unix time,
-    // service only method
-    void calculateMatlabTime();
+    void initByUnixtime(time_t);
 };
 
 #endif

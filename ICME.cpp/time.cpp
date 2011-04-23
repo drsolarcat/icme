@@ -14,121 +14,72 @@ using namespace std;
 Time::Time() {
   // initialize local-UTC time shift
   initLocalUtcShift();
-
-  // initialize ctime structure
-  initTm();
-
-  c_unixtime = time(NULL); // current Unix time
-  c_tm = *gmtime(&c_unixtime); // ctime structure of the current time
-
-  // setting Time object values for the current time
-  t_year = c_tm.tm_year+1900; // exact value of year
-  t_month = c_tm.tm_mon+1; // in 1..12 range
-  t_day = c_tm.tm_mday; // in 1..31 range
-  t_hour = c_tm.tm_hour; // in 0..23 range
-  t_minute = c_tm.tm_min; // in 0..59 range
-  t_second = c_tm.tm_sec; // in 0..61 range, leap seconds included
-  // dropping off leap seconds
-  if (t_second > 59) t_second = 59; // now in 0..59 range
-  t_doy = c_tm.tm_yday+1; // we store days of year in 1..366 range
-
-  t_unixtime = int(c_unixtime); // cast Unix time from time_t to int and save
-
-  // recalculate ctime structure to get day of year
-  c_tm = *gmtime(const_cast<time_t*>(&c_unixtime));
-  // save day of year to the Time object
-  t_doy = c_tm.tm_yday+1; // we want it in 1..366 range
-
-  // calculate Matlab time
-  calculateMatlabTime();
+  // current Unix time
+  time_t c_unixtime = time(NULL);
+  // fill Time object
+  initByUnixtime(c_unixtime);
 }
 
 // construct Time object using year, month, day, hour and second
 Time::Time(int year, int month, int day, int hour, int minute, int second) {
   // initialize local-UTC time shift
   initLocalUtcShift();
-
-  // initialize ctime structure
-  initTm();
-
-  // save provided time data
-  t_year = year;
-  t_month = month;
-  t_day = day;
-  t_hour = hour;
-  t_minute = minute;
-  t_second = second;
-
-  // fill it with time data we already know
-  c_tm.tm_year = t_year-1900; // number of years since 1900
-  c_tm.tm_mon = t_month-1; // in range 0..11
-  c_tm.tm_mday = t_day;
-  c_tm.tm_hour = t_hour+t_local_utc_shift; // taking timezone into account
-  c_tm.tm_min = t_minute;
-  c_tm.tm_sec = t_second;
+  // initialize and fill it with time data we already know
+  tm c_tm = {0};
+  c_tm.tm_year = year-1900; // number of years since 1900
+  c_tm.tm_mon = month-1; // in range 0..11
+  c_tm.tm_mday = day;
+  c_tm.tm_hour = hour+t_local_utc_shift; // taking timezone into account
+  c_tm.tm_min = minute;
+  c_tm.tm_sec = second;
   // calculate Unix time base on ctime structure
-  c_unixtime = mktime(&c_tm);
-  // cast it into integer and save in the Time object
-  t_unixtime = int(c_unixtime);
-
-  // recalculate ctime structure to get day of year
-  c_tm = *gmtime(const_cast<time_t*>(&c_unixtime));
-  // save day of year to the Time object
-  t_doy = c_tm.tm_yday+1; // we want it in 1..366 range
-
-  // calculate Matlab time
-  calculateMatlabTime();
+  time_t c_unixtime = mktime(&c_tm);
+  // fill Time object
+  initByUnixtime(c_unixtime);
 }
 
 // construct Time object using year, day of year, hour, minute and second
 Time::Time(int year, int doy, int hour, int minute, int second) {
   // initialize local-UTC time shift
   initLocalUtcShift();
-
-  // initialize ctime strucure
-  initTm();
-
-  // save provided time data
-  t_year = year;
-  t_doy = doy;
-  t_hour = hour;
-  t_minute = minute;
-  t_second = second;
-
-  // fill ctime strucure with available time data
-  c_tm.tm_year = t_year;
-  c_tm.tm_yday = t_doy;
-  c_tm.tm_hour = t_hour+t_local_utc_shift; // take into account the timezone
-  c_tm.tm_min = t_minute;
-  c_tm.tm_sec = t_second;
+  // initialize and fill ctime strucure with available time data
+  tm c_tm = {0};
+  c_tm.tm_year = year-1900;
+  c_tm.tm_mon = 0;
+  c_tm.tm_mday = 1;
+  c_tm.tm_hour = hour+t_local_utc_shift; // take into account the timezone
+  c_tm.tm_min = minute;
+  c_tm.tm_sec = second;
   // calculate Unix time
-  c_unixtime = mktime(&c_tm);
-  // cast it into integer
-  t_unixtime = int(c_unixtime);
-
-  // recalculate ctime structure to get day of month
-  c_tm = *gmtime(const_cast<time_t*>(&c_unixtime));
-  // save day of year to the Time object
-  t_day = c_tm.tm_mday;
-
-  // calculate Matlab time
-  calculateMatlabTime();
+  time_t c_unixtime = mktime(&c_tm)+(doy-1)*86400;
+  // fill Time object
+  initByUnixtime(c_unixtime);
 }
 
 // construct Time object using formatted string representation of time
 Time::Time(string dateTimeString) {}
 
-// construct Time object using Unix, Matlab or MySQL timestamp
+// construct Time object using Unix timestamp
 Time::Time(int timestamp, string type) {
+  // initialize local-UTC time shift
+  initLocalUtcShift();
   // check the type of the timestamp provided
   if (type == "unix") { // if Unix timestamp is provided
-
-  } else if (type == "matlab") { // if Matlab timestamp is provided
-
-  } else if (type == "mysql") { // if MySQL timestamp is provided
-
+    initByUnixtime(time_t(timestamp));
   } else { // throw an error - unknown type of the timestamp
+    cout << "Unknown timestamp type" << endl;
+  }
+}
 
+// construct Time object using Matlab timestamp
+Time::Time(double timestamp, string type) {
+  // initialize local-UTC time shift
+  initLocalUtcShift();
+  // check the type of the timestamp provided
+  if (type == "matlab") { // if Matlab timestamp is provided
+    initByUnixtime(time_t((timestamp-double(719529))*double(86400)));
+  } else { // throw an error - unknown type of the timestamp
+    cout << "Unknown timestamp type" << endl;
   }
 }
 
@@ -156,13 +107,24 @@ void Time::initLocalUtcShift() {
   t_local_utc_shift = (c_sec_local-c_sec_utc)/3600;
 }
 
-// initialize ctime strucure with zeros
-void Time::initTm() {
-  tm c_tm = {0};
-}
+// initialize Timeobject members with Unix time
+void Time::initByUnixtime(time_t c_unixtime) {
+  // cast unixtime from time_t to integer
+  t_unixtime = int(c_unixtime);
 
-// calculate Matlab timestamp from ctime strucure and Unix timestamp
-void Time::calculateMatlabTime() {
+  // ctime structure of the current time
+  tm c_tm = *gmtime(const_cast<time_t*>(&c_unixtime));
+
+  // setting Time object values for the current time
+  t_year = c_tm.tm_year+1900; // exact value of year
+  t_month = c_tm.tm_mon+1; // in 1..12 range
+  t_day = c_tm.tm_mday; // in 1..31 range
+  t_hour = c_tm.tm_hour; // in 0..23 range
+  t_minute = c_tm.tm_min; // in 0..59 range
+  t_second = c_tm.tm_sec; // in 0..61 range, leap seconds included
+  if (t_second > 59) t_second = 59; // drop off leap seconds, now 0..59 range
+  t_doy = c_tm.tm_yday+1; // we store days of year in 1..366 range
+
   // calculating the Matlab timestamp
   // number of seconds between absolute zero time (0000-01-01 00:00:00) is
   // too large, so we will calculate this difference for Unix zero time

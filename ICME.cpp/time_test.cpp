@@ -10,13 +10,27 @@ using namespace std;
 int main() {
   int year = 1970;
   int month = 1;
-  int day = 1;
+  int day = 2;
   int hour = 12;
   int minute = 0;
   int second = 0;
+  int doy = 2;
+  int unixtime = 129600;
+  double matlabtime = 719530.5;
 
-  Time mytime(year, month, day, hour, minute, second);
+  Time mytime1(year, month, day, hour, minute, second);
+  cout << fixed << setprecision(4) << mytime1.matlabtime() << endl;
 
-  cout << fixed << setprecision(4) << mytime.matlabtime() << endl;
+  Time mytime2(year, doy, hour, minute, second);
+  cout << fixed << setprecision(4) << mytime2.matlabtime() << endl;
+
+  Time mytime3(unixtime, "unix");
+  cout << fixed << setprecision(4) << mytime3.matlabtime() << endl;
+
+  Time mytime4(matlabtime, "matlab");
+  cout << fixed << setprecision(4) << mytime4.matlabtime() << endl;
+
+  Time mytime5;
+  cout << fixed << setprecision(4) << mytime5.matlabtime() << endl;
 }
 
