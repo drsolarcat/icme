@@ -5,6 +5,8 @@
 #include <ctime>
 #include <iostream>
 #include <iomanip> // for setprecision() function
+#include <sstream>
+#include <cstdio>
 
 using namespace std;
 
@@ -57,7 +59,32 @@ Time::Time(int year, int doy, int hour, int minute, int second) {
 }
 
 // construct Time object using formatted string representation of time
-Time::Time(string dateTimeString) {}
+Time::Time(string dateTimeString) {
+  // initialize local-UTC time shift
+  initLocalUtcShift();
+  // replace "-" and ":" with " "
+  dateTimeString[4] = ' ';
+  dateTimeString[7] = ' ';
+  dateTimeString[13] = ' ';
+  dateTimeString[16] = ' ';
+  // create stream with date string as a source
+  istringstream dateTimeStream(dateTimeString);
+  // read time data from date string stream
+  int year, month, day, hour, minute, second;
+  dateTimeStream >> year >> month >> day >> hour >> minute >> second;
+  // create ctime structure
+  tm c_tm = {0};
+  c_tm.tm_year = year-1900;
+  c_tm.tm_mon = month-1;
+  c_tm.tm_mday = day;
+  c_tm.tm_hour = hour+t_local_utc_shift;
+  c_tm.tm_min = minute;
+  c_tm.tm_sec = second;
+  // calculate Unix time
+  time_t c_unixtime = mktime(&c_tm);
+  // and finally fill the Time object
+  initByUnixtime(c_unixtime);
+}
 
 // construct Time object using Unix timestamp
 Time::Time(int timestamp, string type) {
@@ -88,6 +115,8 @@ Time::Time(double timestamp, string type) {
 // add "amount" of "type" (year, month, day, hour, minute, second) time to the
 // Time object
 Time& Time::add(int amount, string type) {}
+
+// private methods
 
 // initialize shift between local and UTC time
 void Time::initLocalUtcShift() {

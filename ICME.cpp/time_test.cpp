@@ -17,6 +17,7 @@ int main() {
   int doy = 2;
   int unixtime = 129600;
   double matlabtime = 719530.5;
+  const string stringtime = "1970-01-02 12:00:00";
 
   Time mytime1(year, month, day, hour, minute, second);
   cout << fixed << setprecision(4) << mytime1.matlabtime() << endl;
@@ -30,7 +31,10 @@ int main() {
   Time mytime4(matlabtime, "matlab");
   cout << fixed << setprecision(4) << mytime4.matlabtime() << endl;
 
-  Time mytime5;
+  Time mytime5(stringtime);
   cout << fixed << setprecision(4) << mytime5.matlabtime() << endl;
+
+  Time mytime6;
+  cout << fixed << setprecision(4) << mytime6.matlabtime() << endl;
 }
 

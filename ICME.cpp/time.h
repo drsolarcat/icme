@@ -14,7 +14,6 @@ class Time {
     int t_doy; // day of year
     int t_unixtime;
     double t_matlabtime;
-    string t_stringtime;
     int t_local_utc_shift; // shift between local and UTC time in hours
   public:
     // constructors
@@ -23,17 +22,13 @@ class Time {
                                         // day, hour, minute and second
     Time(int, int, int, int, int); // initialize object with year,
                                    // day of year, hour, minute and second
-
     Time(string); // initialize object with time string, the default format is
                   // yyyy-mm-dd HH:MM:SS
-
     Time(int, string); // initialize object with Unix timestamp
     Time(double, string); // initialize object with Matlab timestamp
     // other methods
     int unixtime() const {return t_unixtime;} // return Unix time
     double matlabtime() const {return t_matlabtime;} // return Matlab time
-    string stringtime() const {return t_stringtime;} // return formatted
-                                                     // string time
     int year() const {return t_year;} // return current year
     int month() const {return t_month;} // return current month
     int day() const {return t_day;} // return current day
