@@ -1,5 +1,6 @@
 
 #include "config.h"
+#include "time.h"
 
 #include <string>
 #include <fstream>
@@ -18,6 +19,7 @@ Config& Config::readFile(string configFilePath) {
   istringstream configFileLineStream; // string stream for a file line
   ConfigRow configRow; // structure for storing the data from a single line
                        // of a file
+  string beginDate, endDate, beginTime, endTime; // begin and end time strings
 
   // clear the data vector, just in case
   data.clear();
@@ -45,11 +47,12 @@ Config& Config::readFile(string configFilePath) {
           configRow.toPlot >> configRow.toGsr >> configRow.toMva >>
           configRow.toCm >> configRow.toTm >> configRow.toHm >>
           configRow.toOm >> configRow.toSave >> configRow.spacecraft >>
-          configRow.beginDate >> configRow.beginTime >> configRow.endDate >>
-          configRow.endTime >> configRow.Nx >> configRow.ratio >>
-          configRow.minY >> configRow.maxY >> configRow.order;
-        // NEXT: calculate begin and end timestamps instead of human
-        // readable time
+          beginDate >> beginTime >> endDate >> endTime >> configRow.Nx >>
+          configRow.ratio >> configRow.minY >> configRow.maxY >>
+          configRow.order;
+        // calculate begin and end Time objects instead of strings
+        configRow.beginTime = Time(beginDate+' '+beginTime);
+        configRow.endTime = Time(endDate+' '+endTime);
         // push the ConfigRow structure to the vector of config data
         data.push_back(configRow);
       }

@@ -2,6 +2,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "time.h"
+
 #include <string>
 #include <vector>
 
@@ -12,8 +14,9 @@ struct ConfigRow {
   int flag, Nx, order;
   char quality;
   bool toPlot, toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
-  string spacecraft, beginDate, beginTime, endDate, endTime;
+  string spacecraft;
   double ratio, minY, maxY;
+  Time beginTime, endTime;
 };
 
 // config class, reads the data from file and filters it

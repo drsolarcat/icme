@@ -112,9 +112,51 @@ Time::Time(double timestamp, string type) {
 
 // other methods
 
+// subtraction operator
+int Time::operator-(Time that) {return t_unixtime-that.unixtime();}
+
+// comparisons operators
+bool Time::operator<(Time that) {return t_unixtime < that.unixtime();}
+bool Time::operator>(Time that) {return t_unixtime > that.unixtime();}
+bool Time::operator<=(Time that) {return t_unixtime <= that.unixtime();}
+bool Time::operator>=(Time that) {return t_unixtime >= that.unixtime();}
+
 // add "amount" of "type" (year, month, day, hour, minute, second) time to the
 // Time object
-Time& Time::add(int amount, string type) {}
+Time& Time::add(int amount, string type) {
+  // create ctime structure and fill it with time data from the Time object
+  tm c_tm = {0};
+  c_tm.tm_year = t_year-1900;
+  c_tm.tm_mon = t_month-1;
+  c_tm.tm_mday = t_day;
+  c_tm.tm_hour = t_hour;
+  c_tm.tm_min = t_minute;
+  c_tm.tm_sec = t_second;
+  // check the type of time data to add and add it
+  if (type == "year") {
+    c_tm.tm_year += amount;
+  } else if (type == "month") {
+    c_tm.tm_mon += amount;
+  } else if (type == "day") {
+    c_tm.tm_mday += amount;
+  } else if (type == "hour") {
+    c_tm.tm_hour += amount;
+  } else if (type == "minute") {
+    c_tm.tm_min += amount;
+  } else if (type == "second") {
+    c_tm.tm_sec += amount;
+  } else { // throw an error - unknoown time type
+    cout << "Unknown time type" << endl;
+  }
+  // take into account the local-UTC shift
+  c_tm.tm_hour += t_local_utc_shift;
+  // get the Unix time of the new time
+  time_t c_unixtime = mktime(&c_tm);
+  // recalculate members of the Time object
+  initByUnixtime(c_unixtime);
+
+  return *this; // chained method
+}
 
 // private methods
 

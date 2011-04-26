@@ -45,7 +45,8 @@ class Time {
     Time& add(int, string); // add some time to the Time object
   private:
     void initLocalUtcShift(); // initialize shift between local and UTC time
-    void initByUnixtime(time_t);
+    void initByUnixtime(time_t); // fill Time object member values using Unix
+                                 // time
 };
 
 #endif

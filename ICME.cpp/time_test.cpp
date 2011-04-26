@@ -36,5 +36,16 @@ int main() {
 
   Time mytime6;
   cout << fixed << setprecision(4) << mytime6.matlabtime() << endl;
+
+  cout << fixed << setprecision(4) << mytime1.add(2, "second").matlabtime() <<
+    endl;
+
+  if (mytime2 < mytime1) {
+    cout << "mytime2 < mytime1" << endl;
+  } else {
+    cout << "mytime2 >= mytime1" << endl;
+  }
+
+  cout << mytime1-mytime2 << endl;
 }
 

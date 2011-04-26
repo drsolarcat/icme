@@ -9,8 +9,8 @@
 
 using namespace std;
 
-// structure for holding the data for one timestamp, i.e. one row from the data
-// file
+// structure for holding the data for one timestamp, i.e. one row from the
+// data file
 struct DataRow {
   int year, month, day, hour, minute, second;
   double B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta;
@@ -22,13 +22,14 @@ struct DataRow {
 class Data {
     vector<DataRow> data; // vector of data rows, one row is one timestamp
   public:
-    Data(); // constructor
     Data& readFile(string); // read data from file
-    Data& filter(int, int); // filter data vector by time (from, until) using
-                            // unixtime as limits
-    Data& filter(Time, Time); // filter data vector by time (from, until) using
-                              // Time objects
-    Data copy(); // copy the data object, to be used before filtering
+    Data& readFile(string, Time, Time); // read data file and filter it
+    Data& filter(Time, Time); // filter data vector by time (from, until)
+                              // using Time objects
+    DataRow row(int i) const {return data[i];}
+    vector<DataRow> rows() const {return data;}
+  private:
+    void readFile(string, Time*, Time*);
 };
 
 #endif

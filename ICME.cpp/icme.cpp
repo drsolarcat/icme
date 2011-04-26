@@ -1,5 +1,6 @@
 
 #include "config.h"
+#include "data.h"
 
 #include <string>
 #include <iostream>
@@ -13,6 +14,7 @@ int main() {
   // TODO: it should be in command line arguments
   const char eventQuality = 'g';
   Config config; // config object, holds config for all events
+  string dataPath; // path to data file, will be changed for each event
 
   // read the config data from the file to the config object and then
   // filter it
@@ -20,8 +22,41 @@ int main() {
 
   // start iterating through the events that should be analyzed
   for (int iEvent = 0; iEvent < config.rows().size(); iEvent++) {
-    // NEXT: get data for the analyzed event
-    cout << config.row(iEvent).beginDate << endl;
+
+    // determine the path to the data file dependant on spacecraft
+    if (config.row(iEvent).spacecraft == "WIND") {
+      dataPath = "./res/wind_240.dat";
+    } else if (config.row(iEvent).spacecraft == "ACE") {
+      dataPath = "./res/ace_240.dat";
+    } else if (config.row(iEvent).spacecraft == "STA") {
+      dataPath = "./res/stereo_a_240.dat";
+    } else if (config.row(iEvent).spacecraft == "STB") {
+      dataPath = "./res/stereo_b_240.dat";
+    } else { // throw an error - unknown spacecraft
+      cout << "Unknown spacecraft" << endl;
+    }
+
+    // create Time objects for wider limits of the event, initially copy
+    // existing time limits
+    Time* preBeginTime = new Time(config.row(iEvent).beginTime);
+    Time* postEndTime = new Time(config.row(iEvent).endTime);
+    // widen time limits
+    preBeginTime->add(-3, "hour");
+    postEndTime->add(3, "hour");
+    // create Data object for wider time limits
+    Data* dataWide = new Data(); // create dynamic object for data
+    dataWide->readFile(dataPath, *preBeginTime, *postEndTime);
+    // create Data object for original time limits
+    Data* dataNarrow = new Data(*dataWide);
+    // filter narrow Data object out of wider one
+    dataNarrow->filter(config.row(iEvent).beginTime,
+      config.row(iEvent).endTime);
+
+    // delete dynamic objects
+    delete dataWide;
+    delete dataNarrow;
+    delete preBeginTime;
+    delete postEndTime;
   } // end of iteration through the events
 }
 
