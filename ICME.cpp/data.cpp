@@ -11,8 +11,6 @@ using namespace std;
 
 // constructors
 
-// TODO: resolve duplication of code in constructors!
-
 // to read data from file and store it in Data object
 Data& Data::readFile(string dataFilePath) {
   // read file using NULL pointers for time limits
