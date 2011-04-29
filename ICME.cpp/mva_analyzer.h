@@ -6,9 +6,6 @@
 
 #include <eigen3/Eigen/Dense>
 
-using namespace std;
-using namespace Eigen;
-
 // this class is used for MVA analysis
 class MvaAnalyzer {
   public:
@@ -20,9 +17,9 @@ class MvaAnalyzer {
     void analyzeMvub(Event&);
   private:
     // calculate variance matrix from three vectors of data (x, y, z)
-    Matrix3d calculateVarianceMatrix(const VectorXd&,
-                                     const VectorXd&,
-                                     const VectorXd&);
+    Eigen::Matrix3d calculateVarianceMatrix(const Eigen::VectorXd&,
+                                            const Eigen::VectorXd&,
+                                            const Eigen::VectorXd&);
     MvaResults analyzeMva(const Event&, bool);
 };
 

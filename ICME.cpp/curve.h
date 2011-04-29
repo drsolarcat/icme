@@ -8,7 +8,7 @@
 // basically (x,y) paired data, the curve is not a function, i.e. y may be not
 // unique for a single x value
 class Curve {
-    vector<double> x, y;
+    std::vector<double> x, y;
   public:
     Curve(); // constructor
     int size(); // size of the curve, i.e. the number of elements in x and y

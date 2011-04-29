@@ -5,10 +5,8 @@
 #include <string>
 #include <ctime>
 
-using namespace std;
-
 // universal class for operations with date and time, much more general and
-// handy than ctyme structures
+// handy than ctime structures
 class Time {
     int t_year, t_month, t_day, t_hour, t_minute, t_second;
     int t_doy; // day of year
@@ -22,10 +20,10 @@ class Time {
                                         // day, hour, minute and second
     Time(int, int, int, int, int); // initialize object with year,
                                    // day of year, hour, minute and second
-    Time(string); // initialize object with time string, the default format is
-                  // yyyy-mm-dd HH:MM:SS
-    Time(int, string); // initialize object with Unix timestamp
-    Time(double, string); // initialize object with Matlab timestamp
+    Time(std::string); // initialize object with time string, the default
+                       // format is yyyy-mm-dd HH:MM:SS
+    Time(int, std::string); // initialize object with Unix timestamp
+    Time(double, std::string); // initialize object with Matlab timestamp
     // other methods
     int unixtime() const {return t_unixtime;} // return Unix time
     double matlabtime() const {return t_matlabtime;} // return Matlab time
@@ -42,7 +40,7 @@ class Time {
     bool operator>(Time);
     bool operator<=(Time);
     bool operator>=(Time);
-    Time& add(int, string); // add some time to the Time object
+    Time& add(int, std::string); // add some time to the Time object
   private:
     void initLocalUtcShift(); // initialize shift between local and UTC time
     void initByUnixtime(time_t); // fill Time object member values using Unix

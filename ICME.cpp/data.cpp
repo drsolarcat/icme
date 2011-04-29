@@ -2,12 +2,15 @@
 #include "data.h"
 #include "time.h"
 
+#include <eigen3/Eigen/Dense>
+
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <iostream>
 
 using namespace std;
+using namespace Eigen;
 
 // constructors
 
@@ -50,6 +53,8 @@ Data& Data::filter(Time beginTime, Time endTime) {
   // erase data outside desired time interval
   data.erase(data.begin(), data.begin()+beginIndex); // lower part
   data.erase(data.begin()+endIndex, data.end()); // upper part
+
+  initVectors(); // initialize Eigen3 vectors of data
 
   return *this; // chained method
 }
@@ -100,6 +105,55 @@ void Data::readFile(string dataFilePath, Time* beginTime, Time* endTime) {
         }
       }
     } // end of iteration through the lines of the data file
+    initVectors(); // initialize Eigen3 vectors of data
+  }
+}
+
+// initialize Eigen3 vectors of data. very stupid function... need to find
+// a way to get rid of this variable lists
+void Data::initVectors() {
+  int n = data.size(); // length of data vectors
+  // resize dynamic vectors for data
+  vectors.year.resize(n);
+  vectors.month.resize(n);
+  vectors.day.resize(n);
+  vectors.hour.resize(n);
+  vectors.minute.resize(n);
+  vectors.second.resize(n);
+  vectors.B.resize(n);
+  vectors.Bx.resize(n);
+  vectors.By.resize(n);
+  vectors.Bz.resize(n);
+  vectors.Vp.resize(n);
+  vectors.Vx.resize(n);
+  vectors.Vy.resize(n);
+  vectors.Vz.resize(n);
+  vectors.Pth.resize(n);
+  vectors.Np.resize(n);
+  vectors.Tp.resize(n);
+  vectors.Vth.resize(n);
+  vectors.beta.resize(n);
+  // fill the vectors with data
+  for (int i=0; i < n; i++) {
+    vectors.year(i) = data[i].year;
+    vectors.month(i) = data[i].month;
+    vectors.day(i) = data[i].day;
+    vectors.hour(i) = data[i].hour;
+    vectors.minute(i) = data[i].minute;
+    vectors.second(i) = data[i].second;
+    vectors.B(i) = data[i].B;
+    vectors.Bx(i) = data[i].Bx;
+    vectors.By(i) = data[i].By;
+    vectors.Bz(i) = data[i].Bz;
+    vectors.Vp(i) = data[i].Vp;
+    vectors.Vx(i) = data[i].Vx;
+    vectors.Vy(i) = data[i].Vy;
+    vectors.Vz(i) = data[i].Vz;
+    vectors.Pth(i) = data[i].Pth;
+    vectors.Np(i) = data[i].Np;
+    vectors.Tp(i) = data[i].Tp;
+    vectors.Vth(i) = data[i].Vth;
+    vectors.beta(i) = data[i].beta;
   }
 }
 

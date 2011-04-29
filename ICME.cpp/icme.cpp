@@ -3,6 +3,7 @@
 #include "data.h"
 #include "event.h"
 #include "mva_analyzer.h"
+#include "gsr_analyzer.h"
 
 #include <string>
 #include <iostream>
@@ -19,6 +20,7 @@ int main() {
   string dataPath; // path to data file, will be changed for each event
   // initialize analyzers
   MvaAnalyzer mva; // MVA analysis class
+  GsrAnalyzer gsr; // GSR analysis class
 
   // read the config data from the file to the config object and then
   // filter it
@@ -56,18 +58,14 @@ int main() {
     dataNarrow->filter(config.row(iEvent).beginTime,
       config.row(iEvent).endTime);
 
-    // NEXT: perform analysis of the event
-
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
 
     // perform GSR analysis if required
-//    if (config.row(iEvent).toGsr) gsr.analyze(*event);
+    if (config.row(iEvent).toGsr) gsr.analyze(*event);
 
     // perform MVA analysis if required
     if (config.row(iEvent).toMva) mva.analyze(*event);
-
-    // END analysis of the event
 
     // delete dynamic objects
     delete dataWide;
