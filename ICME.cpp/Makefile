@@ -5,11 +5,12 @@ CXXSOURCES = icme.cpp config.cpp data.cpp time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 CXX = g++
+GSL = -lgsl -lgslcblas -lm
 
 all: $(PROGRAM)
 
 $(PROGRAM): $(CXXOBJECTS)
-	$(CXX) -o $@ $(CXXOBJECTS)
+	$(CXX) -o $@ $(CXXOBJECTS) $(GSL)
 
 config.o: config.h config.cpp
 	$(CXX) -c -o config.o config.cpp

@@ -16,6 +16,8 @@ class DhtAnalyzer {
     Eigen::Vector3d loop(Event&, double, double, double,
                                  double, double, double,
                                  double, double, double);
+    // correlation coefficient
+    double corr(Event&, Eigen::Vector3d);
 };
 
 #endif

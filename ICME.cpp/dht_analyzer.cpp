@@ -2,6 +2,7 @@
 #include "dht_analyzer.h"
 
 #include <eigen3/Eigen/Dense>
+#include <gsl/gsl_statistics.h>
 
 #include <iostream>
 
@@ -30,6 +31,11 @@ void DhtAnalyzer::analyze(Event& event) {
   dht.Vht = loop(event, dht.Vht(0)-1, 0.1, dht.Vht(0)+1,
                         dht.Vht(1)-1, 0.1, dht.Vht(1)+1,
                         dht.Vht(2)-1, 0.1, dht.Vht(2)+1);
+
+  // calculate Pearson's correlation coefficient between real electrical field
+  // and estimated in a system moving with deHoffmann-Teller speed
+  dht.cc = corr(event, dht.Vht);
+
   // save dHT analysis results in the event object
   event.dht(dht);
 }
@@ -85,5 +91,40 @@ Vector3d DhtAnalyzer::loop(Event& event,
   } // end iteration through possible Vx
 
   return Vht; // return estimated dHT speed
+}
+
+// correlation analysis of the deHoffmann-Teller speed
+double DhtAnalyzer::corr(Event& event, Vector3d Vht) {
+  Vector3d V, B, E; // temporary vectors for speed and magnetic and
+                    // electrical fields
+
+  int n = event.dataNarrow().rows().size(); // length of the data
+  double c1[3*n], c2[3*n]; // vectors of all components of
+                           // electrical field vectors
+
+  // begin iteration through data to calculate electrical field
+  for (int i=0; i<n; i++) {
+    // fill in temporary vectors
+    V(0) = event.dataNarrow().row(i).Vx;
+    V(1) = event.dataNarrow().row(i).Vy;
+    V(2) = event.dataNarrow().row(i).Vz;
+    B(0) = event.dataNarrow().row(i).Bx;
+    B(1) = event.dataNarrow().row(i).By;
+    B(2) = event.dataNarrow().row(i).Bz;
+
+    // true value
+    E = V.cross(B);
+    c1[3*i] = E(0);
+    c1[3*i+1] = E(1);
+    c1[3*i+2] = E(2);
+    // in dHT frame
+    E = Vht.cross(B);
+    c2[3*i] = E(0);
+    c2[3*i+1] = E(1);
+    c2[3*i+2] = E(2);
+  } // end iteration through data
+
+  // return correlation coefficient
+  return gsl_stats_correlation(c1, 1, c2, 1, 3*n);
 }
 
