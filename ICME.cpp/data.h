@@ -3,6 +3,7 @@
 #define DATA_H
 
 #include "time.h"
+#include "axes.h"
 
 #include <eigen3/Eigen/Dense>
 
@@ -37,6 +38,8 @@ class Data {
     const DataRow& row(int i) const {return data[i];}
     const std::vector<DataRow>& rows() const {return data;}
     const DataVectors& cols() const {return vectors;}
+    // project data to new coordinates
+    Data& project(Axes);
   private:
      // readFile function with optional time limit patameters (NULL pointers)
     void readFile(std::string, Time*, Time*);

@@ -15,22 +15,22 @@ void DhtAnalyzer::analyze(Event& event) {
   DhtResults dht; // initialize dHT structure for storing results of analysis
   // first run of the search loop, all range of possible speeds
   // with 10km/s step
-  dht.Vht = loop(event, event.dataNarrow().cols().Vx.minCoeff(), 10,
-                 event.dataNarrow().cols().Vx.maxCoeff(),
-                 event.dataNarrow().cols().Vy.minCoeff(), 10,
-                 event.dataNarrow().cols().Vy.maxCoeff(),
-                 event.dataNarrow().cols().Vz.minCoeff(), 10,
-                 event.dataNarrow().cols().Vz.maxCoeff());
+  dht.Vht = loop(event, event.dataNarrow().cols().Vx.minCoeff(), 10e3,
+                        event.dataNarrow().cols().Vx.maxCoeff(),
+                        event.dataNarrow().cols().Vy.minCoeff(), 10e3,
+                        event.dataNarrow().cols().Vy.maxCoeff(),
+                        event.dataNarrow().cols().Vz.minCoeff(), 10e3,
+                        event.dataNarrow().cols().Vz.maxCoeff());
   // second run of the search loop 10km/s around previously found speed
   // with 1km/s step
-  dht.Vht = loop(event, dht.Vht(0)-10, 1, dht.Vht(0)+10,
-                        dht.Vht(1)-10, 1, dht.Vht(1)+10,
-                        dht.Vht(2)-10, 1, dht.Vht(2)+10);
+  dht.Vht = loop(event, dht.Vht(0)-10e3, 1e3, dht.Vht(0)+10e3,
+                        dht.Vht(1)-10e3, 1e3, dht.Vht(1)+10e3,
+                        dht.Vht(2)-10e3, 1e3, dht.Vht(2)+10e3);
   // third run of the search loop 1km/s around previously found speed
   // with 0.1km/s step
-  dht.Vht = loop(event, dht.Vht(0)-1, 0.1, dht.Vht(0)+1,
-                        dht.Vht(1)-1, 0.1, dht.Vht(1)+1,
-                        dht.Vht(2)-1, 0.1, dht.Vht(2)+1);
+  dht.Vht = loop(event, dht.Vht(0)-1e3, 0.1e3, dht.Vht(0)+1e3,
+                        dht.Vht(1)-1e3, 0.1e3, dht.Vht(1)+1e3,
+                        dht.Vht(2)-1e3, 0.1e3, dht.Vht(2)+1e3);
 
   // calculate Pearson's correlation coefficient between real electrical field
   // and estimated in a system moving with deHoffmann-Teller speed

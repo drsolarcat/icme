@@ -1,6 +1,7 @@
 
 #include "data.h"
 #include "time.h"
+#include "event.h"
 
 #include <eigen3/Eigen/Dense>
 
@@ -99,6 +100,18 @@ void Data::readFile(string dataFilePath, Time* beginTime, Time* endTime) {
           if (currentTime < *beginTime) { // before the minimum time limit
             continue; // miss it
           } else {
+            // converting data to SI units
+            dataRow.B   = dataRow.B*1e-9;  // nT    -> T
+            dataRow.Bx  = dataRow.Bx*1e-9; // nT    -> T
+            dataRow.By  = dataRow.By*1e-9; // nT    -> T
+            dataRow.Bz  = dataRow.Bz*1e-9; // nT    -> T
+            dataRow.Vp  = dataRow.Vp*1e3;  // km/s  -> m/s
+            dataRow.Vx  = dataRow.Vx*1e3;  // km/s  -> m/s
+            dataRow.Vy  = dataRow.Vy*1e3;  // km/s  -> m/s
+            dataRow.Vz  = dataRow.Vz*1e3;  // km/s  -> m/s
+            dataRow.Pth = dataRow.Vp*1e-9; // nPa   -> Pa
+            dataRow.Np  = dataRow.Np*1e6;  // 1/cm3 -> 1/m3
+            dataRow.Vth = dataRow.Vth*1e3; // km/s  -> m/s
             data.push_back(dataRow); // push the row of data to the data vector
           }
           if (currentTime > *endTime) break; // after the maximum time limit
@@ -107,6 +120,34 @@ void Data::readFile(string dataFilePath, Time* beginTime, Time* endTime) {
     } // end of iteration through the lines of the data file
     initVectors(); // initialize Eigen3 vectors of data
   }
+}
+
+// project data to new coordinates
+Data& Data::project(Axes axes) {
+
+  Vector3d V, B; // initialize temporary vectors for speed and magnetic field
+
+  // iterate through data and project it to new axes
+  for (int i=0; i < data.size(); i++) {
+    // fill temporary vectors
+    V(0) = data[i].Vx;
+    V(1) = data[i].Vy;
+    V(2) = data[i].Vz;
+    B(0) = data[i].Bx;
+    B(1) = data[i].By;
+    B(2) = data[i].Bz;
+    // project data to new axes
+    data[i].Vx = V.dot(axes.x);
+    data[i].Vy = V.dot(axes.y);
+    data[i].Vz = V.dot(axes.z);
+    data[i].Bx = B.dot(axes.x);
+    data[i].By = B.dot(axes.y);
+    data[i].Bz = B.dot(axes.z);
+  } // end of iteration through the data
+
+  initVectors(); // recalculate Eigen3 vectors of data
+
+  return *this; // chained method
 }
 
 // initialize Eigen3 vectors of data. very stupid function... need to find
