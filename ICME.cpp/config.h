@@ -13,7 +13,7 @@ struct ConfigRow {
   char quality;
   bool toPlot, toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
   std::string spacecraft;
-  double ratio, minY, maxY;
+  double ratio, minY, maxY, samplingInterval;
   Time beginTime, endTime;
 };
 

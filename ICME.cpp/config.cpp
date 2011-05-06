@@ -34,7 +34,8 @@ Config& Config::readFile(string configFilePath) {
       // we continue only if the line is not empty and not a comment
       if (!configFileLine.empty() && // check if the line is empty
           configFileLine[0] != '#' && // check if it's commented
-          configFileLine[0] != '!') // check if it's the first line with titles
+          configFileLine[0] != '!') // check if it's the first line
+                                    // with titles
       {
         // treating each line as a string stream
         // clean the string stream, required on every iteration
@@ -53,6 +54,8 @@ Config& Config::readFile(string configFilePath) {
         // calculate begin and end Time objects instead of strings
         configRow.beginTime = Time(beginDate+' '+beginTime);
         configRow.endTime = Time(endDate+' '+endTime);
+        // TMP: set the sampling interval explicitly                          !
+        configRow.samplingInterval = 240;
         // push the ConfigRow structure to the vector of config data
         data.push_back(configRow);
       }

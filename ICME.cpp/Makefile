@@ -3,7 +3,7 @@ PROGRAM = icme
 
 CXXSOURCES = icme.cpp config.cpp data.cpp time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
-	curve.cpp branched_curve.cpp
+	curve.cpp branched_curve.cpp integrator.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 CXX = g++
 GSL = -lgsl -lgslcblas -lm
@@ -42,6 +42,9 @@ gsr_curve.o: gsr_curve.h gsr_curve.cpp
 
 branched_curve.o: branched_curve.h branched_curve.cpp
 	$(CXX) -c -o branched_curve.o branched_curve.cpp
+
+integrator.o: integrator.h integrator.cpp
+	$(CXX) -c -o integrator.o integrator.cpp
 
 clean:
 	$(RM) -f $(CXXOBJECTS) $(PROGRAM)

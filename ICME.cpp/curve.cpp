@@ -1,5 +1,6 @@
 
 #include "curve.h"
+#include "newton_cotes.h"
 
 #include <eigen3/Eigen/Dense>
 
@@ -8,15 +9,34 @@ using namespace Eigen;
 // default constructor for the Curve objects
 Curve::Curve() {}
 
+// construct the curve out of data vectors
+Curve::Curve(VectorXd x, VectorXd y) {
+  _vectors.x = x;
+  _vectors.y = y;
+}
+
 // smooth curve component by running average filter
 Curve& Curve::filterRunningAverage(int span, char axis) {
   if (axis == 'x') { // filter x components
-    filterRunningAverage(c_vectors.x, span);
+    filterRunningAverage(_vectors.x, span);
   } else if (axis == 'y') { // filter y component
-    filterRunningAverage(c_vectors.y, span);
+    filterRunningAverage(_vectors.y, span);
   }
 
   return *this; // chained method
+}
+
+// resample curve using min and max X limits and number of points
+Curve& Curve::resample(double minX, double maxX, const int m) {
+  const int n = _vectors.x.size();
+
+//  gsl_interp_accel *acc = gsl_interp_accel_alloc();
+//  gsl_spline *spline = gsl_spline_alloc(gsl_interp_linear, n);
+//  size_t p[n];
+//  gsl_sort_index(p, _vectors.x, 1, n);
+//  gsl_permute(p, _vectors.x, 1, n);
+//  gsl_permute(p, _vectors.y, 1, n);
+//  gsl_spline_init(spline, _vectors.x, _vectors.y, n);
 }
 
 // return smoothed by running average version of the data vector
