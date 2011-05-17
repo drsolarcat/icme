@@ -1,6 +1,5 @@
 
 #include "curve.h"
-#include "newton_cotes.h"
 
 #include <eigen3/Eigen/Dense>
 

@@ -2,6 +2,7 @@
 #include "gsr_analyzer.h"
 #include "dht_analyzer.h"
 #include "mva_analyzer.h"
+#include "gsr_curve.h"
 
 #include <eigen3/Eigen/Dense>
 
@@ -58,10 +59,12 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
                 event.dht().Vht.array()).matrix().normalized();
       // complement with y axis
       axes.y = axes.z.cross(axes.x);
+      GsrCurve* curve = new GsrCurve(event, axes);
       if (true) {
         run.optTheta = theta;
         run.optPhi = phi;
       }
+      delete curve;
       phi += dPhi; // make a step in phi
     } // end iteration through phi angles
     theta += dTheta; // make a step in theta step

@@ -57,7 +57,6 @@ int main() {
     // filter narrow Data object out of wider one
     dataNarrow->filter(config.row(iEvent).beginTime,
       config.row(iEvent).endTime);
-
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
 
