@@ -3,6 +3,7 @@
 
 #include <eigen3/Eigen/Dense>
 
+#include <iostream>
 #include <algorithm>
 
 using namespace std;
@@ -27,13 +28,13 @@ BranchedCurve& BranchedCurve::initBranches() {
   _maxIndex = maxIndexX;
   _minRightIndex = x.size();
 
-  if (maxIndexX == 1 || maxIndexX == x.size()) {
+  if (maxIndexX == 0 || maxIndexX == x.size()-1) {
     _isBranched = false;
   } else {
     int minLeftIndexX, minRightIndexX;
     double minLeftX = x.head(maxIndexX+1).minCoeff(&minLeftIndexX);
-    double minRightX = x.tail(x.size()-maxIndexX+1).minCoeff(&minRightIndexX);
-    minRightIndexX += maxIndexX-1;
+    double minRightX = x.tail(x.size()-maxIndexX).minCoeff(&minRightIndexX);
+    minRightIndexX += maxIndexX;
 
     if (minLeftX == max(minLeftX, minRightX)) {
       for (int i = maxIndexX; i < x.size(); i++) {
@@ -43,7 +44,7 @@ BranchedCurve& BranchedCurve::initBranches() {
         }
       }
     } else {
-      for (int i = maxIndexX; i >= 0; i++) {
+      for (int i = maxIndexX; i >= 0; i--) {
         if (x(i) < minRightX) {
           minLeftIndexX = i+1;
           break;
@@ -53,6 +54,8 @@ BranchedCurve& BranchedCurve::initBranches() {
 
     _minLeftIndex = minLeftIndexX;
     _minRightIndex = minRightIndexX;
+
+    cout << _minLeftIndex << ':' << _maxIndex << ':' << _minRightIndex << endl;
   }
 
   if (_isBranched) {

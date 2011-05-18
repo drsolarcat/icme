@@ -1,6 +1,7 @@
 
 #include "gsr_curve.h"
 #include "axes.h"
+#include "integrator.h"
 
 #include <gsl/gsl_const_mksa.h>
 
@@ -12,6 +13,8 @@ GsrCurve::GsrCurve(Event& event, Axes axes) {
   // step in x direction (sunword)
   const double dx = -event.dht().Vht.dot(axes.x)*
                      event.config().samplingInterval;
+
+  Integrator integrator;
 
   Data data(event.dataNarrow()); // copy data
 
@@ -28,7 +31,9 @@ GsrCurve::GsrCurve(Event& event, Axes axes) {
     if (i == 0) { // the first point of vector potential is 0
       _vectors.x(i) = 0;
     } else { // otherwise perform numerical integration
-      _vectors.x(i) = 1; // TODO
+      _vectors.x(i) = integrator.NewtonCotes(4,
+                                             VectorXd::LinSpaced(i+1, 0, dx*i),
+                                             data.cols().By.head(i+1));
     }
     // transverse pressure
     _vectors.y(i) = data.row(i).Pth+

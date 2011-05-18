@@ -4,6 +4,8 @@
 #include "mva_analyzer.h"
 #include "gsr_curve.h"
 
+#include <iostream>
+
 #include <eigen3/Eigen/Dense>
 
 using namespace std;
@@ -47,19 +49,21 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
   theta = minTheta; // initialize theta
   while (theta <= maxTheta) { // begin iteration through theta angles
     // initialize theta quaternion
-    qTheta = AngleAxisd(theta*M_PI, event.pmvab().axes.y);
+    qTheta = AngleAxisd(theta*M_PI/180, event.pmvab().axes.y);
     axes.z = qTheta*event.pmvab().axes.z; // rotate z axis around PMVA y axis
     phi = minPhi; // initialize phi
     while (phi <= maxPhi) { // begin iteration through phi angles
       // initialize phi quaternion
-      qPhi = AngleAxisd(phi*M_PI, event.pmvab().axes.z);
+      qPhi = AngleAxisd(phi*M_PI/180, event.pmvab().axes.z);
       axes.z = qPhi*axes.z; // rotate z axis around PMVA z axis
       // initialize x axis
       axes.x = (event.dht().Vht.dot(axes.z)*axes.z.array()-
                 event.dht().Vht.array()).matrix().normalized();
       // complement with y axis
       axes.y = axes.z.cross(axes.x);
+//      cout << axes.x << ' ' << axes.y << ' ' << axes.z << endl;
       GsrCurve* curve = new GsrCurve(event, axes);
+      curve->initBranches();
       if (true) {
         run.optTheta = theta;
         run.optPhi = phi;
