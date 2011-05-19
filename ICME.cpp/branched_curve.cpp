@@ -45,7 +45,7 @@ BranchedCurve& BranchedCurve::initBranches() {
 
     // align the minimums, so that they are equal Y-valued
     // if the left minimum is higher than the right one
-    if (minLeftX >= minRightX)) {
+    if (minLeftX >= minRightX) {
       // go from the maximum to the right minimum
       for (int i = maxIndexX; i < x.size(); i++) {
         if (x(i) < minLeftX) {
