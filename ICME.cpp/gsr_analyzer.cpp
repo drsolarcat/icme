@@ -77,7 +77,7 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
       axes.y = axes.z.cross(axes.x);
       GsrCurve* curve = new GsrCurve(event, axes);
       (*curve).initBranches().computeResidue();
-      run.residue(i,k) =
+//      run.residue(i,k) =
       if (true) {
         run.optTheta = theta;
         run.optPhi = phi;
