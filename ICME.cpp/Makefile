@@ -5,6 +5,7 @@ CXXSOURCES = icme.cpp config.cpp data.cpp time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
+
 CXX = g++
 GSL = -lgsl -lgslcblas -lm
 FLAGS = -O3
