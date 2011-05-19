@@ -14,7 +14,7 @@ GsrCurve::GsrCurve(Event& event, Axes axes) {
   const double dx = -event.dht().Vht.dot(axes.x)*
                      event.config().samplingInterval;
 
-  Integrator integrator;
+  Integrator integrator; // numerical integrator
 
   Data data(event.dataNarrow()); // copy data
 
@@ -22,18 +22,24 @@ GsrCurve::GsrCurve(Event& event, Axes axes) {
 
   data.project(axes); // project data to temporary axes
 
+  // establish the size of data vectors
   _vectors.x = VectorXd::Zero(n);
   _vectors.y = VectorXd::Zero(n);
+
+  VectorXd X = VectorXd::Zero(1);
 
   // iterate through data
   for (int i=0; i < n; i++) {
     _vectors.x(i) = (i == 0) ? 0 : 1;
-    if (i == 0) { // the first point of vector potential is 0
+    if (i > 0) { // perform numerical integration
+      X.conservativeResize(i+1);
+      X(i) = dx*i;
+      // Simpson's 3/8 rule
+      _vectors.x(i) = integrator.Holoborodko(5, X, data.cols().By.head(i+1)); // 25
+//      _vectors.x(i) = integrator.NewtonCotes(4,
+//        VectorXd::LinSpaced(i+1, 0, i*dx), data.cols().By.head(i+1)); // 29
+    } else { // the first point of vector potential is 0
       _vectors.x(i) = 0;
-    } else { // otherwise perform numerical integration
-      _vectors.x(i) = integrator.NewtonCotes(4,
-                                             VectorXd::LinSpaced(i+1, 0, dx*i),
-                                             data.cols().By.head(i+1));
     }
     // transverse pressure
     _vectors.y(i) = data.row(i).Pth+

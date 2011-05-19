@@ -38,6 +38,7 @@ struct GsrRun {
   double minTheta, dTheta, maxTheta, // theta limits
          minPhi, dPhi, maxPhi, // phi limits
          optTheta, optPhi; // optimal theta and phi
+  Eigen::MatrixXd residue;
 };
 
 // this structure holds results of GSR analysis

@@ -5,6 +5,7 @@
 #include "gsr_curve.h"
 
 #include <iostream>
+#include <ctime>
 
 #include <eigen3/Eigen/Dense>
 
@@ -17,7 +18,10 @@ void GsrAnalyzer::analyze(Event& event) {
   MvaAnalyzer mva; // initialize MVA analyzer
   GsrResults  gsr;
 
+
   dht.analyze(event); // carry dHT analysis for the event
+
+
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
 
   // make a run of axes searching algorithm, save the results in the run
@@ -42,16 +46,26 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
   run.dPhi     = dPhi;
   run.maxPhi   = maxPhi;
 
+  // define residue matrix size
+  run.residue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+                               int((maxPhi-minPhi)/dPhi)+1);
+
   // temporary quaternions for making axes rotations
   Quaterniond qTheta;
   Quaterniond qPhi;
 
+  int i, k; // angle counters
+
+//  time_t t1 = time(NULL);
+
+  i = 0; // starting from 1st row
   theta = minTheta; // initialize theta
   while (theta <= maxTheta) { // begin iteration through theta angles
     // initialize theta quaternion
     qTheta = AngleAxisd(theta*M_PI/180, event.pmvab().axes.y);
     axes.z = qTheta*event.pmvab().axes.z; // rotate z axis around PMVA y axis
     phi = minPhi; // initialize phi
+    k = 0; // starting from 2nd column
     while (phi <= maxPhi) { // begin iteration through phi angles
       // initialize phi quaternion
       qPhi = AngleAxisd(phi*M_PI/180, event.pmvab().axes.z);
@@ -61,18 +75,23 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
                 event.dht().Vht.array()).matrix().normalized();
       // complement with y axis
       axes.y = axes.z.cross(axes.x);
-//      cout << axes.x << ' ' << axes.y << ' ' << axes.z << endl;
       GsrCurve* curve = new GsrCurve(event, axes);
-      curve->initBranches();
+      (*curve).initBranches().computeResidue();
+      run.residue(i,k) =
       if (true) {
         run.optTheta = theta;
         run.optPhi = phi;
       }
       delete curve;
       phi += dPhi; // make a step in phi
+      k++; // move to the next column
     } // end iteration through phi angles
     theta += dTheta; // make a step in theta step
+    i++; // move to the next row
   } // end iteration through theta angles
+
+//  time_t t2 = time(NULL);
+//  cout << difftime(t2, t1) << endl;
 
   return run; // return
 }
