@@ -98,6 +98,19 @@ BranchedCurve& BranchedCurve::initBranches(int minLeftIndex,
 
 // compute residues of the curve branches
 BranchedCurve& BranchedCurve::computeResidue() {
+  if (_isBranched && _branches[0].size() > 0.2*size() &&
+      _branches[1].size() > 0.2*size())
+  {
+    Curve curveIn(_branches[0]);
+    Curve curveOut(_branches[1]);
 
+    double minX = max(curveIn.cols().x.minCoeff(),
+                      curveOut.cols().x.minCoeff());
+    double maxX = min(curveIn.cols().x.maxCoeff(),
+                      curveOut.cols().x.maxCoeff());
+
+    curveIn.resample(minX, maxX, size());
+    curveOut.resample(minX, maxX, size());
+  }
 }
 

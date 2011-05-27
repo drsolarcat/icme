@@ -2,6 +2,10 @@
 #include "curve.h"
 
 #include <eigen3/Eigen/Dense>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_sort_double.h>
+#include <gsl/gsl_permutation.h>
 
 using namespace Eigen;
 
@@ -29,13 +33,18 @@ Curve& Curve::filterRunningAverage(int span, char axis) {
 Curve& Curve::resample(double minX, double maxX, const int m) {
   const int n = _vectors.x.size();
 
-//  gsl_interp_accel *acc = gsl_interp_accel_alloc();
-//  gsl_spline *spline = gsl_spline_alloc(gsl_interp_linear, n);
-//  size_t p[n];
-//  gsl_sort_index(p, _vectors.x, 1, n);
-//  gsl_permute(p, _vectors.x, 1, n);
-//  gsl_permute(p, _vectors.y, 1, n);
-//  gsl_spline_init(spline, _vectors.x, _vectors.y, n);
+//  if (n >= gsl_interp_type_min_size(gsl_interp_linear)) {
+  if (n >= 2) {
+    gsl_interp_accel* acc = gsl_interp_accel_alloc();
+    gsl_spline* spline = gsl_spline_alloc(gsl_interp_linear, n);
+    size_t p[n];
+    gsl_sort_index(p, _vectors.x, 1, n);
+//    gsl_permute(p, _vectors.x, 1, n);
+//    gsl_permute(p, _vectors.y, 1, n);
+//    gsl_spline_init(spline, _vectors.x, _vectors.y, n);
+    gsl_spline_free (spline);
+    gsl_interp_accel_free (acc);
+  }
 }
 
 // return smoothed by running average version of the data vector

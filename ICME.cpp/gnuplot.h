@@ -1,7 +1,6 @@
 /*
 
 Eigen3 version by Alexey Isavnin (2011)
-
 Original version by Daniel Stahlke (2009)
 
 */

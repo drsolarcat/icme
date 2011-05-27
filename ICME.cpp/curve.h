@@ -22,6 +22,7 @@ class Curve {
     Curve(Eigen::VectorXd, Eigen::VectorXd); // construct out of vectors
     // curve data accessor
     const CurveVectors& cols() const {return _vectors;}
+    const int size() const {return _vectors.x.size();} // length of the curve
     Curve& filterRunningAverage(int, char); // running average filter
     Curve& filterSavitzkyGolay(int, int); // Savitzky-Golay filter
     // resample the curve using min and max X limits and number of points
