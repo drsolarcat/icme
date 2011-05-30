@@ -26,7 +26,15 @@ void GsrAnalyzer::analyze(Event& event) {
 
   // make a run of axes searching algorithm, save the results in the run
   // structure
-  gsr.runs.push_back(loopAxes(event, 0, 10, 360, 0, 5, 90));
+  gsr.runs.push_back(loopAxes(event, 0, 5, 90, 0, 10, 360));
+  gsr.runs.push_back(loopAxes(event,
+    gsr.runs[0].optTheta-5, 1, gsr.runs[0].optTheta+5,
+    gsr.runs[0].optPhi-10, 1, gsr.runs[0].optPhi+10));
+//  gsr.runs.push_back(loopAxes(event, 0, 1, 90, 0, 1, 360));
+
+  cout << gsr.runs[0].optTheta << ' ' << gsr.runs[0].optPhi << endl;
+  cout << gsr.runs[1].optTheta << ' ' << gsr.runs[1].optPhi << endl;
+//  cout << gsr.runs[2].optTheta << ' ' << gsr.runs[2].optPhi << endl;
 }
 
 // run one loop of axes search algorithm
@@ -77,11 +85,7 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
       axes.y = axes.z.cross(axes.x);
       GsrCurve* curve = new GsrCurve(event, axes);
       (*curve).initBranches().computeResidue();
-//      run.residue(i,k) =
-      if (true) {
-        run.optTheta = theta;
-        run.optPhi = phi;
-      }
+      run.residue(i,k) = curve->residue();
       delete curve;
       phi += dPhi; // make a step in phi
       k++; // move to the next column
@@ -89,6 +93,11 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
     theta += dTheta; // make a step in theta step
     i++; // move to the next row
   } // end iteration through theta angles
+
+  int iTheta, iPhi;
+  run.residue.minCoeff(&iTheta, &iPhi);
+  run.optTheta = minTheta + iTheta*dTheta;
+  run.optPhi = minPhi + iPhi*dPhi;
 
 //  time_t t2 = time(NULL);
 //  cout << difftime(t2, t1) << endl;

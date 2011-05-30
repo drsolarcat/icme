@@ -109,8 +109,17 @@ BranchedCurve& BranchedCurve::computeResidue() {
     double maxX = min(curveIn.cols().x.maxCoeff(),
                       curveOut.cols().x.maxCoeff());
 
+    double minY = min(curveIn.cols().y.minCoeff(),
+                      curveOut.cols().y.minCoeff());
+    double maxY = max(curveIn.cols().y.maxCoeff(),
+                      curveOut.cols().y.maxCoeff());
+
     curveIn.resample(minX, maxX, size());
     curveOut.resample(minX, maxX, size());
+
+    _residue = (curveIn.cols().y-curveOut.cols().y).norm()/abs(maxY-minY);
+  } else {
+    _residue = 1e100;
   }
 }
 

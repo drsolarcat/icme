@@ -5,7 +5,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_sort_double.h>
-#include <gsl/gsl_permutation.h>
+#include <gsl/gsl_permute.h>
 
 using namespace Eigen;
 
@@ -35,15 +35,35 @@ Curve& Curve::resample(double minX, double maxX, const int m) {
 
 //  if (n >= gsl_interp_type_min_size(gsl_interp_linear)) {
   if (n >= 2) {
+    // initialize the accelerator object
     gsl_interp_accel* acc = gsl_interp_accel_alloc();
+    // initialize the interpolating spline
     gsl_spline* spline = gsl_spline_alloc(gsl_interp_linear, n);
-    size_t p[n];
-    gsl_sort_index(p, _vectors.x, 1, n);
-//    gsl_permute(p, _vectors.x, 1, n);
-//    gsl_permute(p, _vectors.y, 1, n);
-//    gsl_spline_init(spline, _vectors.x, _vectors.y, n);
-    gsl_spline_free (spline);
-    gsl_interp_accel_free (acc);
+
+    double x[n], y[n]; // arrays for storing vector data
+    size_t p[n]; // permuations arrays
+
+    // write curve data to arrays
+    for (int i = 0; i < size(); i++) {
+      x[i] = _vectors.x(i);
+      y[i] = _vectors.y(i);
+    }
+    gsl_sort_index(p, x, 1, n); // sort curve data by ASC X, get permutations
+    gsl_permute(p, x, 1, n); // apply permutations
+    gsl_permute(p, y, 1, n); // apply permutations
+    gsl_spline_init(spline, x, y, n); // initialize the interpolating spline
+    double dx = (maxX-minX)/(m-1); // compute the X step
+    _vectors.x.resize(m); // resize curve vector for the resampled curve
+    _vectors.y.resize(m); // resize curve vector for the resampled curve
+    // save new resampled curve data
+    for (int i = 0; i < m; i++) {
+       // resampled X
+      _vectors.x(i) = minX+i*dx;
+      // resampled Y
+      _vectors.y(i) = gsl_spline_eval(spline, _vectors.x(i), acc);
+    }
+    gsl_spline_free (spline); // free spline memory
+    gsl_interp_accel_free (acc); // free accelerator memory
   }
 }
 
