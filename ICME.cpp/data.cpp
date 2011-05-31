@@ -108,7 +108,7 @@ void Data::readFile(string dataFilePath, Time* beginTime, Time* endTime) {
             dataRow.Vx  = dataRow.Vx*1e3;  // km/s  -> m/s
             dataRow.Vy  = dataRow.Vy*1e3;  // km/s  -> m/s
             dataRow.Vz  = dataRow.Vz*1e3;  // km/s  -> m/s
-            dataRow.Pth = dataRow.Vp*1e-9; // nPa   -> Pa
+            dataRow.Pth = dataRow.Pth*1e-9; // nPa   -> Pa
             dataRow.Np  = dataRow.Np*1e6;  // 1/cm3 -> 1/m3
             dataRow.Vth = dataRow.Vth*1e3; // km/s  -> m/s
             data.push_back(dataRow); // push the row of data to the data vector

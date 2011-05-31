@@ -3,6 +3,7 @@
 #define CURVE_H
 
 #include <eigen3/Eigen/Dense>
+#include <gsl/gsl_interp.h>
 
 #include <vector>
 
@@ -26,9 +27,11 @@ class Curve {
     Curve& filterRunningAverage(int, char); // running average filter
     Curve& filterSavitzkyGolay(int, int); // Savitzky-Golay filter
     // resample the curve using min and max X limits and number of points
-    Curve& resample(double, double, int);
+    Curve& resample(double, double, const int,
+                    const gsl_interp_type* interp_type = gsl_interp_linear);
     // resample the curve using min and max X limits and step
-    Curve& resample(double, double, double);
+    Curve& resample(double, double, double,
+                    const gsl_interp_type* interp_type = gsl_interp_linear);
     // compute the residue between the branches of the curve
     double computeResidue();
     // returns data vector smoothed by running average filter

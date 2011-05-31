@@ -2,9 +2,11 @@
 #include "branched_curve.h"
 
 #include <eigen3/Eigen/Dense>
+#include <gsl/gsl_version.h>
 
 #include <iostream>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 using namespace Eigen;
@@ -86,40 +88,58 @@ BranchedCurve& BranchedCurve::initBranches(int minLeftIndex,
   _branches.clear(); // clear branches
   // initialize left minimum to maximum branch
   _branches.push_back(
-    Curve(_vectors.x.segment(minLeftIndex, maxIndex-minLeftIndex),
-          _vectors.y.segment(minLeftIndex, maxIndex-minLeftIndex)));
+    Curve(_vectors.x.segment(minLeftIndex, maxIndex-minLeftIndex+1),
+          _vectors.y.segment(minLeftIndex, maxIndex-minLeftIndex+1)));
+
   // initialize maximum to right minimum branch
   _branches.push_back(
-    Curve(_vectors.x.segment(maxIndex, minRightIndex-maxIndex),
-          _vectors.y.segment(maxIndex, minRightIndex-maxIndex)));
+    Curve(_vectors.x.segment(maxIndex, minRightIndex-maxIndex+1),
+          _vectors.y.segment(maxIndex, minRightIndex-maxIndex+1)));
 
   return *this; // chained method
 }
 
 // compute residues of the curve branches
 BranchedCurve& BranchedCurve::computeResidue() {
-  if (_isBranched && _branches[0].size() > 0.2*size() &&
-      _branches[1].size() > 0.2*size())
-  {
+
+  // minimal length of the branch
+  _branchLength = min(_maxIndex-_minLeftIndex+1, _minRightIndex-_maxIndex+1);
+
+  // interpolation type used for resampling
+  const gsl_interp_type* interp_type = gsl_interp_linear;
+
+  /* if GSL_VERSION >= 1.15 */
+  /* if (_isBranched && m >= gsl_interp_type_min_size(interp_type)) { */
+  /* else */
+  const int interp_min_size = 2;
+  if (_isBranched && _branchLength >= interp_min_size && _branchLength > 0.3*size()) {
+  /* endif */
+    // copy the curve branches
     Curve curveIn(_branches[0]);
     Curve curveOut(_branches[1]);
 
+    // init the limits for the resampled branches
     double minX = max(curveIn.cols().x.minCoeff(),
                       curveOut.cols().x.minCoeff());
     double maxX = min(curveIn.cols().x.maxCoeff(),
                       curveOut.cols().x.maxCoeff());
 
+    // resample the branches
+    curveIn.resample(minX, maxX, 2*size(), interp_type);
+    curveOut.resample(minX, maxX, 2*size(), interp_type);
+
+    // init the limits of the Y values of the curves
     double minY = min(curveIn.cols().y.minCoeff(),
                       curveOut.cols().y.minCoeff());
     double maxY = max(curveIn.cols().y.maxCoeff(),
                       curveOut.cols().y.maxCoeff());
 
-    curveIn.resample(minX, maxX, size());
-    curveOut.resample(minX, maxX, size());
-
+    // compute residue
     _residue = (curveIn.cols().y-curveOut.cols().y).norm()/abs(maxY-minY);
-  } else {
-    _residue = 1e100;
+    _combinedResidue = _residue*size()/2/_branchLength; // new normalization
+  } else { // if the curve is not branched
+    _residue = numeric_limits<double>::infinity();
+    _combinedResidue = numeric_limits<double>::infinity();
   }
 }
 

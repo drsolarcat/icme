@@ -30,7 +30,9 @@ Curve& Curve::filterRunningAverage(int span, char axis) {
 }
 
 // resample curve using min and max X limits and number of points
-Curve& Curve::resample(double minX, double maxX, const int m) {
+Curve& Curve::resample(double minX, double maxX, const int m,
+                       const gsl_interp_type* interp_type)
+{
   const int n = _vectors.x.size();
 
 //  if (n >= gsl_interp_type_min_size(gsl_interp_linear)) {
@@ -38,7 +40,7 @@ Curve& Curve::resample(double minX, double maxX, const int m) {
     // initialize the accelerator object
     gsl_interp_accel* acc = gsl_interp_accel_alloc();
     // initialize the interpolating spline
-    gsl_spline* spline = gsl_spline_alloc(gsl_interp_linear, n);
+    gsl_spline* spline = gsl_spline_alloc(interp_type, n);
 
     double x[n], y[n]; // arrays for storing vector data
     size_t p[n]; // permuations arrays
@@ -78,14 +80,14 @@ VectorXd Curve::filteredRunningAverage(VectorXd y, int span) {
 
   // begin iteration through the data
   for (int i = 0; i < n; i++) {
-    if (i < delta) { // cose to the beginning of the data vector
+    if (i < delta) { // close to the beginning of the data vector
       d = i;
-    } else if (n-i < delta) { // close to the end of the data vector
-      d = n - i;
+    } else if (n-i-1 < delta) { // close to the end of the data vector
+      d = n-i-1;
     } else { // somewhere in the middle of the data vector
       d = delta;
     }
-    yy(i) = y.segment(i-d,2*d).sum()/(2*d+1); // perform filtering
+    yy(i) = y.segment(i-d,2*d+1).sum()/(2*d+1); // perform filtering
   } // end iteration through the data
 
   return yy; // return new filtered data vector

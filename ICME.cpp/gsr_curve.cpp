@@ -5,7 +5,6 @@
 
 #include <gsl/gsl_const_mksa.h>
 
-using namespace std;
 using namespace Eigen;
 
 // construct the Pt(A) curve
@@ -34,10 +33,7 @@ GsrCurve::GsrCurve(Event& event, Axes axes) {
     if (i > 0) { // perform numerical integration
       X.conservativeResize(i+1);
       X(i) = dx*i;
-      // Simpson's 3/8 rule
-      _vectors.x(i) = integrator.Holoborodko(5, X, data.cols().By.head(i+1)); // 25
-//      _vectors.x(i) = integrator.NewtonCotes(4,
-//        VectorXd::LinSpaced(i+1, 0, i*dx), data.cols().By.head(i+1)); // 29
+      _vectors.x(i) = integrator.Holoborodko(5, X, data.cols().By.head(i+1));
     } else { // the first point of vector potential is 0
       _vectors.x(i) = 0;
     }
