@@ -25,14 +25,14 @@ void GsrAnalyzer::analyze(Event& event) {
 
   // make a run of axes searching algorithm, save the results in the run
   // structure
-  gsr.runs.push_back(loopAxes(event, 0, 5, 90, 0, 5, 360));
-  gsr.runs.push_back(loopAxes(event,
-    gsr.runs[0].optTheta-5, 1, gsr.runs[0].optTheta+5,
-    gsr.runs[0].optPhi-5, 1, gsr.runs[0].optPhi+5));
-//  gsr.runs.push_back(loopAxes(event, 0, 1, 90, 0, 1, 360));
+//  gsr.runs.push_back(loopAxes(event, 0, 5, 90, 0, 5, 360));
+//  gsr.runs.push_back(loopAxes(event,
+//    gsr.runs[0].optTheta-5, 1, gsr.runs[0].optTheta+5,
+//    gsr.runs[0].optPhi-5, 1, gsr.runs[0].optPhi+5));
+  gsr.runs.push_back(loopAxes(event, 0, 1, 90, 0, 1, 360));
 
   cout << gsr.runs[0].optTheta << ' ' << gsr.runs[0].optPhi << endl;
-  cout << gsr.runs[1].optTheta << ' ' << gsr.runs[1].optPhi << endl;
+//  cout << gsr.runs[1].optTheta << ' ' << gsr.runs[1].optPhi << endl;
 //  cout << gsr.runs[2].optTheta << ' ' << gsr.runs[2].optPhi << endl;
 
 
@@ -42,10 +42,10 @@ void GsrAnalyzer::analyze(Event& event) {
   // some test files
   Axes axes;
   Quaterniond qTheta, qPhi;
-  qTheta = AngleAxisd(gsr.runs[1].optTheta*M_PI/180, event.pmvab().axes.y);
+  qTheta = AngleAxisd(gsr.runs[0].optTheta*M_PI/180, event.pmvab().axes.y);
 //  qTheta = AngleAxisd(8*M_PI/180, event.pmvab().axes.y);
   axes.z = qTheta*event.pmvab().axes.z;
-  qPhi = AngleAxisd(gsr.runs[1].optPhi*M_PI/180, event.pmvab().axes.z);
+  qPhi = AngleAxisd(gsr.runs[0].optPhi*M_PI/180, event.pmvab().axes.z);
 //  qPhi = AngleAxisd(182*M_PI/180, event.pmvab().axes.z);
   axes.z = qPhi*axes.z;
   axes.x = (event.dht().Vht.dot(axes.z)*axes.z.array()-
@@ -62,6 +62,10 @@ void GsrAnalyzer::analyze(Event& event) {
 
   myfile.open ("./rml.txt");
   myfile << gsr.runs[0].residue << endl;
+  myfile.close();
+
+  myfile.open ("./l.txt");
+  myfile << gsr.runs[0].length << endl;
   myfile.close();
 }
 
@@ -84,6 +88,8 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
 
   // define residue matrix size
   run.residue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+                               int((maxPhi-minPhi)/dPhi)+1);
+  run.length  = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
                                int((maxPhi-minPhi)/dPhi)+1);
 
   // temporary quaternions for making axes rotations
@@ -117,6 +123,7 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
       (*curve).initBranches().computeResidue();
       // save residue into a matrix
       run.residue(i,k) = curve->combinedResidue();
+      run.length(i,k) = curve->branchLength();
       // deallocate the curve
       delete curve;
       phi += dPhi; // make a step in phi

@@ -25,6 +25,8 @@ class BranchedCurve: public Curve {
     double residue() {return _residue;} // residue accessor
     double combinedResidue() {return _combinedResidue;} // residue accessor
     double branchLength() {return _branchLength;} // residue accessor
+    BranchedCurve& initBranchesByTracing();
+    BranchedCurve& initBranchesByExtremums();
     BranchedCurve& initBranches(); // determine the branches of the curve
     BranchedCurve& initBranches(int, int, int); // initialize curves by
                                                 // boundary indices

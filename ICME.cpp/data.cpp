@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <iostream>
 
 using namespace std;
 using namespace Eigen;
@@ -36,6 +37,7 @@ Data& Data::filter(Time beginTime, Time endTime) {
   int beginIndex, endIndex; // indices for minimum and maximum limits of the
                             // data interval
   Time currentTime; // Time object for storing of the current time
+
   // iterate through data array
   for (int i=0; i < data.size(); i++) {
     // initialize current Time object
@@ -51,8 +53,8 @@ Data& Data::filter(Time beginTime, Time endTime) {
   } // end of iteration through data
 
   // erase data outside desired time interval
-  data.erase(data.begin(), data.begin()+beginIndex); // lower part
   data.erase(data.begin()+endIndex, data.end()); // upper part
+  data.erase(data.begin(), data.begin()+beginIndex+1); // lower part
 
   initVectors(); // initialize Eigen3 vectors of data
 

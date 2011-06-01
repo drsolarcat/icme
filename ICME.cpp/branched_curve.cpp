@@ -11,15 +11,75 @@
 using namespace std;
 using namespace Eigen;
 
-// initialize branches of the curve
 BranchedCurve& BranchedCurve::initBranches() {
+  initBranchesByTracing();
+}
+
+BranchedCurve& BranchedCurve::initBranchesByTracing() {
+
+  // copy the curve data vectors
+  VectorXd x = _vectors.x;
+  VectorXd y = _vectors.y;
+
+  // smooth the curve
+  filterRunningAverage(y, 5);
+
+  int leftIndex = 0,
+      centerIndex,
+      rightIndex = size()-1;
+  x.maxCoeff(&centerIndex);
+
+  _maxIndex = centerIndex;
+  _minLeftIndex = leftIndex;
+  _minRightIndex = rightIndex;
+  _isBranched = false;
+
+  if (x(centerIndex) < x(leftIndex) && x(centerIndex) < x(rightIndex)) {
+    x = -x;
+  }
+
+  const double eps2 = pow(0.01*(x.maxCoeff()-x.minCoeff()), 2)+
+                      pow(0.01*(y.maxCoeff()-y.minCoeff()), 2);
+
+  if (x(centerIndex) == x(rightIndex) || x(centerIndex) == x(leftIndex)) {
+    _isBranched = false;
+  } else {
+    while (rightIndex-leftIndex > 0.4*size()) {
+      if (x(leftIndex) < x(rightIndex)) {
+        leftIndex++;
+      } else if (x(leftIndex) > x(rightIndex)) {
+        rightIndex--;
+      }
+      if (pow(x(leftIndex)-x(rightIndex), 2)+
+          pow(y(leftIndex)-y(rightIndex), 2) < eps2)
+      {
+        _minRightIndex = rightIndex;
+        _minLeftIndex = leftIndex;
+        _maxIndex = centerIndex;
+        _isBranched = true;
+        break;
+      }
+    }
+  }
+
+  // initialize branch curves
+  if (_isBranched) {
+    initBranches(_minLeftIndex, _maxIndex, _minRightIndex);
+  }
+
+//  cout << _minLeftIndex << ':' << _maxIndex << ':' << _minRightIndex << endl;
+
+  return *this; // chained method
+}
+
+// initialize branches of the curve
+BranchedCurve& BranchedCurve::initBranchesByExtremums() {
 
   // copy curve data vectors
   VectorXd x = _vectors.x;
   VectorXd y = _vectors.y;
 
   // smooth the curve data
-  filterRunningAverage(x, 5);
   filterRunningAverage(y, 5);
 
   // let X be always with positive camber
@@ -68,14 +128,14 @@ BranchedCurve& BranchedCurve::initBranches() {
     // save branches boundaries
     _minLeftIndex = minLeftIndexX;
     _minRightIndex = minRightIndexX;
-
-//    cout << _minLeftIndex << ':' << _maxIndex << ':' << _minRightIndex << endl;
   }
 
   // initialize branch curves
   if (_isBranched) {
     initBranches(_minLeftIndex, _maxIndex, _minRightIndex);
   }
+
+//  cout << _minLeftIndex << ':' << _maxIndex << ':' << _minRightIndex << endl;
 
   return *this; // chained method
 }
@@ -112,7 +172,7 @@ BranchedCurve& BranchedCurve::computeResidue() {
   /* if (_isBranched && m >= gsl_interp_type_min_size(interp_type)) { */
   /* else */
   const int interp_min_size = 2;
-  if (_isBranched && _branchLength >= interp_min_size && _branchLength > 0.3*size()) {
+  if (_isBranched && _branchLength >= interp_min_size) {
   /* endif */
     // copy the curve branches
     Curve curveIn(_branches[0]);
@@ -141,5 +201,6 @@ BranchedCurve& BranchedCurve::computeResidue() {
     _residue = numeric_limits<double>::infinity();
     _combinedResidue = numeric_limits<double>::infinity();
   }
+//  cout << _combinedResidue << endl;
 }
 
