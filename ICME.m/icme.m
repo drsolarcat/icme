@@ -1,6 +1,6 @@
 
 clear all;
-configPath = '../data/config';
+configPath = '../../data/config';
 disp(['Reading config from file: ', configPath]);
 config = Config(configPath);
 quality = 'g';

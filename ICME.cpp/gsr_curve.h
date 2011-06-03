@@ -12,6 +12,7 @@
 // transverse pressure, specific to GSR method
 class GsrCurve: public BranchedCurve {
   public:
+    GsrCurve();
     GsrCurve(Event&, Axes); // physical constructor
 };
 

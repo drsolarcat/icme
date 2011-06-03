@@ -142,9 +142,9 @@ PmvaResults MvaAnalyzer::analyzePmva(const Event& event, bool unit) {
   Matrix3d eigenVectors = eigensolver.eigenvectors();
 
   // maximum variance vector is the Y axis
-  pmva.axes.y = eigenVectors.col(2);
+  pmva.axes.y = eigenVectors.col(2).normalized();
   // -Vht is the X axis
-  pmva.axes.x = (-Vht.array()).matrix();
+  pmva.axes.x = (-Vht.array()).matrix().normalized();
   // [x,y] complements the coordinates
   pmva.axes.z = (pmva.axes.x.cross(pmva.axes.y)).normalized();
 
