@@ -149,7 +149,7 @@ BranchedCurve& BranchedCurve::initBranchesByExtremums() {
       }
     }
 
-    const int delta = int(0.05*size());
+//    const int delta = int(0.05*size());
 
     // save branches boundaries
     _leftIndex = minLeftIndexX;
