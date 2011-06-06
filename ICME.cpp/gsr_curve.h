@@ -1,11 +1,11 @@
 
 #ifndef GSR_CURVE_H
 #define GSR_CURVE_H
-
+// project headers
 #include "branched_curve.h"
 #include "event.h"
 #include "axes.h"
-
+// library headers
 #include <eigen3/Eigen/Dense>
 
 // this class of branched curves supports initializing by vector potential and

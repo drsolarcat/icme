@@ -15,7 +15,8 @@ class GsrAnalyzer {
     // loop through angles and find the optimal angles for new axes
     GsrRun loopAxes(Event&, double, double, double,
                             double, double, double);
-
+    // compute magnetic field map for a given GSR run
+    GsrRun& computeMap(Event&, GsrRun&);
 };
 
 #endif

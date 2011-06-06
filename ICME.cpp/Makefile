@@ -27,9 +27,6 @@ data.o: data.h data.cpp
 time.o: time.h time.cpp
 	$(CXX) -c -o time.o time.cpp $(FLAGS)
 
-event.o: event.h event.cpp
-	$(CXX) -c -o event.o event.cpp $(FLAGS)
-
 mva_analyzer.o: mva_analyzer.h mva_analyzer.cpp
 	$(CXX) -c -o mva_analyzer.o mva_analyzer.cpp $(FLAGS)
 
@@ -50,6 +47,9 @@ branched_curve.o: branched_curve.h branched_curve.cpp
 
 integrator.o: integrator.h integrator.cpp
 	$(CXX) -c -o integrator.o integrator.cpp $(FLAGS)
+
+event.o: event.h event.cpp
+	$(CXX) -c -o event.o event.cpp $(FLAGS)
 
 clean:
 	$(RM) -f $(CXXOBJECTS) $(PROGRAM)

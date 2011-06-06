@@ -6,6 +6,7 @@
 #include "gsr_curve.h"
 // library headers
 #include <eigen3/Eigen/Dense>
+#include <gsl/gsl_const_mksa.h>
 // standard headers
 #include <iostream>
 #include <fstream>
@@ -25,7 +26,22 @@ void GsrAnalyzer::analyze(Event& event) {
 
   // make a run of axes searching algorithm, save the results in the run
   // structure
-  gsr.runs.push_back(loopAxes(event, 0, 1, 90, 0, 1, 360));
+  GsrRun run = loopAxes(event, 0, 1, 90, 0, 1, 360);
+
+  // quaternions, needed to turn to optimized axes
+  Quaterniond qTheta;
+  Quaterniond qPhi;
+
+  computeMap(event, run);
+  gsr.runs.push_back(run);
+  qTheta = AngleAxisd(run.optTheta*M_PI/180, event.pmvab().axes.y);
+  qPhi = AngleAxisd(run.optPhi*M_PI/180, event.pmvab().axes.z);
+  run.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
+  run.axes.x = (event.dht().Vht.dot(run.axes.z)*run.axes.z-
+                event.dht().Vht).normalized();
+  run.axes.y = run.axes.z.cross(run.axes.x).normalized();
+  run.curve = GsrCurve(event, run.axes);
+  run.curve.initBranches("extremums").computeResidue();
 
   cout << gsr.runs[0].optTheta << ' ' << gsr.runs[0].optPhi << endl;
 
@@ -115,5 +131,32 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
   run.optPhi = minPhi + iPhi*dPhi;
 
   return run; // return
+}
+
+// compute magnetic field map for a given GSR run
+GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
+  Data data(event.dataNarrow());
+
+  data.project(run.axes);
+
+  double dx = -event.dht().Vht.dot(run.axes.x)*event.config().samplingInterval*
+               run.curve.size()/event.config().Nx;
+  double dy = event.config().ratio*dx;
+  int Ny = floor((event.config().maxY-event.config().minY)*
+           GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
+  dy = (event.config().maxY-event.config().minY)*
+       GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy;
+  Ny = ceil(event.config().maxY/dy)-floor(event.config().minY/dy)+1;
+  VectorXd Y = VectorXd::Zero(Ny);
+  for (int i = 0; i < Ny; i++) {
+    Y(i) = ceil(event.config().maxY/dy)+i*dy;
+  }
+  int Nx = event.config().Nx;
+
+//  Curve curveIn(run.curve.branches()[0]);
+//  Curve curveOut(run.curve.branches()[1]);
+
+//  curveIn.resample(curveIn.cols().x.minCoeff(), curveIn.cols().x.maxCoeff(), Nx);
+//  curveOut.resample(curveOut.cols().x.minCoeff(), curveOut.cols().x.maxCoeff(), Nx);
 }
 

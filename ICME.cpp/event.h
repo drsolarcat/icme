@@ -1,13 +1,14 @@
 
 #ifndef EVENT_H
 #define EVENT_H
-
+//project headers
 #include "data.h"
 #include "config.h"
 #include "axes.h"
-
+#include "branched_curve.h"
+// library headers
 #include <eigen3/Eigen/Dense>
-
+// standard headers
 #include <vector>
 
 // this structure holds the results of MVA analysis
@@ -41,6 +42,8 @@ struct GsrRun {
   Eigen::MatrixXd originalResidue, // original residue
                   combinedResidue, // renormalized residue
                   branchLength; // branch length
+  Axes axes;
+  BranchedCurve curve;
 };
 
 // this structure holds results of GSR analysis
