@@ -1,13 +1,13 @@
 
 PROGRAM = icme
 
-CXXSOURCES = icme.cpp config.cpp data.cpp time.cpp event.cpp \
+CXXSOURCES = icme.cpp config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 CXX = g++
-GSL = -lgsl -lgslcblas -lm
+GSL = -lgsl -lgslcblas -lm /home/isavnin/opt/lib/libboost_iostreams.a
 FLAGS = -O3
 
 all: $(PROGRAM)
@@ -24,8 +24,8 @@ config.o: config.h config.cpp
 data.o: data.h data.cpp
 	$(CXX) -c -o data.o data.cpp $(FLAGS)
 
-time.o: time.h time.cpp
-	$(CXX) -c -o time.o time.cpp $(FLAGS)
+my_time.o: my_time.h my_time.cpp
+	$(CXX) -c -o my_time.o my_time.cpp $(FLAGS)
 
 mva_analyzer.o: mva_analyzer.h mva_analyzer.cpp
 	$(CXX) -c -o mva_analyzer.o mva_analyzer.cpp $(FLAGS)

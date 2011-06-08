@@ -4,9 +4,14 @@
 #include "dht_analyzer.h"
 #include "mva_analyzer.h"
 #include "gsr_curve.h"
+#include "gnuplot.h"
+#include "gsl_fit_poly.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_const_mksa.h>
+#include <gsl/gsl_sort_double.h>
+#include <gsl/gsl_permute.h>
+#include <gsl/gsl_fit.h>
 // standard headers
 #include <iostream>
 #include <fstream>
@@ -32,8 +37,6 @@ void GsrAnalyzer::analyze(Event& event) {
   Quaterniond qTheta;
   Quaterniond qPhi;
 
-  computeMap(event, run);
-  gsr.runs.push_back(run);
   qTheta = AngleAxisd(run.optTheta*M_PI/180, event.pmvab().axes.y);
   qPhi = AngleAxisd(run.optPhi*M_PI/180, event.pmvab().axes.z);
   run.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
@@ -42,6 +45,9 @@ void GsrAnalyzer::analyze(Event& event) {
   run.axes.y = run.axes.z.cross(run.axes.x).normalized();
   run.curve = GsrCurve(event, run.axes);
   run.curve.initBranches("extremums").computeResidue();
+
+  computeMap(event, run);
+  gsr.runs.push_back(run);
 
   cout << gsr.runs[0].optTheta << ' ' << gsr.runs[0].optPhi << endl;
 
@@ -125,7 +131,8 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
   // searching for the minimum residue direction
   int iTheta, iPhi; // index of optimal angles
   // get indices
-  run.originalResidue.minCoeff(&iTheta, &iPhi);
+//  run.originalResidue.minCoeff(&iTheta, &iPhi);
+  run.combinedResidue.minCoeff(&iTheta, &iPhi);
   // translate indices into optimal angles
   run.optTheta = minTheta + iTheta*dTheta;
   run.optPhi = minPhi + iPhi*dPhi;
@@ -145,18 +152,128 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   int Ny = floor((event.config().maxY-event.config().minY)*
            GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
   dy = (event.config().maxY-event.config().minY)*
-       GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy;
-  Ny = ceil(event.config().maxY/dy)-floor(event.config().minY/dy)+1;
+       GSL_CONST_MKSA_ASTRONOMICAL_UNIT/Ny;
+  Ny = ceil(event.config().maxY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy)-
+       floor(event.config().minY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy)+1;
   VectorXd Y = VectorXd::Zero(Ny);
   for (int i = 0; i < Ny; i++) {
     Y(i) = ceil(event.config().maxY/dy)+i*dy;
   }
   int Nx = event.config().Nx;
 
-//  Curve curveIn(run.curve.branches()[0]);
-//  Curve curveOut(run.curve.branches()[1]);
+  Curve curveIn(run.curve.branches()[0]);
+  Curve curveOut(run.curve.branches()[1]);
 
-//  curveIn.resample(curveIn.cols().x.minCoeff(), curveIn.cols().x.maxCoeff(), Nx);
-//  curveOut.resample(curveOut.cols().x.minCoeff(), curveOut.cols().x.maxCoeff(), Nx);
+//  Gnuplot gp1("gnuplot -persist");
+//	gp1 << "p '-' w p t 'PtIn(A)', '-' w p t 'PtOut(A)'\n";
+//  gp1.send(curveIn).send(curveOut);
+
+  curveIn.resample(Nx);
+  curveOut.resample(Nx);
+
+//  Gnuplot gp2("gnuplot -persist");
+//	gp2 << "p '-' w p t 'PtIn(A)', '-' w p t 'PtOut(A)'\n";
+//  gp2.send(curveIn).send(curveOut);
+
+//  Gnuplot gp3("gnuplot -persist");
+//  gp3 << "p '-' w l t 'Pt(A)'\n";
+//  gp3.send((Curve)run.curve);
+
+  double xArrAll[2*Nx], yArrAll[2*Nx];
+
+  for (int i = 0; i < 2*Nx; i++) {
+    if (i < Nx) {
+      xArrAll[i] = curveIn.cols().x(i);
+      yArrAll[i] = curveIn.cols().y(i);
+    } else {
+      xArrAll[i] = curveOut.cols().x(i-Nx);
+      yArrAll[i] = curveOut.cols().y(i-Nx);
+    }
+  }
+
+  size_t p[2*Nx]; // permuations arrays
+  gsl_sort_index(p, xArrAll, 1, 2*Nx); // sort curve data by ASC X, get permutations
+  gsl_permute(p, xArrAll, 1, 2*Nx); // apply permutations
+  gsl_permute(p, yArrAll, 1, 2*Nx); // apply permutations
+
+  VectorXd xAll = VectorXd::Zero(2*Nx),
+           yAll = VectorXd::Zero(2*Nx);
+
+  int k = 0;
+  for (int i = 0; i < 2*Nx; i++) {
+    if (i-1 < 2*Nx && xArrAll[i] == xArrAll[i+1]) {
+      continue;
+    } else if (i > 0 && xArrAll[i] == xArrAll[i-1]) {
+      xAll(k) = xArrAll[i];
+      yAll(k) = (yArrAll[i-1]+yArrAll[i])/2;
+    } else {
+      xAll(k) = xArrAll[i];
+      yAll(k) = yArrAll[i];
+    }
+    k++;
+  }
+  int nAll = k;
+  xAll.conservativeResize(nAll);
+  yAll.conservativeResize(nAll);
+
+  Curve curveAll(xAll, yAll);
+
+  double c0, c1, cov00, cov01, cov11, chi2;
+  gsl_fit_linear(xArrAll, 1, yArrAll, 1, nAll, &c0, &c1,
+                 &cov00, &cov01, &cov11, &chi2);
+
+  int slope = (c1 > 0 ? 1 : -1);
+
+  double pCoeff[event.config().order+1];
+  gsl_fit_poly(nAll, event.config().order, xArrAll, yArrAll, pCoeff);
+
+  VectorXd yAllPoly = VectorXd::Zero(nAll);
+  for (int i = 0; i < nAll; i++) {
+    yAllPoly(i) += gsl_fit_poly_eval(xAll[i], pCoeff, event.config().order);
+  }
+
+  Curve curveAllPoly(xAll, yAllPoly);
+
+  Gnuplot gp4("gnuplot -persist");
+  gp4 << "p '-' w p t 'Pt(A)', '-' w l t 'Pt(A) fit'\n";
+  gp4.send(curveAll).send(curveAllPoly);
+
+  double dpCoeff[event.config().order];
+  for (int i = 0; i <= event.config().order-1; i++) {
+    dpCoeff[i] = pCoeff[i+1]*(i+1);
+  }
+
+  double ddpCoeff[event.config().order-1];
+  for (int i = 0; i <= event.config().order-2; i++) {
+    ddpCoeff[i] = dpCoeff[i+1]*(i+1);
+  }
+
+  double xb, xc;
+  VectorXd xTmp;
+  int xbIndex;
+  if (slope > 0) {
+    xb = curveAll.cols().x.minCoeff(&xbIndex);
+    xc = curveAll.cols().x.maxCoeff();
+    xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(0)-150,
+                                     curveAll.cols().x(nAll-1)+5);
+  } else {
+    xb = curveAll.cols().x.maxCoeff(&xbIndex);
+    xc = curveAll.cols().x.minCoeff();
+    xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(nAll-1)-5,
+                                     curveAll.cols().x(0)+150);
+  }
+  int iTmp;
+  while (slope > 0 && gsl_fit_poly_eval(xb, dpCoeff,
+                                        event.config().order-1 < 0 ||
+         slope < 0 && gsl_fit_poly_eval(xb, dpCoeff,
+                                        event.config().order-1 > 0))
+  {
+    if (slope > 0) {
+//      curveAll.cols().x.tail(nAll-xbIndex-1).minCoeff(&iTmp);
+//      xbIndex = xbIndex+iTmp
+    } else {
+//      curveAll.cols().x.head(xbIndex).maxCoeff(&iTmp);
+    }
+  }
 }
 

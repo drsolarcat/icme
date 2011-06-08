@@ -9,6 +9,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace My;
 
 // this is the main driver function of the whole project
 int main() {

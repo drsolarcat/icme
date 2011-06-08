@@ -2,7 +2,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "time.h"
+#include "my_time.h"
 
 #include <string>
 #include <vector>
@@ -14,7 +14,7 @@ struct ConfigRow {
   bool toPlot, toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
   std::string spacecraft;
   double ratio, minY, maxY, samplingInterval;
-  Time beginTime, endTime;
+  My::Time beginTime, endTime;
 };
 
 // config class, reads the data from file and filters it

@@ -2,7 +2,7 @@
 #ifndef DATA_H
 #define DATA_H
 
-#include "time.h"
+#include "my_time.h"
 #include "axes.h"
 
 #include <eigen3/Eigen/Dense>
@@ -31,8 +31,8 @@ class Data {
     DataVectors vectors; // Eigen3 vectors of data, yes, a copy, but worth it
   public:
     Data& readFile(std::string); // read data from file
-    Data& readFile(std::string, Time, Time); // read data file and filter it
-    Data& filter(Time, Time); // filter data vector by time (from, until)
+    Data& readFile(std::string, My::Time, My::Time); // read data file and filter it
+    Data& filter(My::Time, My::Time); // filter data vector by time (from, until)
                               // using Time objects
     // getters for data, both in rows and columns
     const DataRow& row(int i) const {return data[i];}
@@ -42,7 +42,7 @@ class Data {
     Data& project(Axes);
   private:
      // readFile function with optional time limit patameters (NULL pointers)
-    void readFile(std::string, Time*, Time*);
+    void readFile(std::string, My::Time*, My::Time*);
     void initVectors(); // initialize Eigen3 vectors of data
 };
 

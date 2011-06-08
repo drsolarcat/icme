@@ -8,6 +8,10 @@ Original version by Daniel Stahlke (2009)
 #ifndef GNUPLOT_IOSTREAM_H
 #define GNUPLOT_IOSTREAM_H
 
+#define BOOST_THREAD_USE_LIB
+
+#include "curve.h"
+
 // C system includes
 #include <stdio.h>
 #ifdef GNUPLOT_ENABLE_PTY
@@ -150,6 +154,15 @@ public:
 	Gnuplot &send(Iter arr) {
 		send(arr.begin(), arr.end());
 		return *this;
+	}
+
+  // used to plot the Curve
+	Gnuplot &send(const Curve& curve) {
+	  for (int i = 0; i < curve.size(); i++) {
+	    *this << curve.cols().x(i) << " " << curve.cols().y(i) << "\n";
+	  }
+	  *this << "e" << std::endl;
+	  return *this;
 	}
 
 #ifdef GNUPLOT_ENABLE_BLITZ

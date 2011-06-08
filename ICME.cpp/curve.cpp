@@ -67,6 +67,16 @@ Curve& Curve::resample(double minX, double maxX, const int m,
     gsl_spline_free (spline); // free spline memory
     gsl_interp_accel_free (acc); // free accelerator memory
   }
+
+  return *this;
+}
+
+// resample the curve using the number of points only
+Curve& Curve::resample(const int m,
+                       const gsl_interp_type* interp_type)
+{
+  resample(_vectors.x.minCoeff(), _vectors.x.maxCoeff(), m, interp_type);
+  return *this;
 }
 
 // return smoothed by running average version of the data vector

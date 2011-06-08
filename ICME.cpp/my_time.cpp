@@ -1,14 +1,15 @@
 
-#include "time.h"
-
+// project headers
+#include "my_time.h"
+// standard headers
 #include <string>
 #include <ctime>
 #include <iostream>
-#include <iomanip> // for setprecision() function
 #include <sstream>
 #include <cstdio>
 
 using namespace std;
+using namespace My;
 
 // constructors
 
@@ -31,7 +32,7 @@ Time::Time(int year, int month, int day, int hour, int minute, int second) {
   c_tm.tm_year = year-1900; // number of years since 1900
   c_tm.tm_mon = month-1; // in range 0..11
   c_tm.tm_mday = day;
-  c_tm.tm_hour = hour+t_local_utc_shift; // taking timezone into account
+  c_tm.tm_hour = hour+_local_utc_shift; // taking timezone into account
   c_tm.tm_min = minute;
   c_tm.tm_sec = second;
   // calculate Unix time base on ctime structure
@@ -49,7 +50,7 @@ Time::Time(int year, int doy, int hour, int minute, int second) {
   c_tm.tm_year = year-1900;
   c_tm.tm_mon = 0;
   c_tm.tm_mday = 1;
-  c_tm.tm_hour = hour+t_local_utc_shift; // take into account the timezone
+  c_tm.tm_hour = hour+_local_utc_shift; // take into account the timezone
   c_tm.tm_min = minute;
   c_tm.tm_sec = second;
   // calculate Unix time
@@ -77,7 +78,7 @@ Time::Time(string dateTimeString) {
   c_tm.tm_year = year-1900;
   c_tm.tm_mon = month-1;
   c_tm.tm_mday = day;
-  c_tm.tm_hour = hour+t_local_utc_shift;
+  c_tm.tm_hour = hour+_local_utc_shift;
   c_tm.tm_min = minute;
   c_tm.tm_sec = second;
   // calculate Unix time
@@ -113,25 +114,25 @@ Time::Time(double timestamp, string type) {
 // other methods
 
 // subtraction operator
-int Time::operator-(Time that) {return t_unixtime-that.unixtime();}
+int Time::operator-(Time that) {return _unixtime-that.unixtime();}
 
 // comparisons operators
-bool Time::operator<(Time that) {return t_unixtime < that.unixtime();}
-bool Time::operator>(Time that) {return t_unixtime > that.unixtime();}
-bool Time::operator<=(Time that) {return t_unixtime <= that.unixtime();}
-bool Time::operator>=(Time that) {return t_unixtime >= that.unixtime();}
+bool Time::operator<(Time that) {return _unixtime < that.unixtime();}
+bool Time::operator>(Time that) {return _unixtime > that.unixtime();}
+bool Time::operator<=(Time that) {return _unixtime <= that.unixtime();}
+bool Time::operator>=(Time that) {return _unixtime >= that.unixtime();}
 
 // add "amount" of "type" (year, month, day, hour, minute, second) time to the
 // Time object
 Time& Time::add(int amount, string type) {
   // create ctime structure and fill it with time data from the Time object
   tm c_tm = {0};
-  c_tm.tm_year = t_year-1900;
-  c_tm.tm_mon = t_month-1;
-  c_tm.tm_mday = t_day;
-  c_tm.tm_hour = t_hour;
-  c_tm.tm_min = t_minute;
-  c_tm.tm_sec = t_second;
+  c_tm.tm_year = _year-1900;
+  c_tm.tm_mon = _month-1;
+  c_tm.tm_mday = _day;
+  c_tm.tm_hour = _hour;
+  c_tm.tm_min = _minute;
+  c_tm.tm_sec = _second;
   // check the type of time data to add and add it
   if (type == "year") {
     c_tm.tm_year += amount;
@@ -149,7 +150,7 @@ Time& Time::add(int amount, string type) {
     cout << "Unknown time type" << endl;
   }
   // take into account the local-UTC shift
-  c_tm.tm_hour += t_local_utc_shift;
+  c_tm.tm_hour += _local_utc_shift;
   // get the Unix time of the new time
   time_t c_unixtime = mktime(&c_tm);
   // recalculate members of the Time object
@@ -175,26 +176,26 @@ void Time::initLocalUtcShift() {
   // get Unix time for the UTC time
   int c_sec_utc = mktime(c_tm_utc);
   // calculate and save time shift between local and UTC time in hours
-  t_local_utc_shift = (c_sec_local-c_sec_utc)/3600;
+  _local_utc_shift = (c_sec_local-c_sec_utc)/3600;
 }
 
 // initialize Timeobject members with Unix time
 void Time::initByUnixtime(time_t c_unixtime) {
   // cast unixtime from time_t to integer
-  t_unixtime = int(c_unixtime);
+  _unixtime = int(c_unixtime);
 
   // ctime structure of the current time
   tm c_tm = *gmtime(const_cast<time_t*>(&c_unixtime));
 
   // setting Time object values for the current time
-  t_year = c_tm.tm_year+1900; // exact value of year
-  t_month = c_tm.tm_mon+1; // in 1..12 range
-  t_day = c_tm.tm_mday; // in 1..31 range
-  t_hour = c_tm.tm_hour; // in 0..23 range
-  t_minute = c_tm.tm_min; // in 0..59 range
-  t_second = c_tm.tm_sec; // in 0..61 range, leap seconds included
-  if (t_second > 59) t_second = 59; // drop off leap seconds, now 0..59 range
-  t_doy = c_tm.tm_yday+1; // we store days of year in 1..366 range
+  _year = c_tm.tm_year+1900; // exact value of year
+  _month = c_tm.tm_mon+1; // in 1..12 range
+  _day = c_tm.tm_mday; // in 1..31 range
+  _hour = c_tm.tm_hour; // in 0..23 range
+  _minute = c_tm.tm_min; // in 0..59 range
+  _second = c_tm.tm_sec; // in 0..61 range, leap seconds included
+  if (_second > 59) _second = 59; // drop off leap seconds, now 0..59 range
+  _doy = c_tm.tm_yday+1; // we store days of year in 1..366 range
 
   // calculating the Matlab timestamp
   // number of seconds between absolute zero time (0000-01-01 00:00:00) is
@@ -204,7 +205,7 @@ void Time::initByUnixtime(time_t c_unixtime) {
   c_tm0.tm_year = 1970-1900; // number of years since 1900
   c_tm0.tm_mon = 0;
   c_tm0.tm_mday = 1;
-  c_tm0.tm_hour = 0+t_local_utc_shift; // taking timezone into account
+  c_tm0.tm_hour = 0+_local_utc_shift; // taking timezone into account
   c_tm0.tm_min = 0;
   c_tm0.tm_sec = 0;
   // get Unix time for zero time
@@ -216,6 +217,6 @@ void Time::initByUnixtime(time_t c_unixtime) {
   // 86400 is the number of seconds in one day
   double c_matlabtime = double(719529)+c_sec0/double(86400);
   // save Matlab time
-  t_matlabtime = c_matlabtime;
+  _matlabtime = c_matlabtime;
 }
 

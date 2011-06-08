@@ -32,6 +32,9 @@ class Curve {
     // resample the curve using min and max X limits and step
     Curve& resample(double, double, double,
                     const gsl_interp_type* interp_type = gsl_interp_linear);
+    // resample the curve using only number of points required
+    Curve& resample(const int,
+                    const gsl_interp_type* interp_type = gsl_interp_linear);
     // compute the residue between the branches of the curve
     double computeResidue();
     // returns data vector smoothed by running average filter
