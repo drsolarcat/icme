@@ -262,18 +262,21 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(nAll-1)-5,
                                      curveAll.cols().x(0)+150);
   }
+
   int iTmp;
   while (slope > 0 && gsl_fit_poly_eval(xb, dpCoeff,
-                                        event.config().order-1 < 0 ||
+                                        event.config().order-1) < 0 ||
          slope < 0 && gsl_fit_poly_eval(xb, dpCoeff,
-                                        event.config().order-1 > 0))
+                                        event.config().order-1) > 0)
   {
     if (slope > 0) {
-//      curveAll.cols().x.tail(nAll-xbIndex-1).minCoeff(&iTmp);
-//      xbIndex = xbIndex+iTmp
+//      xb = curveAll.cols().x(nAll - (curveAll.cols().x.array() > xb).sum() - 1);
+      xb = curveAll.cols().x(++xbIndex);
     } else {
-//      curveAll.cols().x.head(xbIndex).maxCoeff(&iTmp);
+//      xb = curveAll.cols().x((curveAll.cols().x.array() < xb).sum() - 1);
+      xb = curveAll.cols().x(--xbIndex);
     }
   }
+  cout << xc << ' ' << xb << endl;
 }
 
