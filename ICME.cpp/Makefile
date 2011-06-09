@@ -7,7 +7,7 @@ CXXSOURCES = icme.cpp config.cpp data.cpp my_time.cpp event.cpp \
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 CXX = g++
-GSL = -lgsl -lgslcblas -lm -lutil -lboost_iostreams# /home/isavnin/opt/lib/libboost_iostreams.a
+GSL = -lgsl -lgslcblas -lm -lutil -lboost_iostreams
 FLAGS = -O3
 
 all: $(PROGRAM)

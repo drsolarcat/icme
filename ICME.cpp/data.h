@@ -40,6 +40,9 @@ class Data {
     const DataVectors& cols() const {return vectors;}
     // project data to new coordinates
     Data& project(Axes);
+    // resample data
+    Data& resample(const int,
+                   const gsl_interp_type* interp_type = gsl_interp_linear);
   private:
      // readFile function with optional time limit patameters (NULL pointers)
     void readFile(std::string, My::Time*, My::Time*);

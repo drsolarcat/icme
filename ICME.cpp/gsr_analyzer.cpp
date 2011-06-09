@@ -6,12 +6,16 @@
 #include "gsr_curve.h"
 #include "gnuplot.h"
 #include "gsl_fit_poly.h"
+#include "gsr_fit.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_const_mksa.h>
 #include <gsl/gsl_sort_double.h>
 #include <gsl/gsl_permute.h>
 #include <gsl/gsl_fit.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_multifit_nlin.h>
 // standard headers
 #include <iostream>
 #include <fstream>
@@ -234,9 +238,9 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 
   Curve curveAllPoly(xAll, yAllPoly);
 
-  Gnuplot gp4("gnuplot -persist");
-  gp4 << "p '-' w p t 'Pt(A)', '-' w l t 'Pt(A) fit'\n";
-  gp4.send(curveAll).send(curveAllPoly);
+//  Gnuplot gp4("gnuplot -persist");
+//  gp4 << "p '-' w p t 'Pt(A)', '-' w l t 'Pt(A) fit'\n";
+//  gp4.send(curveAll).send(curveAllPoly);
 
   double dpCoeff[event.config().order];
   for (int i = 0; i <= event.config().order-1; i++) {
@@ -255,12 +259,12 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     xb = curveAll.cols().x.minCoeff(&xbIndex);
     xc = curveAll.cols().x.maxCoeff();
     xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(0)-150,
-                                     curveAll.cols().x(nAll-1)+5);
+                                     curveAll.cols().x(nAll-1)+50);
   } else {
     xb = curveAll.cols().x.maxCoeff(&xbIndex);
     xc = curveAll.cols().x.minCoeff();
-    xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(nAll-1)-5,
-                                     curveAll.cols().x(0)+150);
+    xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(0)-5,
+                                     curveAll.cols().x(nAll-1)+150);
   }
 
   int iTmp;
@@ -270,13 +274,116 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
                                         event.config().order-1) > 0)
   {
     if (slope > 0) {
-//      xb = curveAll.cols().x(nAll - (curveAll.cols().x.array() > xb).sum() - 1);
       xb = curveAll.cols().x(++xbIndex);
     } else {
-//      xb = curveAll.cols().x((curveAll.cols().x.array() < xb).sum() - 1);
       xb = curveAll.cols().x(--xbIndex);
     }
   }
-  cout << xc << ' ' << xb << endl;
+
+  double e2 = gsl_fit_poly_eval(xb, dpCoeff, event.config().order-1)/
+              gsl_fit_poly_eval(xb, pCoeff, event.config().order);
+  double e1 = gsl_fit_poly_eval(xb, pCoeff, event.config().order)/
+              exp(e2*xb);
+  double eCoeff[] = {e1, e2};
+  double E2 = gsl_fit_poly_eval(xc, ddpCoeff, event.config().order-2)/
+              gsl_fit_poly_eval(xc, dpCoeff, event.config().order-1);
+  double E1 = gsl_fit_poly_eval(xc, dpCoeff, event.config().order-1)/
+              E2/exp(E2*xc);
+  double E3 = gsl_fit_poly_eval(xc, pCoeff, event.config().order)-
+              E1*exp(E2*xc);
+  double ECoeff[] = {E1, E2, E3};
+
+  const gsl_multifit_fdfsolver_type *T;
+  gsl_multifit_fdfsolver *s;
+  int status;
+
+  gsl_multifit_function_fdf f;
+  double sigma[nAll];
+  for (int i = 0; i < nAll; i++) sigma[i] = 1;
+  gsr_fit_data params;
+  params.x = xArrAll;
+  params.y = yArrAll;
+  params.p = pCoeff;
+  params.e = eCoeff;
+  params.E = ECoeff;
+  params.order = event.config().order;
+  params.xc = xc;
+  params.xb = xb;
+  params.sigma = sigma;
+  params.n = nAll;
+
+  f.f = &gsr_fit_f;
+  f.df = &gsr_fit_df;
+  f.fdf = &gsr_fit_fdf;
+  f.n = nAll;
+  f.p = 4;
+  f.params = &params;
+
+  gsl_vector *coeff0 = gsl_vector_alloc(4);
+  gsl_vector_set(coeff0, 0, 1);
+  gsl_vector_set(coeff0, 1, -slope);
+  gsl_vector_set(coeff0, 2, 1);
+  gsl_vector_set(coeff0, 3, slope);
+
+  T = gsl_multifit_fdfsolver_lmsder;
+  s = gsl_multifit_fdfsolver_alloc(T, nAll, 4);
+  gsl_multifit_fdfsolver_set(s, &f, coeff0);
+
+  int i = 0;
+  do {
+    i++;
+    status = gsl_multifit_fdfsolver_iterate(s);
+
+//    if (status) break;
+
+    status = gsl_multifit_test_delta(s->dx, s->x, 1e-4, 1e-4);
+  } while (status == GSL_CONTINUE && i < 5000);
+
+  cout << i << endl;
+  cout << gsl_vector_get(s->x, 0) << endl;
+  cout << gsl_vector_get(s->x, 1) << endl;
+  cout << gsl_vector_get(s->x, 2) << endl;
+  cout << gsl_vector_get(s->x, 3) << endl;
+
+  double coeff[4];
+  coeff[0] = gsl_vector_get(s->x, 0);
+  coeff[1] = gsl_vector_get(s->x, 1);
+  coeff[2] = gsl_vector_get(s->x, 2);
+  coeff[3] = gsl_vector_get(s->x, 3);
+
+  gsl_multifit_fdfsolver_free (s);
+
+  VectorXd yTmp = VectorXd::Zero(1000);
+  for (int i = 0; i < 1000; i++) {
+    yTmp(i) = gsr_fit_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
+                             event.config().order, eCoeff, ECoeff);
+  }
+
+  Curve curveTmp(xTmp, yTmp);
+
+  Gnuplot gp5("gnuplot -persist");
+  gp5 << "p '-' w p t 'Pt(A) in', '-' w p t 'Pt(A) out', '-' w l t 'Pt(A) fit'\n";
+  gp5.send(curveIn).send(curveOut).send(curveTmp);
+
+  VectorXd dyTmp = VectorXd::Zero(1000);
+  for (int i = 0; i < 1000; i++) {
+    dyTmp(i) = gsr_fit_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
+                               event.config().order, eCoeff, ECoeff);
+  }
+
+  Curve curveDerTmp(xTmp, dyTmp);
+
+  Gnuplot gp6("gnuplot -persist");
+  gp6 << "p '-' w l t 'dPt/dA'\n";
+  gp6.send(curveDerTmp);
+
+  VectorXd X = VectorXd::Zero(Nx);
+  for (int i = 0; i < Nx; i++) {
+    X(i) = i*dx;
+  }
+
+  MatrixXd Axy  = MatrixXd::Zero(Nx, Ny),
+           Bxxy = MatrixXd::Zero(Nx, Ny),
+           Bzzy = MatrixXd::Zero(Nx, Ny);
 }
 

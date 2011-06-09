@@ -45,6 +45,15 @@ class Curve {
     static Eigen::VectorXd filteredSavitzkyGolay(Eigen::VectorXd, int, int);
     // filters data vector by Savitzky-Golay filter
     static void filterSavitzkyGolay(Eigen::VectorXd&, int, int);
+    // resample the vector using min and max limits and number of points
+    static void resample(Eigen::VectorXd&, double, double, const int,
+                    const gsl_interp_type* interp_type = gsl_interp_linear);
+    // resample the vector using min and max limits and step
+    static void resample(Eigen::VectorXd&, double, double, double,
+                    const gsl_interp_type* interp_type = gsl_interp_linear);
+    // resample the vector using only number of points required
+    static void resample(Eigen::VectorXd&, const int,
+                    const gsl_interp_type* interp_type = gsl_interp_linear);
 };
 
 #endif
