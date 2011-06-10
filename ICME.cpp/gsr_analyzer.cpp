@@ -36,7 +36,7 @@ void GsrAnalyzer::analyze(Event& event) {
   // make a run of axes searching algorithm, save the results in the run
   // structure
   GsrRun run = loopAxes(event, 0, 1, 90, 0, 1, 360);
-
+  cout << "axes found" << endl;
   // quaternions, needed to turn to optimized axes
   Quaterniond qTheta;
   Quaterniond qPhi;
@@ -382,8 +382,24 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     X(i) = i*dx;
   }
 
-  MatrixXd Axy  = MatrixXd::Zero(Nx, Ny),
-           Bxxy = MatrixXd::Zero(Nx, Ny),
-           Bzzy = MatrixXd::Zero(Nx, Ny);
+  VectorXd A(run.curve.cols().x);
+  VectorXd Bx(data.cols().Bx);
+  VectorXd By(data.cols().By);
+  VectorXd Bz(data.cols().Bz);
+  VectorXd Pth(data.cols().Pth);
+
+  Curve::resample(A, Nx);
+  Curve::resample(Bx, Nx);
+  Curve::resample(By, Nx);
+  Curve::resample(Bz, Nx);
+  Curve::resample(Pth, Nx);
+
+  MatrixXd Axy = MatrixXd::Zero(Ny, Nx),
+           Bxy = MatrixXd::Zero(Ny, Nx),
+           Bzy = MatrixXd::Zero(Ny, Nx);
+
+  // TODO
+//  Axy.row() = A;
+//  Bxy.row() = Bx;
 }
 

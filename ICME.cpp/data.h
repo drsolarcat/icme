@@ -2,11 +2,13 @@
 #ifndef DATA_H
 #define DATA_H
 
+// project headers
 #include "my_time.h"
 #include "axes.h"
-
+// library headers
 #include <eigen3/Eigen/Dense>
-
+#include <gsl/gsl_interp.h>
+// standard headers
 #include <vector>
 #include <string>
 
@@ -42,7 +44,7 @@ class Data {
     Data& project(Axes);
     // resample data
     Data& resample(const int,
-                   const gsl_interp_type* interp_type = gsl_interp_linear);
+                   const gsl_interp_type* interpType = gsl_interp_linear);
   private:
      // readFile function with optional time limit patameters (NULL pointers)
     void readFile(std::string, My::Time*, My::Time*);

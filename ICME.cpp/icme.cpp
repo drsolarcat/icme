@@ -1,10 +1,11 @@
 
+// project headers
 #include "config.h"
 #include "data.h"
 #include "event.h"
 #include "mva_analyzer.h"
 #include "gsr_analyzer.h"
-
+// standard headers
 #include <string>
 #include <iostream>
 
@@ -13,6 +14,7 @@ using namespace My;
 
 // this is the main driver function of the whole project
 int main() {
+
   const string configPath = "./res/config"; // path to config file
   // the quality of the events to be analyzed
   // TODO: it should be in command line arguments

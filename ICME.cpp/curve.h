@@ -27,33 +27,29 @@ class Curve {
     Curve& filterRunningAverage(int, char); // running average filter
     Curve& filterSavitzkyGolay(int, int); // Savitzky-Golay filter
     // resample the curve using min and max X limits and number of points
-    Curve& resample(double, double, const int,
-                    const gsl_interp_type* interp_type = gsl_interp_linear);
-    // resample the curve using min and max X limits and step
-    Curve& resample(double, double, double,
-                    const gsl_interp_type* interp_type = gsl_interp_linear);
+    Curve& resample(const double, const double, const int,
+                    const gsl_interp_type* interpType = gsl_interp_linear);
     // resample the curve using only number of points required
     Curve& resample(const int,
-                    const gsl_interp_type* interp_type = gsl_interp_linear);
+                    const gsl_interp_type* interpType = gsl_interp_linear);
     // compute the residue between the branches of the curve
     double computeResidue();
     // returns data vector smoothed by running average filter
-    static Eigen::VectorXd filteredRunningAverage(Eigen::VectorXd, int);
+    static Eigen::VectorXd filteredRunningAverage(const Eigen::VectorXd&,
+                                                  const int);
     // filters data vector by running average inplace
-    static void filterRunningAverage(Eigen::VectorXd&, int);
+    static void filterRunningAverage(Eigen::VectorXd&, const int);
     // returns data vector smoothed by Savitzky-Golay filter
-    static Eigen::VectorXd filteredSavitzkyGolay(Eigen::VectorXd, int, int);
+    static Eigen::VectorXd filteredSavitzkyGolay(const Eigen::VectorXd&,
+                                                 const int, const int);
     // filters data vector by Savitzky-Golay filter
-    static void filterSavitzkyGolay(Eigen::VectorXd&, int, int);
-    // resample the vector using min and max limits and number of points
-    static void resample(Eigen::VectorXd&, double, double, const int,
-                    const gsl_interp_type* interp_type = gsl_interp_linear);
-    // resample the vector using min and max limits and step
-    static void resample(Eigen::VectorXd&, double, double, double,
-                    const gsl_interp_type* interp_type = gsl_interp_linear);
+    static void filterSavitzkyGolay(Eigen::VectorXd&, const int, const int);
     // resample the vector using only number of points required
     static void resample(Eigen::VectorXd&, const int,
-                    const gsl_interp_type* interp_type = gsl_interp_linear);
+                    const gsl_interp_type* interpType = gsl_interp_linear);
+    // returns resampled vector using only the number of points
+    static Eigen::VectorXd resampled(const Eigen::VectorXd&, const int,
+                    const gsl_interp_type* interpType = gsl_interp_linear);
 };
 
 #endif

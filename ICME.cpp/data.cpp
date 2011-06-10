@@ -152,6 +152,11 @@ Data& Data::project(Axes axes) {
   return *this; // chained method
 }
 
+// resample data by new number of points
+Data& Data::resample(const int m, const gsl_interp_type* interpType) {
+
+}
+
 // initialize Eigen3 vectors of data. very stupid function... need to find
 // a way to get rid of this variable lists
 void Data::initVectors() {

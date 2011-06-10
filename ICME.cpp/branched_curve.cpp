@@ -102,8 +102,8 @@ BranchedCurve& BranchedCurve::initBranchesByExtremums() {
   VectorXd y = _vectors.y;
 
   // smooth the curve data
-  filterRunningAverage(y, 0.07*size());
-  filterRunningAverage(y, 0.1*size());
+  filterRunningAverage(y, int(0.07*size()));
+  filterRunningAverage(y, int(0.1*size()));
 //  filterRunningAverage(y, 5);
 
   // let X be always with positive camber
@@ -193,14 +193,9 @@ BranchedCurve& BranchedCurve::computeResidue() {
                       _rightIndex - _centerIndex + 1);
 
   // interpolation type used for resampling
-  const gsl_interp_type* interp_type = gsl_interp_linear;
+  const gsl_interp_type *interpType = gsl_interp_linear;
 
-  /* if GSL_VERSION >= 1.15 */
-  /* if (_isBranched && m >= gsl_interp_type_min_size(interp_type)) { */
-  /* else */
-  const int interp_min_size = 2;
-  if (_isBranched && _branchLength >= interp_min_size) {
-  /* endif */
+  if (_isBranched && _branchLength >= gsl_interp_type_min_size(interpType)) {
     // copy the curve branches
     Curve curveIn(_branches[0]);
     Curve curveOut(_branches[1]);
@@ -212,8 +207,8 @@ BranchedCurve& BranchedCurve::computeResidue() {
                       curveOut.cols().x.maxCoeff());
 
     // resample the branches
-    curveIn.resample(minX, maxX, 2*size(), interp_type);
-    curveOut.resample(minX, maxX, 2*size(), interp_type);
+    curveIn.resample(minX, maxX, 2*size(), interpType);
+    curveOut.resample(minX, maxX, 2*size(), interpType);
 
     // init the limits of the Y values of the curves
     double minY = min(curveIn.cols().y.minCoeff(),
