@@ -50,6 +50,8 @@ class Curve {
     // returns resampled vector using only the number of points
     static Eigen::VectorXd resampled(const Eigen::VectorXd&, const int,
                     const gsl_interp_type* interpType = gsl_interp_linear);
+    // returns weighted average as in Hau & Sonnerup (1999)
+    static Eigen::VectorXd weightedAverage(const Eigen::VectorXd&, double);
 };
 
 #endif

@@ -2,6 +2,7 @@
 #ifndef GSL_FIT_POLY
 #define GSL_FIT_POLY
 
+// library headers
 #include <gsl/gsl_multifit.h>
 
 void gsl_fit_poly(const int n, const int order,

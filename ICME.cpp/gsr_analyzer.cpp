@@ -7,6 +7,7 @@
 #include "gnuplot.h"
 #include "gsl_fit_poly.h"
 #include "gsr_fit.h"
+#include "differentiator.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_const_mksa.h>
@@ -157,11 +158,12 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
            GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
   dy = (event.config().maxY-event.config().minY)*
        GSL_CONST_MKSA_ASTRONOMICAL_UNIT/Ny;
-  Ny = ceil(event.config().maxY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy)-
-       floor(event.config().minY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy)+1;
+  int NyUp = ceil(event.config().maxY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
+  int NyDown = -floor(event.config().minY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
+  Ny = NyDown + 1 + NyUp;
   VectorXd Y = VectorXd::Zero(Ny);
-  for (int i = 0; i < Ny; i++) {
-    Y(i) = ceil(event.config().maxY/dy)+i*dy;
+  for (int i = -NyDown; i <= NyUp; i++) {
+    Y(NyDown+i) = i*dy;
   }
   int Nx = event.config().Nx;
 
@@ -333,9 +335,6 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   do {
     i++;
     status = gsl_multifit_fdfsolver_iterate(s);
-
-//    if (status) break;
-
     status = gsl_multifit_test_delta(s->dx, s->x, 1e-4, 1e-4);
   } while (status == GSL_CONTINUE && i < 5000);
 
@@ -362,7 +361,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   Curve curveTmp(xTmp, yTmp);
 
   Gnuplot gp5("gnuplot -persist");
-  gp5 << "p '-' w p t 'Pt(A) in', '-' w p t 'Pt(A) out', '-' w l t 'Pt(A) fit'\n";
+  gp5 <<
+    "p '-' w p t 'Pt(A) in', '-' w p t 'Pt(A) out', '-' w l t 'Pt(A) fit'\n";
   gp5.send(curveIn).send(curveOut).send(curveTmp);
 
   VectorXd dyTmp = VectorXd::Zero(1000);
@@ -398,8 +398,48 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
            Bxy = MatrixXd::Zero(Ny, Nx),
            Bzy = MatrixXd::Zero(Ny, Nx);
 
-  // TODO
-//  Axy.row() = A;
-//  Bxy.row() = Bx;
+  Axy.row(NyDown) = A;
+  Bxy.row(NyDown) = Bx;
+
+  VectorXd d2A_dx2 = VectorXd::Zero(Nx),
+           dPt_dA  = VectorXd::Zero(Nx),
+           d2A_dy2 = VectorXd::Zero(Nx);
+
+  Differentitor differentiator;
+
+  for (int i = 1; i <= NyUp; i++) {
+    d2A_dx2 = differentiator.Holoborodko2(7,
+      Curve::weightedAverage(Axy.row(NyDown+i-1), 1-(abs(i)-1)/Ny/3), dx);
+    for (int k = 0; k < Nx; k++) {
+      dPt_dA(k) = gsr_fit_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff, pCoeff,
+        dpCoeff, event.config().order, eCoeff, ECoeff);
+    }
+    d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
+    Axy.row(NyDown+i) = Axy.row(NyDown+i-1)+Bxy.row(NyDown+i-1)*dy+
+                        d2A_dy2.transpose()*pow(dy, 2)/2;
+    Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
+                                               1-abs(i)/Ny/3);
+    Bxy.row(NyDown+i) = Bxy.row(NyDown+i-1)+d2A_dy2.transpose()*dy;
+    Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
+                                               1-abs(i)/Ny/3);
+  }
+
+  for (int i = -1; i >= -NyDown; i--) {
+    d2A_dx2 = differentiator.Holoborodko2(7,
+      Curve::weightedAverage(Axy.row(NyDown+i+1), 1-(abs(i)-1)/Ny/3), dx);
+    for (int k = 0; k < Nx; k++) {
+      dPt_dA(k) = gsr_fit_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff, pCoeff,
+        dpCoeff, event.config().order, eCoeff, ECoeff);
+    }
+    d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
+    Axy.row(NyDown+i) = Axy.row(NyDown+i+1)-Bxy.row(NyDown+i+1)*dy+
+                        d2A_dy2.transpose()*pow(dy, 2)/2;
+    Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
+                                               1-abs(i)/Ny/3);
+    Bxy.row(NyDown+i) = Bxy.row(NyDown+i+1)-d2A_dy2.transpose()*dy;
+    Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
+                                               1-abs(i)/Ny/3);
+  }
+
 }
 

@@ -1,3 +1,4 @@
 1. Make advantage of using .data() method to convert vectors to C arrays
 2. Static resampling
+3. Organise fit functions into gsr/gsl categories (only gsl?)
 

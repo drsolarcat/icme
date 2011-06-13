@@ -162,3 +162,14 @@ VectorXd Curve::resampled(const VectorXd& x, const int m,
   }
 }
 
+// returns weighted average as in Hau & Sonnerup (1999)
+// static member function
+VectorXd Curve::weightedAverage(const VectorXd& x, double w) {
+  VectorXd xx(x);
+
+  xx.segment(1, xx.size()-2) = w*xx.segment(1, xx.size()-2)+
+    0.5*(1-w)*(xx.head(xx.size()-2)+xx.tail(xx.size()-2));
+
+  return xx;
+}
+
