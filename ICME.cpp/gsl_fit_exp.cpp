@@ -8,7 +8,10 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_multifit_nlin.h>
+// standard headers
+#include <iostream>
 
+using namespace std;
 using namespace Eigen;
 
 int gsl_fit_exp_0(int n, double* x, double* y, double* c0)
@@ -21,6 +24,7 @@ int gsl_fit_exp_0(int n, double* x, double* y, double* c0)
   int m = 200;
 
   Curve curve(xVec, yVec);
+  cout << xVec << endl;
   curve.resample(m);
 
   Integrator integrator;

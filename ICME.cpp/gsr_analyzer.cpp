@@ -391,6 +391,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   Curve curveABz(A, Bz);
 
   double e[3];
+  cout << "before fitting" << endl;
   gsl_fit_exp(nAll, A.data(), Bz.data(), e);
   cout << e[0] << ' ' << e[1] << ' ' << e[2] << endl;
   VectorXd BzFit = VectorXd::Zero(Nx);
