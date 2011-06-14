@@ -6,7 +6,8 @@
 #include "gsr_curve.h"
 #include "gnuplot.h"
 #include "gsl_fit_poly.h"
-#include "gsr_fit.h"
+#include "gsl_fit_epe.h"
+#include "gsl_fit_exp.h"
 #include "differentiator.h"
 // library headers
 #include <eigen3/Eigen/Dense>
@@ -14,9 +15,6 @@
 #include <gsl/gsl_sort_double.h>
 #include <gsl/gsl_permute.h>
 #include <gsl/gsl_fit.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_multifit_nlin.h>
 // standard headers
 #include <iostream>
 #include <fstream>
@@ -294,68 +292,16 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   double E3 = gsl_fit_poly_eval(xc, pCoeff, event.config().order)-
               E1*exp(E2*xc);
   double ECoeff[] = {E1, E2, E3};
-
-  const gsl_multifit_fdfsolver_type *T;
-  gsl_multifit_fdfsolver *s;
-  int status;
-
-  gsl_multifit_function_fdf f;
-  double sigma[nAll];
-  for (int i = 0; i < nAll; i++) sigma[i] = 1;
-  gsr_fit_data params;
-  params.x = xArrAll;
-  params.y = yArrAll;
-  params.p = pCoeff;
-  params.e = eCoeff;
-  params.E = ECoeff;
-  params.order = event.config().order;
-  params.xc = xc;
-  params.xb = xb;
-  params.sigma = sigma;
-  params.n = nAll;
-
-  f.f = &gsr_fit_f;
-  f.df = &gsr_fit_df;
-  f.fdf = &gsr_fit_fdf;
-  f.n = nAll;
-  f.p = 4;
-  f.params = &params;
-
-  gsl_vector *coeff0 = gsl_vector_alloc(4);
-  gsl_vector_set(coeff0, 0, 1);
-  gsl_vector_set(coeff0, 1, -slope);
-  gsl_vector_set(coeff0, 2, 1);
-  gsl_vector_set(coeff0, 3, slope);
-
-  T = gsl_multifit_fdfsolver_lmsder;
-  s = gsl_multifit_fdfsolver_alloc(T, nAll, 4);
-  gsl_multifit_fdfsolver_set(s, &f, coeff0);
-
-  int i = 0;
-  do {
-    i++;
-    status = gsl_multifit_fdfsolver_iterate(s);
-    status = gsl_multifit_test_delta(s->dx, s->x, 1e-4, 1e-4);
-  } while (status == GSL_CONTINUE && i < 5000);
-
-  cout << i << endl;
-  cout << gsl_vector_get(s->x, 0) << endl;
-  cout << gsl_vector_get(s->x, 1) << endl;
-  cout << gsl_vector_get(s->x, 2) << endl;
-  cout << gsl_vector_get(s->x, 3) << endl;
-
+  double coeff0[] = {1, -slope, 1, slope};
   double coeff[4];
-  coeff[0] = gsl_vector_get(s->x, 0);
-  coeff[1] = gsl_vector_get(s->x, 1);
-  coeff[2] = gsl_vector_get(s->x, 2);
-  coeff[3] = gsl_vector_get(s->x, 3);
 
-  gsl_multifit_fdfsolver_free (s);
+  gsl_fit_epe(nAll, xArrAll, yArrAll, xc, xb, pCoeff, event.config().order,
+              eCoeff, ECoeff, coeff0, coeff);
 
   VectorXd yTmp = VectorXd::Zero(1000);
   for (int i = 0; i < 1000; i++) {
-    yTmp(i) = gsr_fit_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
-                             event.config().order, eCoeff, ECoeff);
+    yTmp(i) = gsl_fit_epe_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
+                                 event.config().order, eCoeff, ECoeff);
   }
 
   Curve curveTmp(xTmp, yTmp);
@@ -367,8 +313,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 
   VectorXd dyTmp = VectorXd::Zero(1000);
   for (int i = 0; i < 1000; i++) {
-    dyTmp(i) = gsr_fit_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
-                               event.config().order, eCoeff, ECoeff);
+    dyTmp(i) = gsl_fit_epe_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
+                                   event.config().order, eCoeff, ECoeff);
   }
 
   Curve curveDerTmp(xTmp, dyTmp);
@@ -411,8 +357,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i-1), 1-(abs(i)-1)/Ny/3), dx);
     for (int k = 0; k < Nx; k++) {
-      dPt_dA(k) = gsr_fit_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff, pCoeff,
-        dpCoeff, event.config().order, eCoeff, ECoeff);
+      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff,
+        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
     }
     d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
     Axy.row(NyDown+i) = Axy.row(NyDown+i-1)+Bxy.row(NyDown+i-1)*dy+
@@ -428,8 +374,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i+1), 1-(abs(i)-1)/Ny/3), dx);
     for (int k = 0; k < Nx; k++) {
-      dPt_dA(k) = gsr_fit_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff, pCoeff,
-        dpCoeff, event.config().order, eCoeff, ECoeff);
+      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff,
+        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
     }
     d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
     Axy.row(NyDown+i) = Axy.row(NyDown+i+1)-Bxy.row(NyDown+i+1)*dy+
@@ -441,5 +387,31 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
                                                1-abs(i)/Ny/3);
   }
 
+//  Curve curveABz(run.curve.cols().x, data.cols().Bz);
+  Curve curveABz(A, Bz);
+
+  double e[3];
+  gsl_fit_exp(nAll, A.data(), Bz.data(), e);
+  cout << e[0] << ' ' << e[1] << ' ' << e[2] << endl;
+  VectorXd BzFit = VectorXd::Zero(Nx);
+  for (int i = 0; i < Nx; i++) {
+    BzFit(i) = gsl_fit_exp_eval_f(A(i), e);
+  }
+  Curve curveABzFit(A, BzFit);
+
+  Gnuplot gp7("gnuplot -persist");
+  gp7 << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fitted'\n";
+  gp7.send(curveABz).send(curveABzFit);
+
+  for (int i = -NyDown; i<= NyUp; i++) {
+    for (int k = 0; k < Nx; k++) {
+      Bzy(NyDown+i, k) = gsl_fit_exp_eval_f(Axy(NyDown+i, k), e);
+    }
+  }
+
+  ofstream myfile;
+  myfile.open ("./map.dat");
+  myfile << Bzy << endl;
+  myfile.close();
 }
 

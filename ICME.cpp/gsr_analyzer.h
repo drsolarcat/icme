@@ -2,12 +2,14 @@
 #ifndef GSR_ANALYZER_H
 #define GSR_ANALYZER_H
 
+// project headers
 #include "event.h"
-
+// library headers
 #include <eigen3/Eigen/Dense>
 
 // this class is used to carry GSR analysis
 class GsrAnalyzer {
+
   public:
     void analyze(Event&); // main trigger to carry the analysis,
                           // the results are stored in the Event object

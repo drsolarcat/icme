@@ -3,7 +3,8 @@ PROGRAM = icme
 
 CXXSOURCES = icme.cpp config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
-	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp
+	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
+	gsl_fit_epe.cpp gsl_fit_poly.cpp gsl_fit_exp.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 CXX = g++
@@ -50,6 +51,15 @@ integrator.o: integrator.h integrator.cpp
 
 differentiator.o: differentiator.h differentiator.cpp
 	$(CXX) -c -o differentiator.o differentiator.cpp $(FLAGS)
+
+gsl_fit_epe.o: gsl_fit_epe.h gsl_fit_epe.cpp
+	$(CXX) -c -o gsl_fit_epe.o gsl_fit_epe.cpp $(FLAGS)
+
+gsl_fit_poly.o: gsl_fit_poly.h gsl_fit_poly.cpp
+	$(CXX) -c -o gsl_fit_poly.o gsl_fit_poly.cpp $(FLAGS)
+
+gsl_fit_exp.o: gsl_fit_exp.h gsl_fit_exp.cpp
+	$(CXX) -c -o gsl_fit_exp.o gsl_fit_exp.cpp $(FLAGS)
 
 event.o: event.h event.cpp
 	$(CXX) -c -o event.o event.cpp $(FLAGS)
