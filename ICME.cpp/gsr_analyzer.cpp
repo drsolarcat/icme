@@ -35,7 +35,6 @@ void GsrAnalyzer::analyze(Event& event) {
   // make a run of axes searching algorithm, save the results in the run
   // structure
   GsrRun run = loopAxes(event, 0, 1, 90, 0, 1, 360);
-  cout << "axes found" << endl;
   // quaternions, needed to turn to optimized axes
   Quaterniond qTheta;
   Quaterniond qPhi;
@@ -259,7 +258,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     xb = curveAll.cols().x.minCoeff(&xbIndex);
     xc = curveAll.cols().x.maxCoeff();
     xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(0)-150,
-                                     curveAll.cols().x(nAll-1)+50);
+                                     curveAll.cols().x(nAll-1)+5);
   } else {
     xb = curveAll.cols().x.maxCoeff(&xbIndex);
     xc = curveAll.cols().x.minCoeff();
@@ -293,15 +292,19 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
               E1*exp(E2*xc);
   double ECoeff[] = {E1, E2, E3};
   double coeff0[] = {1, -slope, 1, slope};
-  double coeff[4];
+//  double coeff[4];
+  double coeff[3];
 
-  gsl_fit_epe(nAll, xArrAll, yArrAll, xc, xb, pCoeff, event.config().order,
-              eCoeff, ECoeff, coeff0, coeff);
+//  gsl_fit_epe(nAll, xArrAll, yArrAll, xc, xb, pCoeff, event.config().order,
+//              eCoeff, ECoeff, coeff0, coeff);
+
+  gsl_fit_exp(nAll, xArrAll, yArrAll, coeff);
 
   VectorXd yTmp = VectorXd::Zero(1000);
   for (int i = 0; i < 1000; i++) {
-    yTmp(i) = gsl_fit_epe_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
-                                 event.config().order, eCoeff, ECoeff);
+//    yTmp(i) = gsl_fit_epe_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
+//                                 event.config().order, eCoeff, ECoeff);
+    yTmp(i) = gsl_fit_exp_eval_f(xTmp[i], coeff);
   }
 
   Curve curveTmp(xTmp, yTmp);
@@ -313,8 +316,9 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 
   VectorXd dyTmp = VectorXd::Zero(1000);
   for (int i = 0; i < 1000; i++) {
-    dyTmp(i) = gsl_fit_epe_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
-                                   event.config().order, eCoeff, ECoeff);
+//    dyTmp(i) = gsl_fit_epe_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
+//                                   event.config().order, eCoeff, ECoeff);
+    dyTmp(i) = gsl_fit_exp_eval_df(xTmp[i], coeff);
   }
 
   Curve curveDerTmp(xTmp, dyTmp);
@@ -353,9 +357,12 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 
   Differentitor differentiator;
 
+  cout << NyUp << " steps up and " << NyDown << " steps down with step size " << dy << endl;
+
   for (int i = 1; i <= NyUp; i++) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i-1), 1-(abs(i)-1)/Ny/3), dx);
+//    d2A_dx2 = differentiator.Holoborodko2(7, Axy.row(NyDown+i-1), dx);
     for (int k = 0; k < Nx; k++) {
       dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff,
         pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
@@ -373,6 +380,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   for (int i = -1; i >= -NyDown; i--) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i+1), 1-(abs(i)-1)/Ny/3), dx);
+//    d2A_dx2 = differentiator.Holoborodko2(7, Axy.row(NyDown+i+1), dx);
     for (int k = 0; k < Nx; k++) {
       dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff,
         pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
@@ -391,14 +399,13 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   Curve curveABz(A, Bz);
 
   double e[3];
-  cout << "before fitting" << endl;
-  gsl_fit_exp(nAll, A.data(), Bz.data(), e);
-  cout << e[0] << ' ' << e[1] << ' ' << e[2] << endl;
+  gsl_fit_exp(Nx, A.data(), Bz.data(), e);
   VectorXd BzFit = VectorXd::Zero(Nx);
   for (int i = 0; i < Nx; i++) {
     BzFit(i) = gsl_fit_exp_eval_f(A(i), e);
   }
   Curve curveABzFit(A, BzFit);
+  curveABzFit.sort().unique();
 
   Gnuplot gp7("gnuplot -persist");
   gp7 << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fitted'\n";
@@ -413,6 +420,10 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   ofstream myfile;
   myfile.open ("./map.dat");
   myfile << Bzy << endl;
+  myfile.close();
+
+  myfile.open ("./a.dat");
+  myfile << Axy << endl;
   myfile.close();
 }
 

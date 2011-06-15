@@ -24,7 +24,6 @@ int gsl_fit_exp_0(int n, double* x, double* y, double* c0)
   int m = 200;
 
   Curve curve(xVec, yVec);
-  cout << xVec << endl;
   curve.resample(m);
 
   Integrator integrator;

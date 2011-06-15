@@ -8,6 +8,7 @@
 #include <gsl/gsl_multifit_nlin.h>
 // standard headers
 #include <iostream>
+#include <limits>
 
 using namespace std;
 
@@ -172,18 +173,29 @@ double gsl_fit_epe_eval_df(double x, double xc, double xb, double* c,
                            double* p, double *dp, int order,
                            double* e, double* E)
 {
+  double nom1, nom2, nom3, den1, den2, den3;
 
-  return (gsl_fit_poly_eval(x, dp, order-1)*(1+c[0]*exp(c[1]*(x-xb)))*
+  nom1 = (gsl_fit_poly_eval(x, dp, order-1)*(1+c[0]*exp(c[1]*(x-xb)))*
          (1+c[2]*exp(c[3]*(x-xc)))-
          gsl_fit_poly_eval(x, p, order)*((1+c[0]*exp(c[1]*(x-xb)))*
          c[2]*c[3]*exp(c[3]*(x-xc))+
-         c[0]*c[1]*exp(c[1]*(x-xb))*(1+c[2]*exp(c[3]*(x-xc)))))/
-         pow(1+c[0]*exp(c[1]*(x-xb)), 2)/pow(1+c[2]*exp(c[3]*(x-xc)), 2)+
-         (e[0]*e[1]*exp(e[1]*x)*(1+c[0]*exp(c[1]*(-x+xb)))+
-         e[0]*exp(e[1]*x)*c[0]*c[1]*exp(c[1]*(-x+xb)))/
-         pow(1+c[0]*exp(c[1]*(-x+xb)), 2)+
-         (E[0]*E[1]*exp(E[1]*x)*(1+c[2]*exp(c[3]*(-x+xc)))+
-         (E[0]*exp(E[1]*x)+E[2])*c[2]*c[3]*exp(c[3]*(-x+xc)))/
-         pow(1+c[2]*exp(c[3]*(-x+xc)), 2);
+         c[0]*c[1]*exp(c[1]*(x-xb))*(1+c[2]*exp(c[3]*(x-xc)))));
+  den1 = pow(1+c[0]*exp(c[1]*(x-xb)), 2)*pow(1+c[2]*exp(c[3]*(x-xc)), 2);
+
+  nom2 = (e[0]*e[1]*exp(e[1]*x)*(1+c[0]*exp(c[1]*(-x+xb)))+
+         e[0]*exp(e[1]*x)*c[0]*c[1]*exp(c[1]*(-x+xb)));
+  den2 = pow(1+c[0]*exp(c[1]*(-x+xb)), 2);
+
+  nom3 = (E[0]*E[1]*exp(E[1]*x)*(1+c[2]*exp(c[3]*(-x+xc)))+
+         (E[0]*exp(E[1]*x)+E[2])*c[2]*c[3]*exp(c[3]*(-x+xc)));
+  den3 = pow(1+c[2]*exp(c[3]*(-x+xc)), 2);
+
+  double res = 0;
+
+  if (den1 != numeric_limits<double>::infinity()) res += nom1/den1;
+  if (den2 != numeric_limits<double>::infinity()) res += nom2/den2;
+  if (den3 != numeric_limits<double>::infinity()) res += nom3/den3;
+
+  return res;
 }
 
