@@ -2,4 +2,5 @@
 2. Static resampling
 3. Organise fit functions into gsr/gsl categories (only gsl?)
 4. Check that dx/dy artifact has really disappeared
+5. Implement several fitting functions, seems like there isn't any universal one
 

@@ -144,35 +144,51 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
 
 // compute magnetic field map for a given GSR run
 GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
+  // copy the data into external Dara object, we need a copy because we
+  // will have to project it onto new coordinate system
   Data data(event.dataNarrow());
 
+  // project the data into optimized coordinate system
   data.project(run.axes);
 
+  // compute the dx step
   double dx = -event.dht().Vht.dot(run.axes.x)*event.config().samplingInterval*
                run.curve.size()/event.config().Nx;
+  // first estimate for the dy step
   double dy = event.config().ratio*dx;
+  // number of Y-nodes
   int Ny = floor((event.config().maxY-event.config().minY)*
            GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
+  // final value for the Y step
   dy = (event.config().maxY-event.config().minY)*
        GSL_CONST_MKSA_ASTRONOMICAL_UNIT/Ny;
+  // number of steps into positive Y direction
   int NyUp = ceil(event.config().maxY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
+  // number of steps into negative Y direction
   int NyDown = -floor(event.config().minY*GSL_CONST_MKSA_ASTRONOMICAL_UNIT/dy);
+  // final number of Y-nodes
   Ny = NyDown + 1 + NyUp;
+  // initialize the vector of Y nodes
   VectorXd Y = VectorXd::Zero(Ny);
+  // and fill it with actual Y values
   for (int i = -NyDown; i <= NyUp; i++) {
     Y(NyDown+i) = i*dy;
   }
+  // number of X nodes
   int Nx = event.config().Nx;
 
-  Curve curveIn(run.curve.branches()[0]);
-  Curve curveOut(run.curve.branches()[1]);
+  // copy branches of Pt(A) into separate Curve objects, we need the copies
+  // because we will need to resample them
+  Curve APtIn(run.curve.branches()[0]);
+  Curve APtOut(run.curve.branches()[1]);
 
 //  Gnuplot gp1("gnuplot -persist");
 //	gp1 << "p '-' w p t 'PtIn(A)', '-' w p t 'PtOut(A)'\n";
 //  gp1.send(curveIn).send(curveOut);
 
-  curveIn.resample(Nx);
-  curveOut.resample(Nx);
+  // resample the branches curves to the new lattice
+  APtIn.resample(Nx);
+  APtOut.resample(Nx);
 
 //  Gnuplot gp2("gnuplot -persist");
 //	gp2 << "p '-' w p t 'PtIn(A)', '-' w p t 'PtOut(A)'\n";
@@ -182,108 +198,99 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 //  gp3 << "p '-' w l t 'Pt(A)'\n";
 //  gp3.send((Curve)run.curve);
 
-  double xArrAll[2*Nx], yArrAll[2*Nx];
+  // initialize arrays for the branches
 
+  double *AarrAll  = new double[2*Nx],
+         *PtArrAll = new double[2*Nx];
+  // fill the arrays with values of the both branches
   for (int i = 0; i < 2*Nx; i++) {
-    if (i < Nx) {
-      xArrAll[i] = curveIn.cols().x(i);
-      yArrAll[i] = curveIn.cols().y(i);
-    } else {
-      xArrAll[i] = curveOut.cols().x(i-Nx);
-      yArrAll[i] = curveOut.cols().y(i-Nx);
+    if (i < Nx) { // get values from the inward branch
+      AarrAll[i] = APtIn.cols().x(i);
+      PtArrAll[i] = APtIn.cols().y(i);
+    } else { // get values from the outward branch
+      AarrAll[i] = APtOut.cols().x(i-Nx);
+      PtArrAll[i] = APtOut.cols().y(i-Nx);
     }
   }
 
-  size_t p[2*Nx]; // permuations arrays
-  gsl_sort_index(p, xArrAll, 1, 2*Nx); // sort curve data by ASC X, get permutations
-  gsl_permute(p, xArrAll, 1, 2*Nx); // apply permutations
-  gsl_permute(p, yArrAll, 1, 2*Nx); // apply permutations
+  // map arrays into vectors
+  Map<VectorXd> Aall(AarrAll, 2*Nx);
+  Map<VectorXd> PtAll(PtArrAll, 2*Nx);
 
-  VectorXd xAll = VectorXd::Zero(2*Nx),
-           yAll = VectorXd::Zero(2*Nx);
+  // build a Pt(A) curve from the data vectors
+  Curve APtAll(Aall, PtAll);
 
-  int k = 0;
-  for (int i = 0; i < 2*Nx; i++) {
-    if (i-1 < 2*Nx && xArrAll[i] == xArrAll[i+1]) {
-      continue;
-    } else if (i > 0 && xArrAll[i] == xArrAll[i-1]) {
-      xAll(k) = xArrAll[i];
-      yAll(k) = (yArrAll[i-1]+yArrAll[i])/2;
-    } else {
-      xAll(k) = xArrAll[i];
-      yAll(k) = yArrAll[i];
-    }
-    k++;
-  }
-  int nAll = k;
-  xAll.conservativeResize(nAll);
-  yAll.conservativeResize(nAll);
+  // sort and unique the curve
+  APtAll.sort().unique();
 
-  Curve curveAll(xAll, yAll);
+  int nAll = APtAll.size(); // length of the curve
 
-  double c0, c1, cov00, cov01, cov11, chi2;
-  gsl_fit_linear(xArrAll, 1, yArrAll, 1, nAll, &c0, &c1,
-                 &cov00, &cov01, &cov11, &chi2);
+  // change size of the data arrays
+  AarrAll = (double*) realloc(AarrAll, nAll*sizeof(double));
+  PtArrAll = (double*) realloc(PtArrAll, nAll*sizeof(double));
+  // reinitialize the data arrays
+  AarrAll  = const_cast<double*>(APtAll.cols().x.data());
+  PtArrAll = const_cast<double*>(APtAll.cols().y.data());
 
-  int slope = (c1 > 0 ? 1 : -1);
+  // find the slope of the curve
+  double lCoeff[2]; // linear coefficients array
+  // do the fitting
+  gsl_fit_poly(nAll, 1, AarrAll, PtArrAll, lCoeff);
+  // initialize the slope, TODO: sign function
+  int slope = (lCoeff[1] > 0 ? 1 : -1);
 
-  double pCoeff[event.config().order+1];
-  gsl_fit_poly(nAll, event.config().order, xArrAll, yArrAll, pCoeff);
+  double pCoeff[event.config().order+1]; // polynomial coefficients
+  // do the fitting
+  gsl_fit_poly(nAll, event.config().order, AarrAll, PtArrAll, pCoeff);
 
-  VectorXd yAllPoly = VectorXd::Zero(nAll);
-  for (int i = 0; i < nAll; i++) {
-    yAllPoly(i) += gsl_fit_poly_eval(xAll[i], pCoeff, event.config().order);
-  }
-
-  Curve curveAllPoly(xAll, yAllPoly);
-
-//  Gnuplot gp4("gnuplot -persist");
-//  gp4 << "p '-' w p t 'Pt(A)', '-' w l t 'Pt(A) fit'\n";
-//  gp4.send(curveAll).send(curveAllPoly);
-
+  // compute 1st derivative of the polynomial
   double dpCoeff[event.config().order];
   for (int i = 0; i <= event.config().order-1; i++) {
     dpCoeff[i] = pCoeff[i+1]*(i+1);
   }
 
+  // compute 2nd derivative of the polynomial
   double ddpCoeff[event.config().order-1];
   for (int i = 0; i <= event.config().order-2; i++) {
     ddpCoeff[i] = dpCoeff[i+1]*(i+1);
   }
 
-  double xb, xc;
-  VectorXd xTmp;
-  int xbIndex;
-  if (slope > 0) {
-    xb = curveAll.cols().x.minCoeff(&xbIndex);
-    xc = curveAll.cols().x.maxCoeff();
-    xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(0)-150,
-                                     curveAll.cols().x(nAll-1)+5);
-  } else {
-    xb = curveAll.cols().x.maxCoeff(&xbIndex);
-    xc = curveAll.cols().x.minCoeff();
-    xTmp = VectorXd::LinSpaced(1000, curveAll.cols().x(0)-5,
-                                     curveAll.cols().x(nAll-1)+150);
+  double Ab, Ac; // boundary and center value of A
+  VectorXd Atmp; // wide range A, just for plotting
+  int AbIndex; // index of the
+  if (slope > 0) { // Ab < Ac
+    Ab = APtAll.cols().x.minCoeff(&AbIndex);
+    Ac = APtAll.cols().x.maxCoeff();
+    Atmp = VectorXd::LinSpaced(1000, APtAll.cols().x(0)-150,
+                                     APtAll.cols().x(nAll-1)+5);
+  } else { // Ac < Ab
+    Ab = APtAll.cols().x.maxCoeff(&AbIndex);
+    Ac = APtAll.cols().x.minCoeff();
+    Atmp = VectorXd::LinSpaced(1000, APtAll.cols().x(0)-5,
+                                     APtAll.cols().x(nAll-1)+150);
   }
 
-  int iTmp;
-  while (slope > 0 && gsl_fit_poly_eval(xb, dpCoeff,
+  // do not allow the Ab to pass the zero derivative point of the polynomial
+  while (slope > 0 && gsl_fit_poly_eval(Ab, dpCoeff,
                                         event.config().order-1) < 0 ||
-         slope < 0 && gsl_fit_poly_eval(xb, dpCoeff,
+         slope < 0 && gsl_fit_poly_eval(Ab, dpCoeff,
                                         event.config().order-1) > 0)
   {
     if (slope > 0) {
-      xb = curveAll.cols().x(++xbIndex);
+      Ab = APtAll.cols().x(++AbIndex);
     } else {
-      xb = curveAll.cols().x(--xbIndex);
+      Ab = APtAll.cols().x(--AbIndex);
     }
   }
 
+  /*
+  // estimate the coefficients of the exponent in the boundary part of Pt(A)
   double e2 = gsl_fit_poly_eval(xb, dpCoeff, event.config().order-1)/
               gsl_fit_poly_eval(xb, pCoeff, event.config().order);
   double e1 = gsl_fit_poly_eval(xb, pCoeff, event.config().order)/
               exp(e2*xb);
   double eCoeff[] = {e1, e2};
+  // estimate the coefficients of the exponent in the central part of Pt(A)
   double E2 = gsl_fit_poly_eval(xc, ddpCoeff, event.config().order-2)/
               gsl_fit_poly_eval(xc, dpCoeff, event.config().order-1);
   double E1 = gsl_fit_poly_eval(xc, dpCoeff, event.config().order-1)/
@@ -291,99 +298,127 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   double E3 = gsl_fit_poly_eval(xc, pCoeff, event.config().order)-
               E1*exp(E2*xc);
   double ECoeff[] = {E1, E2, E3};
-  double coeff0[] = {1, -slope, 1, slope};
+//  double coeff0[] = {1, -slope, 1, slope};
 //  double coeff[4];
-  double coeff[3];
+  */
+
+  double coeff[3]; // fitting coefficients for exponent
 
 //  gsl_fit_epe(nAll, xArrAll, yArrAll, xc, xb, pCoeff, event.config().order,
 //              eCoeff, ECoeff, coeff0, coeff);
 
-  gsl_fit_exp(nAll, xArrAll, yArrAll, coeff);
+  // fit the exponent to Pt(A)
+  gsl_fit_exp(nAll, AarrAll, PtArrAll, coeff);
 
-  VectorXd yTmp = VectorXd::Zero(1000);
+  // initialize temporary Pt vector, for plotting only
+  VectorXd PtTmp = VectorXd::Zero(1000);
+  // fill it with evaluated values for the fitted Pt(A)
   for (int i = 0; i < 1000; i++) {
-//    yTmp(i) = gsl_fit_epe_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
+//    PtTmp(i) = gsl_fit_epe_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
 //                                 event.config().order, eCoeff, ECoeff);
-    yTmp(i) = gsl_fit_exp_eval_f(xTmp[i], coeff);
+    PtTmp(i) = gsl_fit_exp_eval_f(Atmp[i], coeff);
   }
 
-  Curve curveTmp(xTmp, yTmp);
+  // initialize temporary fitted curve, for plotting only
+  Curve APtTmp(Atmp, PtTmp);
 
   Gnuplot gp5("gnuplot -persist");
   gp5 <<
     "p '-' w p t 'Pt(A) in', '-' w p t 'Pt(A) out', '-' w l t 'Pt(A) fit'\n";
-  gp5.send(curveIn).send(curveOut).send(curveTmp);
+  gp5.send(APtIn).send(APtOut).send(APtTmp);
 
-  VectorXd dyTmp = VectorXd::Zero(1000);
+  // initialize temporary dPt/dA vector, for plotting only
+  VectorXd dPtTmp = VectorXd::Zero(1000);
+  // fill it with derivatives
   for (int i = 0; i < 1000; i++) {
-//    dyTmp(i) = gsl_fit_epe_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
+//    dPtTmp(i) = gsl_fit_epe_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
 //                                   event.config().order, eCoeff, ECoeff);
-    dyTmp(i) = gsl_fit_exp_eval_df(xTmp[i], coeff);
+    dPtTmp(i) = gsl_fit_exp_eval_df(Atmp[i], coeff);
   }
 
-  Curve curveDerTmp(xTmp, dyTmp);
+  // initialize temporary derivative of the fitted curve, for plotting only
+  Curve AdPtTmp(Atmp, dPtTmp);
 
   Gnuplot gp6("gnuplot -persist");
   gp6 << "p '-' w l t 'dPt/dA'\n";
-  gp6.send(curveDerTmp);
+  gp6.send(AdPtTmp);
 
+  // initialize and fill in the X coordinates vector (on a lattice)
   VectorXd X = VectorXd::Zero(Nx);
   for (int i = 0; i < Nx; i++) {
     X(i) = i*dx;
   }
 
+  // copy A, B and Pth to new vector objects, needed for resampling
   VectorXd A(run.curve.cols().x);
   VectorXd Bx(data.cols().Bx);
   VectorXd By(data.cols().By);
   VectorXd Bz(data.cols().Bz);
   VectorXd Pth(data.cols().Pth);
 
+  // resample physical parameters to use on a lattice
   Curve::resample(A, Nx);
   Curve::resample(Bx, Nx);
   Curve::resample(By, Nx);
   Curve::resample(Bz, Nx);
   Curve::resample(Pth, Nx);
 
+  // initialize matrices for A, Bx and Bz maps
   MatrixXd Axy = MatrixXd::Zero(Ny, Nx),
            Bxy = MatrixXd::Zero(Ny, Nx),
            Bzy = MatrixXd::Zero(Ny, Nx);
 
+  // fill initialize A and Bx values to the matrices, i.e. measured spacecraft
+  // data
   Axy.row(NyDown) = A;
   Bxy.row(NyDown) = Bx;
 
+  // initialize vectors for some important derivatives
   VectorXd d2A_dx2 = VectorXd::Zero(Nx),
            dPt_dA  = VectorXd::Zero(Nx),
            d2A_dy2 = VectorXd::Zero(Nx);
 
+  // initialize differentiator
   Differentitor differentiator;
 
   cout << NyUp << " steps up and " << NyDown << " steps down with step size " << dy << endl;
 
+  // reconstruct the upper part of the map using recursive solver
   for (int i = 1; i <= NyUp; i++) {
+    // 2nd derivative of A by x using Holoborodko2 filter, smoothed with
+    // weighted average prior to differenting
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i-1), 1-(abs(i)-1)/Ny/3), dx);
-//    d2A_dx2 = differentiator.Holoborodko2(7, Axy.row(NyDown+i-1), dx);
+    // evaluate the 1st derivative of Pt by A using fitting curve
     for (int k = 0; k < Nx; k++) {
-      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff,
-        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
+//      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff,
+//        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
+      dPt_dA(k) = gsl_fit_exp_eval_df(Axy(NyDown+i-1, k), coeff);
     }
+    // compute 2nd derivative of A by y using Grad-Shafranov equation
     d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
+    // write the next row of A, GS equation used
     Axy.row(NyDown+i) = Axy.row(NyDown+i-1)+Bxy.row(NyDown+i-1)*dy+
                         d2A_dy2.transpose()*pow(dy, 2)/2;
+    // smooth it with weighted average
     Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
                                                1-abs(i)/Ny/3);
+    // wtite the next row of Bx
     Bxy.row(NyDown+i) = Bxy.row(NyDown+i-1)+d2A_dy2.transpose()*dy;
+    // smooth it with weighted average
     Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
                                                1-abs(i)/Ny/3);
   }
 
+  // reconstruct the lower part of teh map using recursive solver,
+  // everything is the same as for the upper part
   for (int i = -1; i >= -NyDown; i--) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i+1), 1-(abs(i)-1)/Ny/3), dx);
-//    d2A_dx2 = differentiator.Holoborodko2(7, Axy.row(NyDown+i+1), dx);
     for (int k = 0; k < Nx; k++) {
-      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff,
-        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
+//      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff,
+//        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
+      dPt_dA(k) = gsl_fit_exp_eval_df(Axy(NyDown+i+1, k), coeff);
     }
     d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
     Axy.row(NyDown+i) = Axy.row(NyDown+i+1)-Bxy.row(NyDown+i+1)*dy+
@@ -395,23 +430,28 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
                                                1-abs(i)/Ny/3);
   }
 
-//  Curve curveABz(run.curve.cols().x, data.cols().Bz);
-  Curve curveABz(A, Bz);
+  // initialize the Bz(A) curve
+  Curve ABz(A, Bz);
 
-  double e[3];
-  gsl_fit_exp(Nx, A.data(), Bz.data(), e);
-  VectorXd BzFit = VectorXd::Zero(Nx);
+  // fit it with exponent
+  double e[3]; // exponent fitting coefficients
+  gsl_fit_exp(Nx, A.data(), Bz.data(), e); // fit it
+  VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
+  // fill it by evaluating the fitting function
   for (int i = 0; i < Nx; i++) {
     BzFit(i) = gsl_fit_exp_eval_f(A(i), e);
   }
-  Curve curveABzFit(A, BzFit);
-  curveABzFit.sort().unique();
+  // initialize fitted Bz(A)
+  Curve ABzFit(A, BzFit);
+  // sort and unique it
+  ABzFit.sort().unique();
 
   Gnuplot gp7("gnuplot -persist");
   gp7 << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fitted'\n";
-  gp7.send(curveABz).send(curveABzFit);
+  gp7.send(ABz).send(ABzFit);
 
-  for (int i = -NyDown; i<= NyUp; i++) {
+  // calculate the Bz map using the fitted Bz(A)
+  for (int i = -NyDown; i <= NyUp; i++) {
     for (int k = 0; k < Nx; k++) {
       Bzy(NyDown+i, k) = gsl_fit_exp_eval_f(Axy(NyDown+i, k), e);
     }
@@ -425,5 +465,9 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   myfile.open ("./a.dat");
   myfile << Axy << endl;
   myfile.close();
+
+  // free dynamic arrays
+//  delete [] AarrAll;
+//  delete [] PtArrAll;
 }
 

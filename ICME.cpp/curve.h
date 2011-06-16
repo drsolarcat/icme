@@ -2,9 +2,10 @@
 #ifndef CURVE_H
 #define CURVE_H
 
+// library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_interp.h>
-
+// standard headers
 #include <vector>
 
 // this structure stores curve data
