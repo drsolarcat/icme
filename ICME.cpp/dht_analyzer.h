@@ -2,8 +2,9 @@
 #ifndef DHT_ANALYZER_H
 #define DHT_ANALYZER_H
 
+// project headers
 #include "event.h"
-
+// library headers
 #include <eigen3/Eigen/Dense>
 
 // this class is used for searching for the deHoffmann-Teller frame

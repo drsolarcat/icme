@@ -5,11 +5,16 @@
 #include "event.h"
 #include "mva_analyzer.h"
 #include "gsr_analyzer.h"
+#include "gnuplot.h"
+// library headers
+#include "engine.h"
+#include <eigen3/Eigen/Dense>
 // standard headers
 #include <string>
 #include <iostream>
 
 using namespace std;
+using namespace Eigen;
 using namespace My;
 
 // this is the main driver function of the whole project
@@ -64,7 +69,178 @@ int main() {
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
 
     // perform GSR analysis if required
-    if (config.row(iEvent).toGsr) gsr.analyze(*event);
+    if (config.row(iEvent).toGsr) {
+
+      gsr.analyze(*event);
+
+      if (config.row(iEvent).toPlot) { // plot
+
+        // plot residue maps through Matlab
+        Engine *ep;
+        mxArray *mOriginalResidue, *mCombinedResidue, *mTheta, *mPhi;
+        VectorXd phi, theta;
+        ep = engOpen(NULL);
+        engOutputBuffer(ep, NULL, 0);
+        for (int i = 0; i < (*event).gsr().runs.size(); i++) {
+
+          theta = VectorXd::LinSpaced(
+            ((*event).gsr().runs[i].maxTheta-(*event).gsr().runs[i].minTheta)/
+              (*event).gsr().runs[i].dTheta+1,
+            (*event).gsr().runs[i].minTheta,
+            (*event).gsr().runs[i].maxTheta);
+
+          phi = VectorXd::LinSpaced(
+            ((*event).gsr().runs[i].maxPhi-(*event).gsr().runs[i].minPhi)/
+              (*event).gsr().runs[i].dPhi+1,
+            (*event).gsr().runs[i].minPhi,
+            (*event).gsr().runs[i].maxPhi);
+
+          mTheta = mxCreateDoubleMatrix(1, theta.size(), mxREAL);
+          mPhi = mxCreateDoubleMatrix(1, phi.size(), mxREAL);
+
+          memcpy((double*)mxGetPr(mTheta), (double*)theta.data(),
+                 theta.size()*sizeof(double));
+          memcpy((double*)mxGetPr(mPhi), (double*)phi.data(),
+                 phi.size()*sizeof(double));
+
+          engPutVariable(ep, "theta", mTheta);
+          engPutVariable(ep, "phi", mPhi);
+
+          char matlabCommand[] =
+          "R = R.^-1;\n"
+          "figure\n"
+          "h = polar([0 2*pi], [0 90]);\n"
+          "ph = findall(gca, 'type', 'patch');\n"
+          "set(ph, 'facecolor', [0 0 .5], 'edgecolor', [0 0 .5]);\n"
+          "set(gcf, 'Color', 'white');\n"
+          "set(gcf, 'Renderer', 'Painters');\n"
+          "pl = findobj(allchild(gca));\n"
+          "hold on\n"
+          "contour(theta'*cos(phi*pi/180), theta'*sin(phi*pi/180), R, ...\n"
+          "        linspace(min(R(:)), max(R(:)), 500), 'Fill', 'on');\n"
+          "colorbar\n"
+          "for i = 1:length(pl)-1\n"
+          "    if strcmpi(get(pl(i), 'Type'), 'line')\n"
+          "        set(pl(i), 'Color', 'white');\n"
+          "    elseif strcmpi(get(pl(i), 'Type'), 'text') && i > 25\n"
+          "        set(pl(i), 'Color', 'white');\n"
+          "    end\n"
+          "    uistack(pl(i), 'top');\n"
+          "end\n"
+          "delete(h)\n"
+          "cbar_handle = findobj(gcf, 'Tag', 'Colorbar');\n"
+          "set(get(cbar_handle,'xlabel'),'string','1/R');\n"
+          "hold off\n";
+
+          mOriginalResidue = mxCreateDoubleMatrix(
+            (*event).gsr().runs[i].originalResidue.rows(),
+            (*event).gsr().runs[i].originalResidue.cols(), mxREAL);
+
+          memcpy(
+            (double*)mxGetPr(mOriginalResidue),
+            (double*)(*event).gsr().runs[i].originalResidue.data(),
+            (*event).gsr().runs[i].originalResidue.rows()*
+            (*event).gsr().runs[i].originalResidue.cols()*sizeof(double));
+
+          engPutVariable(ep, "R", mOriginalResidue);
+
+          engEvalString(ep, matlabCommand);
+
+          mCombinedResidue = mxCreateDoubleMatrix(
+            (*event).gsr().runs[i].combinedResidue.rows(),
+            (*event).gsr().runs[i].combinedResidue.cols(), mxREAL);
+
+          memcpy(
+            (double*)mxGetPr(mCombinedResidue),
+            (double*)(*event).gsr().runs[i].combinedResidue.data(),
+            (*event).gsr().runs[i].combinedResidue.rows()*
+            (*event).gsr().runs[i].combinedResidue.cols()*sizeof(double));
+
+          engPutVariable(ep, "R", mCombinedResidue);
+
+          engEvalString(ep, matlabCommand);
+        }
+
+        // plot Pt(A) through Gnuplot
+        Gnuplot APt("gnuplot -persist");
+        APt << "p '-' w p t 'Pt(A) in', "
+              << "'-' w p t 'Pt(A) out', "
+              << "'-' w l t 'Pt(A) fit'\n";
+        APt.send((*event).gsr().runs.back().APtIn).
+            send((*event).gsr().runs.back().APtOut).
+            send((*event).gsr().runs.back().APtFit);
+
+        // plot dPt/dA through Gnuplot
+        Gnuplot AdPt("gnuplot -persist");
+        AdPt << "p '-' w l t 'dPt/dA fit'\n";
+        AdPt.send((*event).gsr().runs.back().AdPtFit);
+
+        // plot Bz(A) through Gnuplot
+        Gnuplot ABz("gnuplot -persist");
+        ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
+        ABz.send((*event).gsr().runs.back().ABz).
+            send((*event).gsr().runs.back().ABzFit);
+
+        // plot magnetic field map through Matlab
+        mxArray *mAxy, *mBz, *mX, *mY;
+        mX = mxCreateDoubleMatrix(1, (*event).gsr().runs.back().X.size(),
+                                  mxREAL);
+        mY = mxCreateDoubleMatrix(1, (*event).gsr().runs.back().Y.size(),
+                                  mxREAL);
+
+        memcpy((double*)mxGetPr(mX),
+               (double*)(*event).gsr().runs.back().X.data(),
+               (*event).gsr().runs.back().X.size()*sizeof(double));
+        memcpy((double*)mxGetPr(mY),
+               (double*)(*event).gsr().runs.back().Y.data(),
+               (*event).gsr().runs.back().Y.size()*sizeof(double));
+
+        engPutVariable(ep, "X", mX);
+        engPutVariable(ep, "Y", mY);
+
+        mAxy = mxCreateDoubleMatrix(
+          (*event).gsr().runs.back().Axy.rows(),
+          (*event).gsr().runs.back().Axy.cols(), mxREAL);
+
+        memcpy(
+          (double*)mxGetPr(mAxy),
+          (double*)(*event).gsr().runs.back().Axy.data(),
+          (*event).gsr().runs.back().Axy.rows()*
+          (*event).gsr().runs.back().Axy.cols()*sizeof(double));
+
+        engPutVariable(ep, "Axy", mAxy);
+
+        char matlabCommand[] =
+        "figure\n"
+        "contour(X, Y, Bz, linspace(min(Bz(:)), max(Bz(:)), 100), ...\n"
+        "  'Fill', 'on', 'LineStyle', 'none');\n"
+        "colorbar\n"
+        "hold on\n"
+        "contour(X, Y, Axy, 50, 'LineColor', 'black');\n"
+        "caxis([min(Bz(:)) max(Bz(:))]);\n"
+        "set(gca, 'Color', [0 0 .5]);\n"
+        "set(gcf, 'Color', 'white');\n"
+        "set(gcf, 'InvertHardCopy', 'off');\n"
+        "xlabel 'X_{MC} (AU)'\n"
+        "ylabel 'Y_{MC} (AU)'\n";
+
+        mBz = mxCreateDoubleMatrix(
+          (*event).gsr().runs.back().Bz.rows(),
+          (*event).gsr().runs.back().Bz.cols(), mxREAL);
+
+        memcpy(
+          (double*)mxGetPr(mBz),
+          (double*)(*event).gsr().runs.back().Bz.data(),
+          (*event).gsr().runs.back().Bz.rows()*
+          (*event).gsr().runs.back().Bz.cols()*sizeof(double));
+
+        engPutVariable(ep, "Bz", mBz);
+
+        engEvalString(ep, matlabCommand);
+
+        // engClose(ep);
+      }
+    }
 
     // perform MVA analysis if required
     if (config.row(iEvent).toMva) mva.analyze(*event);

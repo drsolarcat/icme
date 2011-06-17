@@ -1,10 +1,11 @@
 
+// project headers
 #include "data.h"
 #include "time.h"
 #include "event.h"
-
+// library headers
 #include <eigen3/Eigen/Dense>
-
+// standard headers
 #include <fstream>
 #include <sstream>
 #include <string>

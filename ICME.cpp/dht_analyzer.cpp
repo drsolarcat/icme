@@ -1,9 +1,10 @@
 
+// project headers
 #include "dht_analyzer.h"
-
+// library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_statistics.h>
-
+// standard headers
 #include <iostream>
 
 using namespace std;

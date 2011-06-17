@@ -1,8 +1,9 @@
 
+// project headers
 #include "gsr_curve.h"
 #include "axes.h"
 #include "integrator.h"
-
+// library headers
 #include <gsl/gsl_const_mksa.h>
 
 using namespace Eigen;

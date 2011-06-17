@@ -4,17 +4,19 @@ PROGRAM = icme
 CXXSOURCES = icme.cpp config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
-	gsl_fit_epe.cpp gsl_fit_poly.cpp gsl_fit_exp.cpp
+	gsl_fit_epe.cpp gsl_fit_poly.cpp gsl_fit_exp.cpp gnuplot.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 CXX = g++
-GSL = -lgsl -lgslcblas -lm -lutil -lboost_iostreams
+GSL = -lgsl -lgslcblas -lm
+BOOST = -lutil -lboost_iostreams
+MATLAB = -lmx -leng -lmat -lut
 FLAGS = -O3
 
 all: $(PROGRAM)
 
 $(PROGRAM): $(CXXOBJECTS)
-	$(CXX) -o $@ $(CXXOBJECTS) $(GSL) $(FLAGS)
+	$(CXX) -o $@ $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(FLAGS)
 
 icme.o: icme.cpp
 	$(CXX) -c -o icme.o icme.cpp $(FLAGS)
@@ -60,6 +62,9 @@ gsl_fit_poly.o: gsl_fit_poly.h gsl_fit_poly.cpp
 
 gsl_fit_exp.o: gsl_fit_exp.h gsl_fit_exp.cpp
 	$(CXX) -c -o gsl_fit_exp.o gsl_fit_exp.cpp $(FLAGS)
+
+gnuplot.o: gnuplot.h gnuplot.cpp
+	$(CXX) -c -o gnuplot.o gnuplot.cpp $(FLAGS)
 
 event.o: event.h event.cpp
 	$(CXX) -c -o event.o event.cpp $(FLAGS)

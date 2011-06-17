@@ -2,8 +2,9 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
+// library headers
 #include <eigen3/Eigen/Dense>
-
+// standard headers
 #include <map>
 
 class Integrator {

@@ -1,11 +1,13 @@
 
 #ifndef EVENT_H
 #define EVENT_H
+
 //project headers
 #include "data.h"
 #include "config.h"
 #include "axes.h"
 #include "branched_curve.h"
+#include "curve.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 // standard headers
@@ -44,6 +46,11 @@ struct GsrRun {
                   branchLength; // branch length
   Axes axes;
   BranchedCurve curve;
+  double dx, dy;
+  int Nx, Ny;
+  Eigen::VectorXd X, Y;
+  Eigen::MatrixXd Axy, Bz;
+  Curve APtIn, APtOut, APtFit, AdPtFit, ABz, ABzFit;
 };
 
 // this structure holds results of GSR analysis

@@ -51,6 +51,8 @@ void GsrAnalyzer::analyze(Event& event) {
   computeMap(event, run);
   gsr.runs.push_back(run);
 
+  event.gsr(gsr);
+
   cout << gsr.runs[0].optTheta << ' ' << gsr.runs[0].optPhi << endl;
 
   ofstream myfile;
@@ -177,29 +179,30 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   // number of X nodes
   int Nx = event.config().Nx;
 
+  // initialize and fill in the X coordinates vector (on a lattice)
+  VectorXd X = VectorXd::Zero(Nx);
+  for (int i = 0; i < Nx; i++) {
+    X(i) = i*dx;
+  }
+
+  // save lattice parameters in the run structure
+  run.dx = dx;
+  run.dy = dy;
+  run.Nx = Nx;
+  run.Ny = Ny;
+  run.X = X;
+  run.Y = Y;
+
   // copy branches of Pt(A) into separate Curve objects, we need the copies
   // because we will need to resample them
   Curve APtIn(run.curve.branches()[0]);
   Curve APtOut(run.curve.branches()[1]);
 
-//  Gnuplot gp1("gnuplot -persist");
-//	gp1 << "p '-' w p t 'PtIn(A)', '-' w p t 'PtOut(A)'\n";
-//  gp1.send(curveIn).send(curveOut);
-
   // resample the branches curves to the new lattice
   APtIn.resample(Nx);
   APtOut.resample(Nx);
 
-//  Gnuplot gp2("gnuplot -persist");
-//	gp2 << "p '-' w p t 'PtIn(A)', '-' w p t 'PtOut(A)'\n";
-//  gp2.send(curveIn).send(curveOut);
-
-//  Gnuplot gp3("gnuplot -persist");
-//  gp3 << "p '-' w l t 'Pt(A)'\n";
-//  gp3.send((Curve)run.curve);
-
   // initialize arrays for the branches
-
   double *AarrAll  = new double[2*Nx],
          *PtArrAll = new double[2*Nx];
   // fill the arrays with values of the both branches
@@ -285,18 +288,18 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 
   /*
   // estimate the coefficients of the exponent in the boundary part of Pt(A)
-  double e2 = gsl_fit_poly_eval(xb, dpCoeff, event.config().order-1)/
-              gsl_fit_poly_eval(xb, pCoeff, event.config().order);
-  double e1 = gsl_fit_poly_eval(xb, pCoeff, event.config().order)/
-              exp(e2*xb);
+  double e2 = gsl_fit_poly_eval(Ab, dpCoeff, event.config().order-1)/
+              gsl_fit_poly_eval(Ab, pCoeff, event.config().order);
+  double e1 = gsl_fit_poly_eval(Ab, pCoeff, event.config().order)/
+              exp(e2*Ab);
   double eCoeff[] = {e1, e2};
   // estimate the coefficients of the exponent in the central part of Pt(A)
-  double E2 = gsl_fit_poly_eval(xc, ddpCoeff, event.config().order-2)/
-              gsl_fit_poly_eval(xc, dpCoeff, event.config().order-1);
-  double E1 = gsl_fit_poly_eval(xc, dpCoeff, event.config().order-1)/
-              E2/exp(E2*xc);
-  double E3 = gsl_fit_poly_eval(xc, pCoeff, event.config().order)-
-              E1*exp(E2*xc);
+  double E2 = gsl_fit_poly_eval(Ac, ddpCoeff, event.config().order-2)/
+              gsl_fit_poly_eval(Ac, dpCoeff, event.config().order-1);
+  double E1 = gsl_fit_poly_eval(Ac, dpCoeff, event.config().order-1)/
+              E2/exp(E2*Ac);
+  double E3 = gsl_fit_poly_eval(Ac, pCoeff, event.config().order)-
+              E1*exp(E2*Ac);
   double ECoeff[] = {E1, E2, E3};
 //  double coeff0[] = {1, -slope, 1, slope};
 //  double coeff[4];
@@ -304,7 +307,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
 
   double coeff[3]; // fitting coefficients for exponent
 
-//  gsl_fit_epe(nAll, xArrAll, yArrAll, xc, xb, pCoeff, event.config().order,
+//  gsl_fit_epe(nAll, xArrAll, yArrAll, Ac, Ab, pCoeff, event.config().order,
 //              eCoeff, ECoeff, coeff0, coeff);
 
   // fit the exponent to Pt(A)
@@ -314,40 +317,31 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   VectorXd PtTmp = VectorXd::Zero(1000);
   // fill it with evaluated values for the fitted Pt(A)
   for (int i = 0; i < 1000; i++) {
-//    PtTmp(i) = gsl_fit_epe_eval_f(xTmp[i], xc, xb, coeff, pCoeff,
+//    PtTmp(i) = gsl_fit_epe_eval_f(xTmp[i], Ac, Ab, coeff, pCoeff,
 //                                 event.config().order, eCoeff, ECoeff);
     PtTmp(i) = gsl_fit_exp_eval_f(Atmp[i], coeff);
   }
 
   // initialize temporary fitted curve, for plotting only
-  Curve APtTmp(Atmp, PtTmp);
+  Curve APtFit(Atmp, PtTmp);
 
-  Gnuplot gp5("gnuplot -persist");
-  gp5 <<
-    "p '-' w p t 'Pt(A) in', '-' w p t 'Pt(A) out', '-' w l t 'Pt(A) fit'\n";
-  gp5.send(APtIn).send(APtOut).send(APtTmp);
+  run.APtIn  = APtIn;
+  run.APtOut = APtOut;
+  run.APtFit = APtFit;
 
   // initialize temporary dPt/dA vector, for plotting only
   VectorXd dPtTmp = VectorXd::Zero(1000);
   // fill it with derivatives
   for (int i = 0; i < 1000; i++) {
-//    dPtTmp(i) = gsl_fit_epe_eval_df(xTmp[i], xc, xb, coeff, pCoeff, dpCoeff,
+//    dPtTmp(i) = gsl_fit_epe_eval_df(xTmp[i], Ac, Ab, coeff, pCoeff, dpCoeff,
 //                                   event.config().order, eCoeff, ECoeff);
     dPtTmp(i) = gsl_fit_exp_eval_df(Atmp[i], coeff);
   }
 
   // initialize temporary derivative of the fitted curve, for plotting only
-  Curve AdPtTmp(Atmp, dPtTmp);
+  Curve AdPtFit(Atmp, dPtTmp);
 
-  Gnuplot gp6("gnuplot -persist");
-  gp6 << "p '-' w l t 'dPt/dA'\n";
-  gp6.send(AdPtTmp);
-
-  // initialize and fill in the X coordinates vector (on a lattice)
-  VectorXd X = VectorXd::Zero(Nx);
-  for (int i = 0; i < Nx; i++) {
-    X(i) = i*dx;
-  }
+  run.AdPtFit = AdPtFit;
 
   // copy A, B and Pth to new vector objects, needed for resampling
   VectorXd A(run.curve.cols().x);
@@ -381,7 +375,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   // initialize differentiator
   Differentitor differentiator;
 
-  cout << NyUp << " steps up and " << NyDown << " steps down with step size " << dy << endl;
+  cout << NyUp << " steps up and " << NyDown << " steps down with step size "
+       << dy << endl;
 
   // reconstruct the upper part of the map using recursive solver
   for (int i = 1; i <= NyUp; i++) {
@@ -391,7 +386,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
       Curve::weightedAverage(Axy.row(NyDown+i-1), 1-(abs(i)-1)/Ny/3), dx);
     // evaluate the 1st derivative of Pt by A using fitting curve
     for (int k = 0; k < Nx; k++) {
-//      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i-1, k), xc, xb, coeff,
+//      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i-1, k), Ac, Ab, coeff,
 //        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
       dPt_dA(k) = gsl_fit_exp_eval_df(Axy(NyDown+i-1, k), coeff);
     }
@@ -416,7 +411,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i+1), 1-(abs(i)-1)/Ny/3), dx);
     for (int k = 0; k < Nx; k++) {
-//      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i+1, k), xc, xb, coeff,
+//      dPt_dA(k) = gsl_fit_epe_eval_df(Axy(NyDown+i+1, k), Ac, Ab, coeff,
 //        pCoeff, dpCoeff, event.config().order, eCoeff, ECoeff);
       dPt_dA(k) = gsl_fit_exp_eval_df(Axy(NyDown+i+1, k), coeff);
     }
@@ -429,6 +424,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
                                                1-abs(i)/Ny/3);
   }
+
+  run.Axy = Axy; // save vector potential
 
   // initialize the Bz(A) curve
   Curve ABz(A, Bz);
@@ -446,9 +443,9 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   // sort and unique it
   ABzFit.sort().unique();
 
-  Gnuplot gp7("gnuplot -persist");
-  gp7 << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fitted'\n";
-  gp7.send(ABz).send(ABzFit);
+  // save Bz(A)
+  run.ABz = ABz;
+  run.ABzFit = ABzFit;
 
   // calculate the Bz map using the fitted Bz(A)
   for (int i = -NyDown; i <= NyUp; i++) {
@@ -457,14 +454,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     }
   }
 
-  ofstream myfile;
-  myfile.open ("./map.dat");
-  myfile << Bzy << endl;
-  myfile.close();
-
-  myfile.open ("./a.dat");
-  myfile << Axy << endl;
-  myfile.close();
+  run.Bz = Bzy; // save magnetic field map
 
   // free dynamic arrays
 //  delete [] AarrAll;

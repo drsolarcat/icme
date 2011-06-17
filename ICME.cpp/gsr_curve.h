@@ -1,6 +1,7 @@
 
 #ifndef GSR_CURVE_H
 #define GSR_CURVE_H
+
 // project headers
 #include "branched_curve.h"
 #include "event.h"
