@@ -1,10 +1,11 @@
 
 PROGRAM = icme
+BENCHMARK = bench
 
-CXXSOURCES = icme.cpp config.cpp data.cpp my_time.cpp event.cpp \
+CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
-	gsl_fit_epe.cpp gsl_fit_poly.cpp gsl_fit_exp.cpp gnuplot.cpp
+	gsl_fit_epe.cpp gsl_fit_poly.cpp gsl_fit_exp.cpp gnuplot.cpp plotter.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 CXX = g++
@@ -13,13 +14,19 @@ BOOST = -lutil -lboost_iostreams
 MATLAB = -lmx -leng -lmat -lut
 FLAGS = -O3
 
-all: $(PROGRAM)
+all: $(PROGRAM) $(BENCHMARK)
 
-$(PROGRAM): $(CXXOBJECTS)
-	$(CXX) -o $@ $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(FLAGS)
+$(PROGRAM): $(CXXOBJECTS) $(PROGRAM).o
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(FLAGS)
 
-icme.o: icme.cpp
+$(BENCHMARK): $(CXXOBJECTS) $(BENCHMARK).o
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(FLAGS)
+
+$(PROGRAM).o: icme.cpp
 	$(CXX) -c -o icme.o icme.cpp $(FLAGS)
+
+$(BENCHMARK).o: bench.cpp
+	$(CXX) -c -o bench.o bench.cpp $(FLAGS)
 
 config.o: config.h config.cpp
 	$(CXX) -c -o config.o config.cpp $(FLAGS)
@@ -54,6 +61,9 @@ integrator.o: integrator.h integrator.cpp
 differentiator.o: differentiator.h differentiator.cpp
 	$(CXX) -c -o differentiator.o differentiator.cpp $(FLAGS)
 
+plotter.o: plotter.h plotter.cpp
+	$(CXX) -c -o plotter.o plotter.cpp $(FLAGS)
+
 gsl_fit_epe.o: gsl_fit_epe.h gsl_fit_epe.cpp
 	$(CXX) -c -o gsl_fit_epe.o gsl_fit_epe.cpp $(FLAGS)
 
@@ -70,8 +80,11 @@ event.o: event.h event.cpp
 	$(CXX) -c -o event.o event.cpp $(FLAGS)
 
 clean:
-	$(RM) -f $(CXXOBJECTS) $(PROGRAM)
+	$(RM) -f $(CXXOBJECTS) $(PROGRAM).o $(BENCHMARK).o $(PROGRAM) $(BENCHMARK)
 
 run:
 	./$(PROGRAM)
+
+test:
+	./$(BENCHMARK)
 
