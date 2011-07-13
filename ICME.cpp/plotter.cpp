@@ -71,8 +71,7 @@ void Plotter::plotResidueMap(const MatrixXd& residue, const VectorXd& theta,
   "delete(h)\n"
   "cbar_handle = findobj(gcf, 'Tag', 'Colorbar');\n"
   "set(get(cbar_handle,'xlabel'),'string','1/R');\n"
-  "hold off\n"
-  "uiwait(gcf);\n";
+  "hold off\n";
 
   engEvalString(_matlab, matlabCommand);
 }
@@ -87,6 +86,7 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   memcpy((double*)mxGetPr(mX), (double*)X.data(), X.size()*sizeof(double));
   memcpy((double*)mxGetPr(mY), (double*)Y.data(), Y.size()*sizeof(double));
 
+cout << Bz.minCoeff() << endl << Bz.maxCoeff() << endl;
   engPutVariable(_matlab, "X", mX);
   engPutVariable(_matlab, "Y", mY);
 
@@ -104,8 +104,6 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
 
   engPutVariable(_matlab, "Bz", mBz);
 
-  cout << Bz.minCoeff() << endl << Bz.maxCoeff() << endl;
-
   char matlabCommand[] =
   "figure\n"
   "contour(X, Y, Bz, linspace(min(Bz(:)), max(Bz(:)), 100), ...\n"
@@ -118,8 +116,7 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   "set(gcf, 'Color', 'white');\n"
   "set(gcf, 'InvertHardCopy', 'off');\n"
   "xlabel 'X_{MC} (AU)'\n"
-  "ylabel 'Y_{MC} (AU)'\n"
-  "uiwait(gcf);\n";
+  "ylabel 'Y_{MC} (AU)'\n";
 
   engEvalString(_matlab, matlabCommand);
 }
