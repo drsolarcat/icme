@@ -1,6 +1,6 @@
 
 // project headers
-#include "gsl_fit_exp.h"
+#include "fit_cexp.h"
 #include "curve.h"
 #include "integrator.h"
 // library headers
@@ -15,7 +15,7 @@ using namespace std;
 using namespace Eigen;
 
 // process the fitting
-int gsl_fit_exp(int n, double* x, double* y, double* c)
+int fit_cexp(int n, double* x, double* y, double* c)
 {
   const gsl_multifit_fdfsolver_type *T; // solver type
   gsl_multifit_fdfsolver *s; // solver
@@ -23,10 +23,10 @@ int gsl_fit_exp(int n, double* x, double* y, double* c)
   const int nc = 3; // number of fitting coefficients
 
   double c0[3]; // initialize initial guess for fitting parameters
-  gsl_fit_exp_0(n, x, y, c0); // compute the initial guess
+  fit_cexp_0(n, x, y, c0); // compute the initial guess
 
   gsl_multifit_function_fdf f; // fitting function
-  gsl_fit_exp_data params; // fitting function parameters
+  fit_cexp_data params; // fitting function parameters
 
   // initialize parametersof the fitting function
   params.x = x;
@@ -34,23 +34,23 @@ int gsl_fit_exp(int n, double* x, double* y, double* c)
   params.n = n;
 
   // initialize the fitting function
-  f.f = &gsl_fit_exp_f; // function
-  f.df = &gsl_fit_exp_df; // Jacobian
-  f.fdf = &gsl_fit_exp_fdf; // function and Jacobian
+  f.f = &fit_cexp_f; // function
+  f.df = &fit_cexp_df; // Jacobian
+  f.fdf = &fit_cexp_fdf; // function and Jacobian
   f.n = n; // length
   f.p = nc; // number of fitting coefficients
   f.params = &params; // fitting function parameters
 
   // vector for initial guess coefficients
-  gsl_vector *coeff0 = gsl_vector_alloc(nc);
-  gsl_vector_set(coeff0, 0, c0[0]);
-  gsl_vector_set(coeff0, 1, c0[1]);
-  gsl_vector_set(coeff0, 2, c0[2]);
+  gsl_vector* cVec0 = gsl_vector_alloc(nc);
+  gsl_vector_set(cVec0, 0, c0[0]);
+  gsl_vector_set(cVec0, 1, c0[1]);
+  gsl_vector_set(cVec0, 2, c0[2]);
 
   // set the solver
   T = gsl_multifit_fdfsolver_lmsder;
   s = gsl_multifit_fdfsolver_alloc(T, n, nc);
-  gsl_multifit_fdfsolver_set(s, &f, coeff0);
+  gsl_multifit_fdfsolver_set(s, &f, cVec0);
 
   // iterate the solver
   int i = 0;
@@ -72,7 +72,7 @@ int gsl_fit_exp(int n, double* x, double* y, double* c)
 }
 
 // compute the initial guess for the fitting parameters
-int gsl_fit_exp_0(int n, double* x, double* y, double* c0)
+int fit_cexp_0(int n, double* x, double* y, double* c0)
 {
   // map array data to vectors
   Map<VectorXd> xVec(x, n);
@@ -117,12 +117,12 @@ int gsl_fit_exp_0(int n, double* x, double* y, double* c0)
 }
 
 // minimization function
-int gsl_fit_exp_f(const gsl_vector* coeff, void* params, gsl_vector* f)
+int fit_cexp_f(const gsl_vector* coeff, void* params, gsl_vector* f)
 {
   // get function parameters
-  double *x = ((gsl_fit_exp_data*)params)->x;
-  double *y = ((gsl_fit_exp_data*)params)->y;
-  int n = ((gsl_fit_exp_data*)params)->n;
+  double* x = ((fit_cexp_data*)params)->x;
+  double* y = ((fit_cexp_data*)params)->y;
+  int n = ((fit_cexp_data*)params)->n;
 
   const int nc = 3; // number of fitting coefficients
   double c[nc]; // coefficients array
@@ -143,12 +143,12 @@ int gsl_fit_exp_f(const gsl_vector* coeff, void* params, gsl_vector* f)
 }
 
 // compute Jacobian of the fitting function
-int gsl_fit_exp_df(const gsl_vector* coeff, void* params, gsl_matrix* J)
+int fit_cexp_df(const gsl_vector* coeff, void* params, gsl_matrix* J)
 {
   // get function parameters from the parameters structure
-  double *x = ((gsl_fit_exp_data*)params)->x;
-  double *y = ((gsl_fit_exp_data*)params)->y;
-  int n = ((gsl_fit_exp_data*)params)->n;
+  double* x = ((fit_cexp_data*)params)->x;
+  double* y = ((fit_cexp_data*)params)->y;
+  int n = ((fit_cexp_data*)params)->n;
 
   const int nc = 3; // number of  fitting coefficients
   double c[nc]; // initialize array of the fitting coefficients
@@ -173,23 +173,23 @@ int gsl_fit_exp_df(const gsl_vector* coeff, void* params, gsl_matrix* J)
 }
 
 // compute Jacobian and function simultaiously
-int gsl_fit_exp_fdf(const gsl_vector* coeff, void* params, gsl_vector* f,
-                    gsl_matrix* J)
+int fit_cexp_fdf(const gsl_vector* coeff, void* params, gsl_vector* f,
+                 gsl_matrix* J)
 {
-  gsl_fit_exp_f(coeff, params, f); // compute the minimization function
-  gsl_fit_exp_df(coeff, params, J); // compute the Jacobian
+  fit_cexp_f(coeff, params, f); // compute the minimization function
+  fit_cexp_df(coeff, params, J); // compute the Jacobian
 
   return GSL_SUCCESS; // done
 }
 
 // evaluate the fitting function
-double gsl_fit_exp_eval_f(double x, double* c)
+double fit_cexp_eval_f(double x, double* c)
 {
   return c[0]+c[1]*exp(c[2]*x); // return the f(x) value
 }
 
 // evaluate the derivative of the fitting function
-double gsl_fit_exp_eval_df(double x, double* c)
+double fit_cexp_eval_df(double x, double* c)
 {
   return c[1]*c[2]*exp(c[2]*x); // return the df/dx(x) value
 }

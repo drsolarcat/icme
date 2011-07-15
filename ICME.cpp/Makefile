@@ -5,7 +5,8 @@ BENCHMARK = bench
 CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
-	gsl_fit_epe.cpp gsl_fit_poly.cpp gsl_fit_exp.cpp gnuplot.cpp plotter.cpp
+	fit_poly.cpp fit_exp.cpp fit_cexp.cpp fit_polyexp.cpp gnuplot.cpp \
+	plotter.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 CXX = g++
@@ -64,14 +65,17 @@ differentiator.o: differentiator.h differentiator.cpp
 plotter.o: plotter.h plotter.cpp
 	$(CXX) -c -o plotter.o plotter.cpp $(FLAGS)
 
-gsl_fit_epe.o: gsl_fit_epe.h gsl_fit_epe.cpp
-	$(CXX) -c -o gsl_fit_epe.o gsl_fit_epe.cpp $(FLAGS)
+fit_poly.o: fit_poly.h fit_poly.cpp
+	$(CXX) -c -o fit_poly.o fit_poly.cpp $(FLAGS)
 
-gsl_fit_poly.o: gsl_fit_poly.h gsl_fit_poly.cpp
-	$(CXX) -c -o gsl_fit_poly.o gsl_fit_poly.cpp $(FLAGS)
+fit_exp.o: fit_exp.h fit_exp.cpp
+	$(CXX) -c -o fit_exp.o fit_exp.cpp $(FLAGS)
 
-gsl_fit_exp.o: gsl_fit_exp.h gsl_fit_exp.cpp
-	$(CXX) -c -o gsl_fit_exp.o gsl_fit_exp.cpp $(FLAGS)
+fit_cexp.o: fit_cexp.h fit_cexp.cpp
+	$(CXX) -c -o fit_cexp.o fit_cexp.cpp $(FLAGS)
+
+fit_polyexp.o: fit_polyexp.h fit_polyexp.cpp
+	$(CXX) -c -o fit_polyexp.o fit_polyexp.cpp $(FLAGS)
 
 gnuplot.o: gnuplot.h gnuplot.cpp
 	$(CXX) -c -o gnuplot.o gnuplot.cpp $(FLAGS)

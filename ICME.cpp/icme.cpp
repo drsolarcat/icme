@@ -78,6 +78,7 @@ int main() {
 
         // plot residue maps through Matlab
         Plotter plotter;
+        /*
         VectorXd phi, theta;
         for (int i = 0; i < (*event).gsr().runs.size(); i++) {
 
@@ -103,6 +104,7 @@ int main() {
                                  (*event).gsr().runs[i].optTheta,
                                  (*event).gsr().runs[i].optPhi);
         }
+        */
 
         // plot Pt(A) through Gnuplot
         Gnuplot APt("gnuplot -persist");

@@ -1,16 +1,15 @@
 
 // project headers
-#include "my_fit_poly.h"
+#include "fit_poly.h"
 // library headers
 #include <gsl/gsl_multifit.h>
 
 // fit polynomial of required order to data
-int my_fit_poly(const int n, const double *x, const double *y,
-                const int order, double *c)
+int fit_poly(int n, double* x, double* y, int order, double* c)
 {
   gsl_multifit_linear_workspace *ws; // workspace
   gsl_matrix *cov, *X; // covariance and X data matrices
-  gsl_vector *y, *c; // Y data and coefficients vectors
+  gsl_vector *yVec, *cVec; // Y data and coefficients vectors
   double chisq; // chi squared
 
   // allocate vectors and matrices
@@ -49,8 +48,7 @@ int my_fit_poly(const int n, const double *x, const double *y,
 }
 
 // evaluate polynomial
-double my_fit_poly_eval(const double x, const int order,
-                        const double *c)
+double fit_poly_eval_f(double x, int order, double* c)
 {
   double y = 0; // initialize the resulting value
 
@@ -60,5 +58,16 @@ double my_fit_poly_eval(const double x, const int order,
   }
 
   return y; // return the result
+}
+
+// evaluate polynomial 1st derivative
+double fit_poly_eval_df(double x, int order, double* c)
+{
+  double cd[order];
+  for (int i = 0; i < order; i++) {
+    cd[i] = c[i+1]*(i+1);
+  }
+
+  return fit_poly_eval_f(x, order-1, cd);
 }
 
