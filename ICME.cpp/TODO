@@ -4,3 +4,12 @@
 4. Check that dx/dy artifact has really disappeared
 5. Implement several fitting functions, seems like there isn't any universal one
 
+Combination of models:
+1. Do some test GSRs to determine event time boundaries for GSR
+2. Do GSR with optimized time boundaries
+2.1. Determine flux rope invariant axis orientation
+2.2. Determine flux rope time boundaries
+3. Do flux rope fitting modeling with axis direction and time boundaries from previous step (Hidalgo eliptical model)
+3.1. Determine impact parameter
+4. Do GSR with invariant axis, time boundaries and impact parameter determined from previous steps
+

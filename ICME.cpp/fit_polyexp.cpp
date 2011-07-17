@@ -17,7 +17,7 @@ int fit_polyexp(int n, double* x, double* y, int order, double* c)
   }
   c[order+1] = cExp[0];
   c[order+2] = cExp[1];
-  c[order+3] = 0.06;
+  c[order+3] = 0.08;
   c[order+4] = x[0];
 
   return GSL_SUCCESS;
