@@ -1,4 +1,9 @@
 
+CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/matlab/extern/include
+LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/extern/lib/glnx86:/usr/local/matlab/bin/glnx86
+LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/bin/glnx86
+export CPLUS_INCLUDE_PATH LIBRARY_PATH
+
 PROGRAM = icme
 BENCHMARK = bench
 
@@ -13,75 +18,75 @@ CXX = g++
 GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams
 MATLAB = -lmx -leng -lmat -lut
-FLAGS = -O3
+CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH)
 
 all: $(PROGRAM) $(BENCHMARK)
 
 $(PROGRAM): $(CXXOBJECTS) $(PROGRAM).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(FLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(CXXFLAGS)
 
 $(BENCHMARK): $(CXXOBJECTS) $(BENCHMARK).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(FLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(CXXFLAGS)
 
 $(PROGRAM).o: icme.cpp
-	$(CXX) -c -o icme.o icme.cpp $(FLAGS)
+	$(CXX) -c -o icme.o icme.cpp $(CXXFLAGS)
 
 $(BENCHMARK).o: bench.cpp
-	$(CXX) -c -o bench.o bench.cpp $(FLAGS)
+	$(CXX) -c -o bench.o bench.cpp $(CXXFLAGS)
 
 config.o: config.h config.cpp
-	$(CXX) -c -o config.o config.cpp $(FLAGS)
+	$(CXX) -c -o config.o config.cpp $(CXXFLAGS)
 
 data.o: data.h data.cpp
-	$(CXX) -c -o data.o data.cpp $(FLAGS)
+	$(CXX) -c -o data.o data.cpp $(CXXFLAGS)
 
 my_time.o: my_time.h my_time.cpp
-	$(CXX) -c -o my_time.o my_time.cpp $(FLAGS)
+	$(CXX) -c -o my_time.o my_time.cpp $(CXXFLAGS)
 
 mva_analyzer.o: mva_analyzer.h mva_analyzer.cpp
-	$(CXX) -c -o mva_analyzer.o mva_analyzer.cpp $(FLAGS)
+	$(CXX) -c -o mva_analyzer.o mva_analyzer.cpp $(CXXFLAGS)
 
 dht_analyzer.o: dht_analyzer.h dht_analyzer.cpp
-	$(CXX) -c -o dht_analyzer.o dht_analyzer.cpp $(FLAGS)
+	$(CXX) -c -o dht_analyzer.o dht_analyzer.cpp $(CXXFLAGS)
 
 gsr_analyzer.o: gsr_analyzer.h gsr_analyzer.cpp
-	$(CXX) -c -o gsr_analyzer.o gsr_analyzer.cpp $(FLAGS)
+	$(CXX) -c -o gsr_analyzer.o gsr_analyzer.cpp $(CXXFLAGS)
 
 curve.o: curve.h curve.cpp
-	$(CXX) -c -o curve.o curve.cpp $(FLAGS)
+	$(CXX) -c -o curve.o curve.cpp $(CXXFLAGS)
 
 gsr_curve.o: gsr_curve.h gsr_curve.cpp
-	$(CXX) -c -o gsr_curve.o gsr_curve.cpp $(FLAGS)
+	$(CXX) -c -o gsr_curve.o gsr_curve.cpp $(CXXFLAGS)
 
 branched_curve.o: branched_curve.h branched_curve.cpp
-	$(CXX) -c -o branched_curve.o branched_curve.cpp $(FLAGS)
+	$(CXX) -c -o branched_curve.o branched_curve.cpp $(CXXFLAGS)
 
 integrator.o: integrator.h integrator.cpp
-	$(CXX) -c -o integrator.o integrator.cpp $(FLAGS)
+	$(CXX) -c -o integrator.o integrator.cpp $(CXXFLAGS)
 
 differentiator.o: differentiator.h differentiator.cpp
-	$(CXX) -c -o differentiator.o differentiator.cpp $(FLAGS)
+	$(CXX) -c -o differentiator.o differentiator.cpp $(CXXFLAGS)
 
 plotter.o: plotter.h plotter.cpp
-	$(CXX) -c -o plotter.o plotter.cpp $(FLAGS)
+	$(CXX) -c -o plotter.o plotter.cpp $(CXXFLAGS)
 
 fit_poly.o: fit_poly.h fit_poly.cpp
-	$(CXX) -c -o fit_poly.o fit_poly.cpp $(FLAGS)
+	$(CXX) -c -o fit_poly.o fit_poly.cpp $(CXXFLAGS)
 
 fit_exp.o: fit_exp.h fit_exp.cpp
-	$(CXX) -c -o fit_exp.o fit_exp.cpp $(FLAGS)
+	$(CXX) -c -o fit_exp.o fit_exp.cpp $(CXXFLAGS)
 
 fit_cexp.o: fit_cexp.h fit_cexp.cpp
-	$(CXX) -c -o fit_cexp.o fit_cexp.cpp $(FLAGS)
+	$(CXX) -c -o fit_cexp.o fit_cexp.cpp $(CXXFLAGS)
 
 fit_polyexp.o: fit_polyexp.h fit_polyexp.cpp
-	$(CXX) -c -o fit_polyexp.o fit_polyexp.cpp $(FLAGS)
+	$(CXX) -c -o fit_polyexp.o fit_polyexp.cpp $(CXXFLAGS)
 
 gnuplot.o: gnuplot.h gnuplot.cpp
-	$(CXX) -c -o gnuplot.o gnuplot.cpp $(FLAGS)
+	$(CXX) -c -o gnuplot.o gnuplot.cpp $(CXXFLAGS)
 
 event.o: event.h event.cpp
-	$(CXX) -c -o event.o event.cpp $(FLAGS)
+	$(CXX) -c -o event.o event.cpp $(CXXFLAGS)
 
 clean:
 	$(RM) -f $(CXXOBJECTS) $(PROGRAM).o $(BENCHMARK).o $(PROGRAM) $(BENCHMARK)
