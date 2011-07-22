@@ -50,7 +50,8 @@ struct GsrRun {
   int Nx, Ny;
   Eigen::VectorXd X, Y;
   Eigen::MatrixXd Axy, Bz;
-  Curve APtIn, APtOut, APtFit, AdPtFit, ABz, ABzFit;
+  Curve APtInCurve, APtOutCurve, APtFitCurve, AdPtFitCurve,
+        ABzCurve, ABzFitCurve;
 };
 
 // this structure holds results of GSR analysis

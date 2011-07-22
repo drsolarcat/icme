@@ -28,5 +28,17 @@ double fit_exp_eval_f(double x, double* c);
 // evaluate the first derivative of the fitting function
 double fit_exp_eval_df(double x, double* c);
 
+class ExpFit {
+  double *_c;
+  public:
+    ExpFit(int n, double *x, double *y) {
+      _c = new double[n];
+      fit_exp(n, x, y, _c);
+    }
+    ~ExpFit() {delete [] _c;}
+    double f(double x) {return fit_exp_eval_f(x, _c);}
+    double df(double x) {return fit_exp_eval_df(x, _c);}
+};
+
 #endif
 

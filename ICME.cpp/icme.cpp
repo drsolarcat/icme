@@ -111,20 +111,20 @@ int main() {
         APt << "p '-' w p t 'Pt(A) in', "
               << "'-' w p t 'Pt(A) out', "
               << "'-' w l t 'Pt(A) fit'\n";
-        APt.send((*event).gsr().runs.back().APtIn).
-            send((*event).gsr().runs.back().APtOut).
-            send((*event).gsr().runs.back().APtFit);
+        APt.send((*event).gsr().runs.back().APtInCurve).
+            send((*event).gsr().runs.back().APtOutCurve).
+            send((*event).gsr().runs.back().APtFitCurve);
 
         // plot dPt/dA through Gnuplot
         Gnuplot AdPt("gnuplot -persist");
         AdPt << "p '-' w l t 'dPt/dA fit'\n";
-        AdPt.send((*event).gsr().runs.back().AdPtFit);
+        AdPt.send((*event).gsr().runs.back().AdPtFitCurve);
 
         // plot Bz(A) through Gnuplot
         Gnuplot ABz("gnuplot -persist");
         ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
-        ABz.send((*event).gsr().runs.back().ABz).
-            send((*event).gsr().runs.back().ABzFit);
+        ABz.send((*event).gsr().runs.back().ABzCurve).
+            send((*event).gsr().runs.back().ABzFitCurve);
 
         // plot magnetic field map through Matlab
 

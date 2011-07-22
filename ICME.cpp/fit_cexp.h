@@ -28,5 +28,17 @@ double fit_cexp_eval_f(double x, double* c);
 // evaluate the first derivative of the fitting function
 double fit_cexp_eval_df(double x, double* c);
 
+class CexpFit {
+  double *_c;
+  public:
+    CexpFit(int n, double *x, double *y) {
+      _c = new double[n];
+      fit_cexp(n, x, y, _c);
+    }
+    ~CexpFit() {delete [] _c;}
+    double f(double x) {return fit_cexp_eval_f(x, _c);}
+    double df(double x) {return fit_cexp_eval_df(x, _c);}
+};
+
 #endif
 

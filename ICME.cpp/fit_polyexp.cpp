@@ -3,15 +3,26 @@
 #include "fit_polyexp.h"
 #include "fit_poly.h"
 #include "fit_exp.h"
+// library headers
+#include <gsl/gsl_sort.h>
+#include <gsl/gsl_permute.h>
 // standard headers
 #include <cmath>
 
 int fit_polyexp(int n, double* x, double* y, int order, double* c)
 {
-  double cExp[2];
-  fit_exp(n, x, y, cExp);
+  // sort data
+  size_t p[n];
+  gsl_sort_index(p, x, 1, n);
+  gsl_permute(p, x, 1, n);
+  gsl_permute(p, y, 1, n);
+  // fit polynomial part
   double cPoly[order+1];
   fit_poly(n, x, y, order, cPoly);
+  // fit exponential part
+  double cExp[2], cExpCtr[3], cExpBdr[2];
+  fit_exp(n, x, y, cExp);
+
   for (int i = 0; i < order+1; i++) {
     c[i] = cPoly[i];
   }
