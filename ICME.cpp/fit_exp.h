@@ -3,9 +3,49 @@
 #define FIT_EXP
 
 // library headers
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_matrix.h>
+//#include <gsl/gsl_vector.h>
+//#include <gsl/gsl_matrix.h>
 
+class ExpFit : public AbstractFit {
+  protected:
+    int _nc = 3;
+  public:
+    // evaluate function at point X using free parameters in array C
+    virtual double f(double x, double* c);
+    // evaluate function derivaives for all free parameters at point X using
+    // free parameters in array C
+    virtual void df(double x, double* c, double* dy);
+    // evaluate function derivative at X
+    virtual double df(double x);
+};
+
+class PosExpFit : public AbstractFit {
+  protected:
+    int _nc = 3;
+  public:
+    // evaluate function at point X using free parameters in array C
+    virtual double f(double x, double* c);
+    // evaluate function derivaives for all free parameters at point X using
+    // free parameters in array C
+    virtual void df(double x, double* c, double* dy);
+    // evaluate function derivative at X
+    virtual double df(double x);
+};
+
+class PosZeroExpFit : public AbstractFit {
+  protected:
+    int _nc = 2;
+  public:
+    // evaluate function at point X using free parameters in array C
+    virtual double f(double x, double* c);
+    // evaluate function derivaives for all free parameters at point X using
+    // free parameters in array C
+    virtual void df(double x, double* c, double* dy);
+    // evaluate function derivative at X
+    virtual double df(double x);
+};
+
+/*
 // structure for storing the curve data
 struct fit_exp_data {
   double *x, *y; // X and Y data
@@ -27,18 +67,7 @@ int fit_exp_fdf(const gsl_vector* coeff, void* params, gsl_vector* f,
 double fit_exp_eval_f(double x, double* c);
 // evaluate the first derivative of the fitting function
 double fit_exp_eval_df(double x, double* c);
-
-class ExpFit {
-  double *_c;
-  public:
-    ExpFit(int n, double *x, double *y) {
-      _c = new double[n];
-      fit_exp(n, x, y, _c);
-    }
-    ~ExpFit() {delete [] _c;}
-    double f(double x) {return fit_exp_eval_f(x, _c);}
-    double df(double x) {return fit_exp_eval_df(x, _c);}
-};
+*/
 
 #endif
 

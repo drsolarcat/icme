@@ -88,6 +88,9 @@ gnuplot.o: gnuplot.h gnuplot.cpp
 event.o: event.h event.cpp
 	$(CXX) -c -o event.o event.cpp $(CXXFLAGS)
 
+fit_abstract.o: fit_abstract.h fit_abstract.cpp
+	$(CXX) -c -o fit_abstract.o fit_abstract.cpp $(CXXFLAGS)
+
 clean:
 	$(RM) -f $(CXXOBJECTS) $(PROGRAM).o $(BENCHMARK).o $(PROGRAM) $(BENCHMARK)
 
