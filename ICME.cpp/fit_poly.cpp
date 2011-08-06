@@ -4,8 +4,8 @@
 // library headers
 #include <gsl/gsl_multifit.h>
 
-// fit polynomial of required order to data
-int fit_poly(int n, double* x, double* y, int order, double* c)
+// fit method
+void PolyFit::fit()
 {
   gsl_multifit_linear_workspace *ws; // workspace
   gsl_matrix *cov, *X; // covariance and X data matrices
@@ -13,28 +13,28 @@ int fit_poly(int n, double* x, double* y, int order, double* c)
   double chisq; // chi squared
 
   // allocate vectors and matrices
-  X = gsl_matrix_alloc(n, order+1);
-  yVec = gsl_vector_alloc(n);
-  cVec = gsl_vector_alloc(order+1);
-  cov = gsl_matrix_alloc(order+1, order+1);
+  X = gsl_matrix_alloc(_n, _nc);
+  yVec = gsl_vector_alloc(_n);
+  cVec = gsl_vector_alloc(_nc);
+  cov = gsl_matrix_alloc(_nc, _nc);
 
   // fill X data matrix
-  for(int i = 0; i < n; i++) {
+  for(int i = 0; i < _n; i++) {
     gsl_matrix_set(X, i, 0, 1.0);
-    for(int j = 0; j <= order; j++) {
-      gsl_matrix_set(X, i, j, pow(x[i], j));
+    for(int j = 0; j <= _order; j++) {
+      gsl_matrix_set(X, i, j, pow(_x[i], j));
     }
-    gsl_vector_set(yVec, i, y[i]);
+    gsl_vector_set(yVec, i, _y[i]);
   }
 
   // allocate linear multifit solver
-  ws = gsl_multifit_linear_alloc(n, order+1);
+  ws = gsl_multifit_linear_alloc(_n, _nc);
   // do the fitting
   gsl_multifit_linear(X, yVec, cVec, cov, &chisq, ws);
 
   // fill in fitting coefficients array
-  for(int i = 0; i <= order; i++) {
-    c[i] = gsl_vector_get(cVec, i);
+  for(int i = 0; i <= _order; i++) {
+    _c[i] = gsl_vector_get(cVec, i);
   }
 
   // free all preallocated objects
@@ -43,12 +43,9 @@ int fit_poly(int n, double* x, double* y, int order, double* c)
   gsl_matrix_free(cov);
   gsl_vector_free(yVec);
   gsl_vector_free(cVec);
-
-  return GSL_SUCCESS; // done
 }
 
-// evaluate polynomial
-double fit_poly_eval_f(double x, int order, double* c)
+double PolyFit::f(double x, int order, double* c)
 {
   double y = 0; // initialize the resulting value
 
@@ -60,14 +57,19 @@ double fit_poly_eval_f(double x, int order, double* c)
   return y; // return the result
 }
 
-// evaluate polynomial 1st derivative
-double fit_poly_eval_df(double x, int order, double* c)
+double PolyFit::f(double x)
 {
-  double cd[order];
-  for (int i = 0; i < order; i++) {
-    cd[i] = c[i+1]*(i+1);
+  return f(x, _order, _c); // return the result
+}
+
+// evaluate function derivative at X
+double PolyFit::df(double x)
+{
+  double cd[_nc-1];
+  for (int i = 0; i < _nc-1; i++) {
+    cd[i] = _c[i+1]*(i+1);
   }
 
-  return fit_poly_eval_f(x, order-1, cd);
+  return f(x, _order-1, cd);
 }
 

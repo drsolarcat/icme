@@ -7,8 +7,7 @@
 #include "gnuplot.h"
 #include "fit_poly.h"
 #include "fit_exp.h"
-#include "fit_cexp.h"
-#include "fit_polyexp.h"
+#include "fit_poly_exp.h"
 #include "differentiator.h"
 // library headers
 #include <eigen3/Eigen/Dense>
@@ -237,28 +236,14 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   PtArrAll = const_cast<double*>(APtAllCurve.cols().y.data());
 
   // find the slope of the curve
-  double lCoeff[2]; // linear coefficients array
-  // do the fitting
-  fit_poly(nAll, AarrAll, PtArrAll, 1, lCoeff);
-
+  PolyFit APtLineFit(nAll, AarrAll, PtArrAll, 1);
+  APtLineFit.fit();
   // initialize the slope, TODO: sign function
-  int slope = (lCoeff[1] > 0 ? 1 : -1);
+  int slope = (APtLineFit.c()[1] > 0 ? 1 : -1);
 
-  double pCoeff[event.config().order+1]; // polynomial coefficients
   // do the fitting
-  fit_poly(nAll, AarrAll, PtArrAll, event.config().order, pCoeff);
-
-  // compute 1st derivative of the polynomial
-  double dpCoeff[event.config().order];
-  for (int i = 0; i <= event.config().order-1; i++) {
-    dpCoeff[i] = pCoeff[i+1]*(i+1);
-  }
-
-  // compute 2nd derivative of the polynomial
-  double ddpCoeff[event.config().order-1];
-  for (int i = 0; i <= event.config().order-2; i++) {
-    ddpCoeff[i] = dpCoeff[i+1]*(i+1);
-  }
+  PolyFit APtPolyFit(nAll, AarrAll, PtArrAll, event.config().order);
+  APtPolyFit.fit();
 
   double Ab, Ac; // boundary and center value of A
   VectorXd Atmp; // wide range A, just for plotting
@@ -267,17 +252,17 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     Ab = APtAllCurve.cols().x.minCoeff(&AbIndex);
     Ac = APtAllCurve.cols().x.maxCoeff();
     Atmp = VectorXd::LinSpaced(1000, APtAllCurve.cols().x(0)-150,
-                                     APtAllCurve.cols().x(nAll-1)+5);
+                                     APtAllCurve.cols().x(nAll-1)+50);
   } else { // Ac < Ab
     Ab = APtAllCurve.cols().x.maxCoeff(&AbIndex);
     Ac = APtAllCurve.cols().x.minCoeff();
-    Atmp = VectorXd::LinSpaced(1000, APtAllCurve.cols().x(0)-5,
+    Atmp = VectorXd::LinSpaced(1000, APtAllCurve.cols().x(0)-50,
                                      APtAllCurve.cols().x(nAll-1)+150);
   }
 
   // do not allow the Ab to pass the zero derivative point of the polynomial
-  while (slope > 0 && fit_poly_eval_f(Ab, event.config().order-1, dpCoeff) < 0 ||
-         slope < 0 && fit_poly_eval_f(Ab, event.config().order-1, dpCoeff) > 0)
+  while (slope > 0 && APtPolyFit.df(Ab) < 0 ||
+         slope < 0 && APtPolyFit.df(Ab) > 0)
   {
     if (slope > 0) {
       Ab = APtAllCurve.cols().x(++AbIndex);
@@ -287,7 +272,9 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   }
 
   // polyexp fitting
-  PolyexpFit APtFit(nAll, AarrAll, PtArrAll, event.config().order);
+  PolyExpFit APtFit(nAll, AarrAll, PtArrAll, event.config().order,
+    event.config().fittingParameterCtr, event.config().fittingParameterBdr);
+  APtFit.fit();
 
   // initialize temporary Pt vector, for plotting only
   VectorXd PtTmp = VectorXd::Zero(1000);
@@ -398,12 +385,14 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   Curve ABzCurve(A, Bz);
 
   // fit it with exponent
-  CexpFit ABzFit(Nx, A.data(), Bz.data());
+  ExpFit ABzFit(Nx, A.data(), Bz.data());
+  ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function
   for (int i = 0; i < Nx; i++) {
     BzFit(i) = ABzFit.f(A(i));
   }
+
   // initialize fitted Bz(A)
   Curve ABzFitCurve(A, BzFit);
   // sort and unique it

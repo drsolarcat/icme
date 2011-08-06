@@ -10,11 +10,11 @@
 
 // this structure represents a single row from the config file
 struct ConfigRow {
-  int flag, Nx, order;
+  int flag, samplingInterval, Nx, order;
   char quality;
   bool toPlot, toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
-  std::string spacecraft;
-  double ratio, minY, maxY, samplingInterval;
+  std::string spacecraft, fittingFuntion;
+  double ratio, minY, maxY, fittingParameterCtr, fittingParameterBdr;
   My::Time beginTime, endTime;
 };
 

@@ -37,8 +37,8 @@ Config& Config::readFile(string configFilePath) {
       // we continue only if the line is not empty and not a comment
       if (!configFileLine.empty() && // check if the line is empty
           configFileLine[0] != '#' && // check if it's commented
-          configFileLine[0] != '!') // check if it's the first line
-                                    // with titles
+          configFileLine[0] != '!' && // check if it's the first line
+          configFileLine[0] != ' ')   // check if it's an empty line
       {
         // treating each line as a string stream
         // clean the string stream, required on every iteration
@@ -51,14 +51,14 @@ Config& Config::readFile(string configFilePath) {
           configRow.toPlot >> configRow.toGsr >> configRow.toMva >>
           configRow.toCm >> configRow.toTm >> configRow.toHm >>
           configRow.toOm >> configRow.toSave >> configRow.spacecraft >>
-          beginDate >> beginTime >> endDate >> endTime >> configRow.Nx >>
-          configRow.ratio >> configRow.minY >> configRow.maxY >>
-          configRow.order;
+          beginDate >> beginTime >> endDate >> endTime >>
+          configRow.samplingInterval >> configRow.fittingFuntion >>
+          configRow.fittingParameterBdr >> configRow.fittingParameterCtr >>
+          configRow.Nx >> configRow.ratio >> configRow.minY >>
+          configRow.maxY >> configRow.order;
         // calculate begin and end Time objects instead of strings
         configRow.beginTime = Time(beginDate+' '+beginTime);
         configRow.endTime = Time(endDate+' '+endTime);
-        // TMP: set the sampling interval explicitly                          !
-        configRow.samplingInterval = 240;
         // push the ConfigRow structure to the vector of config data
         data.push_back(configRow);
       }

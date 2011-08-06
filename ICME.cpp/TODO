@@ -13,3 +13,6 @@ Combination of models:
 3.1. Determine impact parameter
 4. Do GSR with invariant axis, time boundaries and impact parameter determined from previous steps
 
+1. Do not call virtual methods from constructors and destructors
+2. Name hiding - polymorphic methods start from scratch, solution: using Base::method
+

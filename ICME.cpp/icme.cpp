@@ -13,20 +13,26 @@
 // standard headers
 #include <string>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 using namespace Eigen;
 using namespace My;
 
 // this is the main driver function of the whole project
-int main() {
+int main(int argc, char* argv[]) {
 
-  const string configPath = "./res/config"; // path to config file
-  // the quality of the events to be analyzed
-  // TODO: it should be in command line arguments
-  const char eventQuality = 'g';
+  // parse command line arguments
+  const char eventQuality = (argc > 1 ? *argv[1] : 'g'); // event quality
+  // path to config file
+  const string configPath = (argc > 2 ? argv[2] : "./res/config");
+  // path to directory with data files
+  const string dataDir = (argc > 3 ? argv[3] : "./res");
+
   Config config; // config object, holds config for all events
-  string dataPath; // path to data file, will be changed for each event
+  ostringstream dataPathStream; // srting stream for data path string
+  string dataPath; // path to data file
+
   // initialize analyzers
   MvaAnalyzer mva; // MVA analysis class
   GsrAnalyzer gsr; // GSR analysis class
@@ -37,19 +43,26 @@ int main() {
 
   // start iterating through the events that should be analyzed
   for (int iEvent = 0; iEvent < config.rows().size(); iEvent++) {
-
     // determine the path to the data file dependant on spacecraft
+    // push the path to data files
+    dataPathStream << dataDir << '/';
     if (config.row(iEvent).spacecraft == "WIND") {
-      dataPath = "./res/wind_240.dat";
+      dataPathStream << "wind_";
     } else if (config.row(iEvent).spacecraft == "ACE") {
-      dataPath = "./res/ace_240.dat";
+      dataPathStream << "ace_";
     } else if (config.row(iEvent).spacecraft == "STA") {
-      dataPath = "./res/stereo_a_240.dat";
+      dataPathStream << "stereo_a_";
     } else if (config.row(iEvent).spacecraft == "STB") {
-      dataPath = "./res/stereo_b_240.dat";
+      dataPathStream << "stereo_b_";
     } else { // throw an error - unknown spacecraft
       cout << "Unknown spacecraft" << endl;
     }
+    // finalize by adding resolution
+    dataPathStream << config.row(iEvent).samplingInterval << ".dat";
+    // save the data path
+    dataPath = dataPathStream.str();
+    // clear the stream
+    dataPathStream.clear();
 
     // create Time objects for wider limits of the event, initially copy
     // existing time limits
@@ -65,7 +78,7 @@ int main() {
     Data* dataNarrow = new Data(*dataWide);
     // filter narrow Data object out of wider one
     dataNarrow->filter(config.row(iEvent).beginTime,
-      config.row(iEvent).endTime);
+                       config.row(iEvent).endTime);
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
 

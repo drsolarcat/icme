@@ -3,21 +3,23 @@
 
 using namespace std;
 
-class A {
+class Base {
   public:
-    int test() {return 2;};
+    int f(int i, int k) {return 3*i;}
+    int f(int i) {return i;}
 };
 
-class B : public A {
-  //public:
-    //int test() {return 1;}
+class Derived : public Base {
+  public:
+    using Base::f;
+    int f(int i, int k) {return 2*i;}
 };
-
-int B::test() {return 1;}
 
 int main() {
-  B b;
-  cout << b.test() << endl;
+  Derived obj;
+
+  cout << obj.f(2) << endl;
+
   return 0;
 }
 

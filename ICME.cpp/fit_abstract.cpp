@@ -3,16 +3,25 @@
 #include "fit_abstract.h"
 // library headers
 #include <gsl/gsl_multifit_nlin.h>
+// standard headers
+#include <iostream>
 
-extern "C" {
+using namespace std;
+
+// define functions for fitting
+extern "C"
+{
+  // calculates residues
   int fit_f(const gsl_vector* coeff, void* params, gsl_vector* f) {
     AbstractFit *fit = (AbstractFit*)params;
     return fit->f(coeff, params, f);
   }
+  // calculates Jacobian
   int fit_df(const gsl_vector* coeff, void* params, gsl_matrix* J) {
     AbstractFit *fit = (AbstractFit*)params;
     return fit->df(coeff, params, J);
   }
+  // calculates residues and Jacobian
   int fit_fdf(const gsl_vector* coeff, void* params,
               gsl_vector* f, gsl_matrix* J)
   {
@@ -21,22 +30,14 @@ extern "C" {
   }
 }
 
-AbstractFit::AbstractFit(int n, double* x, double* y)
+// fit method
+void AbstractFit::fit()
 {
-  _n = n;
-  _x = x;
-  _y = y;
-  _c = new double[_nc];
-  _c0 = new double[_nc];
-
-  const gsl_multifit_fdfsolver_type *T; // solver type
-  gsl_multifit_fdfsolver *s; // solver
+  // status flag
   int status;
 
-  // initial guess
-  // ---- TODO
-  //fit_0(_n, _x, _y, c0); // compute the initial guess
-  // ---- TODO
+  // compute the initial guess
+  fit0();
 
   gsl_multifit_function_fdf f; // fitting function
 
@@ -49,31 +50,31 @@ AbstractFit::AbstractFit(int n, double* x, double* y)
   f.params = this; // fitting function parameters
 
   // vector for initial guess coefficients
-  gsl_vector* cVec0 = gsl_vector_alloc(_nc);
+  gsl_vector *cVec0 = gsl_vector_alloc(_nc);
   for (int i = 0; i < _nc; i++) {
     gsl_vector_set(cVec0, i, _c0[i]);
   }
 
-  // set the solver
-  T = gsl_multifit_fdfsolver_lmsder;
-  s = gsl_multifit_fdfsolver_alloc(T, _n, _nc);
-  gsl_multifit_fdfsolver_set(s, &f, cVec0);
+  // initialize the solver
+  gsl_multifit_fdfsolver *solver =
+    gsl_multifit_fdfsolver_alloc(gsl_multifit_fdfsolver_lmsder, _n, _nc);
+  gsl_multifit_fdfsolver_set(solver, &f, cVec0);
 
   // iterate the solver
   int i = 0;
   do {
     i++;
-    status = gsl_multifit_fdfsolver_iterate(s);
-    status = gsl_multifit_test_delta(s->dx, s->x, 1e-40, 1e-40);
-  } while (status == GSL_CONTINUE && i < 5000);
+    status = gsl_multifit_fdfsolver_iterate(solver);
+    status = gsl_multifit_test_delta(solver->dx, solver->x, _epsabs, _epsrel);
+  } while (status == GSL_CONTINUE && i < _niter);
 
   // coefficients of the fitted curve
   for (int i = 0; i < _nc; i++) {
-    _c[i] = gsl_vector_get(s->x, i);
+    _c[i] = gsl_vector_get(solver->x, i);
   }
 
   // free the solver
-  gsl_multifit_fdfsolver_free (s);
+  gsl_multifit_fdfsolver_free (solver);
 }
 
 // calculate vector of residues between fitted function and data
@@ -123,7 +124,7 @@ int AbstractFit::df(const gsl_vector* cVec, void* params, gsl_matrix* J)
 
 // calculate both residues and Jacobian
 int AbstractFit::fdf(const gsl_vector* cVec, void* params,
-                      gsl_vector* fVec, gsl_matrix* J)
+                     gsl_vector* fVec, gsl_matrix* J)
 {
   f(cVec, params, fVec); // compute the minimization function
   df(cVec, params, J); // compute the Jacobian
