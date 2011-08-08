@@ -1,7 +1,14 @@
 
-CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/matlab/extern/include
-LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/extern/lib/glnx86:/usr/local/matlab/bin/glnx86
-LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/bin/glnx86
+ifeq ($(HOSTNAME),flspa-milkyway)
+	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/matlab/extern/include
+	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/extern/lib/glnx86:/usr/local/matlab/bin/glnx86
+	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/bin/glnx86
+else
+	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/usr/local/matlab2009b/extern/include
+	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnxa64:/usr/local/matlab2009b/bin/glnxa64
+	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64
+endif
+
 export CPLUS_INCLUDE_PATH LIBRARY_PATH
 
 PROGRAM = icme
