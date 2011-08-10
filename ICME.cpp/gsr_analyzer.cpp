@@ -15,80 +15,83 @@
 #include <gsl/gsl_sort_double.h>
 #include <gsl/gsl_permute.h>
 #include <gsl/gsl_fit.h>
+#include <log4cplus/logger.h>
+#include <log4cplus/configurator.h>
 // standard headers
 #include <iostream>
 #include <fstream>
 
 using namespace std;
 using namespace Eigen;
+using namespace log4cplus;
 
 // main trigger to perform GSR analysis of the event
 void GsrAnalyzer::analyze(Event& event) {
   DhtAnalyzer dht; // initialize dHT analyzer
   MvaAnalyzer mva; // initialize MVA analyzer
-  GsrResults  gsr; // structure for GSR results
 
+  Logger logger = Logger::getInstance("main");
+  LOG4CPLUS_WARN(logger, "GSR");
+
+  cout << "starting dHT analysis... ";
   dht.analyze(event); // carry dHT analysis for the event
+  cout << "done" << endl;
 
+  cout << "starting PMVAB analysis to find initial axes... ";
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
+  cout << "done" << endl;
 
-  // make a run of axes searching algorithm, save the results in the run
+  // make a run of axes searching algorithm, save the results in the gsr
   // structure
-  GsrRun run = loopAxes(event, 0, 1, 90, 0, 1, 360);
+  cout << "searching for optimal axes... ";
+  GsrResults gsr = loopAxes(event, 0, 1, 90, 0, 1, 360);
+  cout << "done" << endl;
   // quaternions, needed to turn to optimized axes
   Quaterniond qTheta;
   Quaterniond qPhi;
 
-  qTheta = AngleAxisd(run.optTheta*M_PI/180, event.pmvab().axes.y);
-  qPhi = AngleAxisd(run.optPhi*M_PI/180, event.pmvab().axes.z);
-  run.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
-  run.axes.x = (event.dht().Vht.dot(run.axes.z)*run.axes.z-
+  // initialize quaternions to turn the axes into MC axes
+  qTheta = AngleAxisd(gsr.optTheta*M_PI/180, event.pmvab().axes.y);
+  qPhi = AngleAxisd(gsr.optPhi*M_PI/180, event.pmvab().axes.z);
+  // turn the axes
+  gsr.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
+  gsr.axes.x = (event.dht().Vht.dot(gsr.axes.z)*gsr.axes.z-
                 event.dht().Vht).normalized();
-  run.axes.y = run.axes.z.cross(run.axes.x).normalized();
-  run.curve = GsrCurve(event, run.axes);
-  run.curve.initBranches("extremums").computeResidue();
+  gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
+  // initialize and save the Pt(A) curve
+  gsr.curve = GsrCurve(event, gsr.axes);
+  gsr.curve.initBranches("extremums").computeResidue();
 
-  computeMap(event, run);
-  gsr.runs.push_back(run);
+  // calculate the magnetic field map and save it into gsr structure
+  computeMap(event, gsr);
 
+  // save the gsr results into event object
   event.gsr(gsr);
-
-  cout << gsr.runs[0].optTheta << ' ' << gsr.runs[0].optPhi << endl;
-
-  ofstream myfile;
-
-  myfile.open ("./rm_original.dat");
-  myfile << gsr.runs[0].originalResidue << endl;
-  myfile.close();
-
-  myfile.open ("./rm_combined.dat");
-  myfile << gsr.runs[0].combinedResidue << endl;
-  myfile.close();
 }
 
 // run one loop of axes search algorithm
-GsrRun GsrAnalyzer::loopAxes(Event& event,
-                             double minTheta, double dTheta, double maxTheta,
-                             double minPhi,   double dPhi,   double maxPhi)
+GsrResults GsrAnalyzer::loopAxes(Event& event,
+                               double minTheta, double dTheta, double maxTheta,
+                               double minPhi,   double dPhi,   double maxPhi)
 {
   double theta, phi; // temporary theta and phi angles
   Axes axes; // temporary coordinate system
-  GsrRun run; // holds the information about the current run
+  GsrResults gsr; // holds the information about the current run
 
   // save axes limits in run structure
-  run.minTheta = minTheta;
-  run.dTheta   = dTheta;
-  run.maxTheta = maxTheta;
-  run.minPhi   = minPhi;
-  run.dPhi     = dPhi;
-  run.maxPhi   = maxPhi;
+  gsr.minTheta = minTheta;
+  gsr.dTheta   = dTheta;
+  gsr.maxTheta = maxTheta;
+  gsr.minPhi   = minPhi;
+  gsr.dPhi     = dPhi;
+  gsr.maxPhi   = maxPhi;
 
   // define residue matrix size
-  run.originalResidue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+  gsr.originalResidue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
                                        int((maxPhi-minPhi)/dPhi)+1);
-  run.combinedResidue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+  gsr.combinedResidue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
                                        int((maxPhi-minPhi)/dPhi)+1);
-  run.branchLength    = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+  gsr.branchLength    = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
                                        int((maxPhi-minPhi)/dPhi)+1);
 
   // temporary quaternions for making axes rotations
@@ -97,6 +100,7 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
 
   int i, k; // angle counters
 
+  // temporary curve and axis required for the loop
   GsrCurve curve;
   Vector3d zTheta;
 
@@ -122,9 +126,9 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
       // initialize branches and compute the residue
       curve.initBranches("extremums").computeResidue();
       // save residue into a matrix
-      run.originalResidue(i,k) = curve.originalResidue();
-      run.combinedResidue(i,k) = curve.combinedResidue();
-      run.branchLength(i,k) = curve.branchLength();
+      gsr.originalResidue(i,k) = curve.originalResidue();
+      gsr.combinedResidue(i,k) = curve.combinedResidue();
+      gsr.branchLength(i,k) = curve.branchLength();
       phi += dPhi; // make a step in phi
       k++; // move to the next column
     } // end iteration through phi angles
@@ -135,27 +139,26 @@ GsrRun GsrAnalyzer::loopAxes(Event& event,
   // searching for the minimum residue direction
   int iTheta, iPhi; // index of optimal angles
   // get indices
-//  run.originalResidue.minCoeff(&iTheta, &iPhi);
-  run.combinedResidue.minCoeff(&iTheta, &iPhi);
+  gsr.combinedResidue.minCoeff(&iTheta, &iPhi);
   // translate indices into optimal angles
-  run.optTheta = minTheta + iTheta*dTheta;
-  run.optPhi = minPhi + iPhi*dPhi;
+  gsr.optTheta = minTheta + iTheta*dTheta;
+  gsr.optPhi = minPhi + iPhi*dPhi;
 
-  return run; // return
+  return gsr; // return
 }
 
 // compute magnetic field map for a given GSR run
-GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
+GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // copy the data into external Dara object, we need a copy because we
   // will have to project it onto new coordinate system
   Data data(event.dataNarrow());
 
   // project the data into optimized coordinate system
-  data.project(run.axes);
+  data.project(gsr.axes);
 
   // compute the dx step
-  double dx = -event.dht().Vht.dot(run.axes.x)*event.config().samplingInterval*
-               run.curve.size()/event.config().Nx;
+  double dx = -event.dht().Vht.dot(gsr.axes.x)*event.config().samplingInterval*
+               gsr.curve.size()/event.config().Nx;
   // first estimate for the dy step
   double dy = event.config().ratio*dx;
   // number of Y-nodes
@@ -186,17 +189,17 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   }
 
   // save lattice parameters in the run structure
-  run.dx = dx;
-  run.dy = dy;
-  run.Nx = Nx;
-  run.Ny = Ny;
-  run.X = X;
-  run.Y = Y;
+  gsr.dx = dx;
+  gsr.dy = dy;
+  gsr.Nx = Nx;
+  gsr.Ny = Ny;
+  gsr.X = X;
+  gsr.Y = Y;
 
   // copy branches of Pt(A) into separate Curve objects, we need the copies
   // because we will need to resample them
-  Curve APtInCurve(run.curve.branches()[0]);
-  Curve APtOutCurve(run.curve.branches()[1]);
+  Curve APtInCurve(gsr.curve.branches()[0]);
+  Curve APtOutCurve(gsr.curve.branches()[1]);
 
   // resample the branches curves to the new lattice
   APtInCurve.resample(Nx);
@@ -287,9 +290,9 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   // initialize temporary fitted curve, for plotting only
   Curve APtFitCurve(Atmp, PtTmp);
 
-  run.APtInCurve  = APtInCurve;
-  run.APtOutCurve = APtOutCurve;
-  run.APtFitCurve = APtFitCurve;
+  gsr.APtInCurve  = APtInCurve;
+  gsr.APtOutCurve = APtOutCurve;
+  gsr.APtFitCurve = APtFitCurve;
 
   // initialize temporary dPt/dA vector, for plotting only
   VectorXd dPtTmp = VectorXd::Zero(1000);
@@ -302,10 +305,10 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   // initialize temporary derivative of the fitted curve, for plotting only
   Curve AdPtFitCurve(Atmp, dPtTmp);
 
-  run.AdPtFitCurve = AdPtFitCurve;
+  gsr.AdPtFitCurve = AdPtFitCurve;
 
   // copy A, B and Pth to new vector objects, needed for resampling
-  VectorXd A(run.curve.cols().x);
+  VectorXd A(gsr.curve.cols().x);
   VectorXd Bx(data.cols().Bx);
   VectorXd By(data.cols().By);
   VectorXd Bz(data.cols().Bz);
@@ -379,7 +382,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i), 1-double(abs(i))/Ny/3);
   }
 
-  run.Axy = Axy; // save vector potential
+  gsr.Axy = Axy; // save vector potential
 
   // initialize the Bz(A) curve
   Curve ABzCurve(A, Bz);
@@ -399,8 +402,8 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
   ABzFitCurve.sort().unique();
 
   // save Bz(A)
-  run.ABzCurve = ABzCurve;
-  run.ABzFitCurve = ABzFitCurve;
+  gsr.ABzCurve = ABzCurve;
+  gsr.ABzFitCurve = ABzFitCurve;
 
   // calculate the Bz map using the fitted Bz(A)
   for (int i = -NyDown; i <= NyUp; i++) {
@@ -409,7 +412,7 @@ GsrRun& GsrAnalyzer::computeMap(Event& event, GsrRun& run) {
     }
   }
 
-  run.Bz = Bzy; // save magnetic field map
+  gsr.Bz = Bzy; // save magnetic field map
 
   // free dynamic arrays
 //  delete [] AarrAll;

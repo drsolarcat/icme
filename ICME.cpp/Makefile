@@ -1,12 +1,12 @@
 
 ifeq ($(HOSTNAME),flspa-milkyway)
-	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/matlab/extern/include
-	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/extern/lib/glnx86:/usr/local/matlab/bin/glnx86
-	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/matlab/bin/glnx86
-else
 	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/usr/local/matlab2009b/extern/include
-	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnxa64:/usr/local/matlab2009b/bin/glnxa64
-	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64
+	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnx86:/usr/local/matlab2009b/bin/glnx86
+	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnx86
+else
+	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2010b/extern/include
+	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnxa64:/usr/local/MATLAB/R2010b/bin/glnxa64
+	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
 endif
 
 export CPLUS_INCLUDE_PATH LIBRARY_PATH
@@ -25,15 +25,16 @@ CXX = g++
 GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams
 MATLAB = -lmx -leng -lmat -lut
+LOG4CPLUS = -llog4cplus
 CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH)
 
 all: $(PROGRAM) $(BENCHMARK)
 
 $(PROGRAM): $(CXXOBJECTS) $(PROGRAM).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(CXXFLAGS)
 
 $(BENCHMARK): $(CXXOBJECTS) $(BENCHMARK).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(CXXFLAGS)
 
 $(PROGRAM).o: icme.cpp
 	$(CXX) -c -o icme.o icme.cpp $(CXXFLAGS)

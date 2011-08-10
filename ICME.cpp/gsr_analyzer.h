@@ -15,10 +15,10 @@ class GsrAnalyzer {
                           // the results are stored in the Event object
   private:
     // loop through angles and find the optimal angles for new axes
-    GsrRun loopAxes(Event&, double, double, double,
-                            double, double, double);
+    GsrResults loopAxes(Event&, double, double, double,
+                                double, double, double);
     // compute magnetic field map for a given GSR run
-    GsrRun& computeMap(Event&, GsrRun&);
+    GsrResults& computeMap(Event&, GsrResults&);
 };
 
 #endif

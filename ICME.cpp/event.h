@@ -36,62 +36,58 @@ struct DhtResults {
   double cc; // correlation coefficient of dHT analysis
 };
 
-// this structure holds results of a single run of axes search algorithm
-struct GsrRun {
+// this structure holds results of GSR analysis
+struct GsrResults {
   double minTheta, dTheta, maxTheta, // theta limits
          minPhi, dPhi, maxPhi, // phi limits
          optTheta, optPhi; // optimal theta and phi
   Eigen::MatrixXd originalResidue, // original residue
                   combinedResidue, // renormalized residue
                   branchLength; // branch length
-  Axes axes;
-  BranchedCurve curve;
-  double dx, dy;
-  int Nx, Ny;
-  Eigen::VectorXd X, Y;
-  Eigen::MatrixXd Axy, Bz;
-  Curve APtInCurve, APtOutCurve, APtFitCurve, AdPtFitCurve,
-        ABzCurve, ABzFitCurve;
-};
-
-// this structure holds results of GSR analysis
-struct GsrResults {
-  std::vector<GsrRun> runs; // runs of axes estimation loop
+  Axes axes; // MC axes
+  BranchedCurve curve; // Pt(A) curve
+  double dx, dy; // steps used for reconstruction
+  int Nx, Ny; // number of steps
+  Eigen::VectorXd X, Y; // reconstruction coordinates
+  Eigen::MatrixXd Axy, Bz; // potential and magnetic field maps
+  Curve APtInCurve, APtOutCurve, // inward and outward branches of Pt(A)
+        APtFitCurve, AdPtFitCurve, // Pt(A) and dPt/dA(A) fits
+        ABzCurve, ABzFitCurve; // Bz(A) curve and its fit
 };
 
 // a class representing one event, it stores all the data and results of
 // analysis of one particular event
 class Event {
-    Data e_dataWide, e_dataNarrow; // data
-    ConfigRow e_config; // configuration structure
+    Data _dataWide, _dataNarrow; // data
+    ConfigRow _config; // configuration structure
     // results of MVAB and MVUB analysis
-    MvaResults e_mvab, e_mvub;
+    MvaResults _mvab, _mvub;
     // results of projected MVAB and MVUB analysis
-    PmvaResults e_pmvab, e_pmvub;
-    GsrResults e_gsr; // results of GSR analysis
-    DhtResults e_dht; // results of dHT analysis
+    PmvaResults _pmvab, _pmvub;
+    GsrResults _gsr; // results of GSR analysis
+    DhtResults _dht; // results of dHT analysis
 //    bool e_isMva, e_isDht, e_isGsr;
   public:
     Event(ConfigRow, Data, Data); // construct the initial object with data
                                   // and configuration
-    const ConfigRow& config() const {return e_config;} // config getter
-    const Data& dataWide() const {return e_dataWide;} // dataWide getter
-    const Data& dataNarrow() const {return e_dataNarrow;} // dataNarrow getter
+    const ConfigRow& config() const {return _config;} // config getter
+    const Data& dataWide() const {return _dataWide;} // dataWide getter
+    const Data& dataNarrow() const {return _dataNarrow;} // dataNarrow getter
     // MVA results setters and getters
-    Event& mvab(MvaResults mvab) {e_mvab = mvab; return *this;}
-    const MvaResults& mvab() const {return e_mvab;}
-    Event& mvub(MvaResults mvub) {e_mvub = mvub; return *this;}
-    const MvaResults& mvub() const {return e_mvub;}
-    Event& pmvab(PmvaResults pmvab) {e_pmvab = pmvab; return *this;}
-    const PmvaResults& pmvab() const {return e_pmvab;}
-    Event& pmvub(PmvaResults pmvub) {e_pmvub = pmvub; return *this;}
-    const PmvaResults& pmvub() const {return e_pmvub;}
+    Event& mvab(MvaResults mvab) {_mvab = mvab; return *this;}
+    const MvaResults& mvab() const {return _mvab;}
+    Event& mvub(MvaResults mvub) {_mvub = mvub; return *this;}
+    const MvaResults& mvub() const {return _mvub;}
+    Event& pmvab(PmvaResults pmvab) {_pmvab = pmvab; return *this;}
+    const PmvaResults& pmvab() const {return _pmvab;}
+    Event& pmvub(PmvaResults pmvub) {_pmvub = pmvub; return *this;}
+    const PmvaResults& pmvub() const {return _pmvub;}
     // dHT setter and getter
-    Event& dht(DhtResults dht) {e_dht = dht; return *this;}
-    const DhtResults& dht() const {return e_dht;}
+    Event& dht(DhtResults dht) {_dht = dht; return *this;}
+    const DhtResults& dht() const {return _dht;}
     // GSR setter and getter
-    Event& gsr(GsrResults gsr) {e_gsr = gsr; return *this;}
-    const GsrResults& gsr() const {return e_gsr;}
+    Event& gsr(GsrResults gsr) {_gsr = gsr; return *this;}
+    const GsrResults& gsr() const {return _gsr;}
 };
 
 #endif
