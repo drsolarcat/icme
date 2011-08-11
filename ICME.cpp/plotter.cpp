@@ -1,8 +1,8 @@
 
-// standard headers
-#include <iostream>
 // project headers
 #include "plotter.h"
+// standard headers
+#include <iostream>
 
 using namespace std;
 using namespace Eigen;
@@ -86,7 +86,6 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   memcpy((double*)mxGetPr(mX), (double*)X.data(), X.size()*sizeof(double));
   memcpy((double*)mxGetPr(mY), (double*)Y.data(), Y.size()*sizeof(double));
 
-cout << Bz.minCoeff() << endl << Bz.maxCoeff() << endl;
   engPutVariable(_matlab, "X", mX);
   engPutVariable(_matlab, "Y", mY);
 

@@ -5,39 +5,55 @@
 #include "fit_exp.h"
 // library headers
 #include <eigen3/Eigen/Dense>
+#include <log4cplus/logger.h>
+#include <log4cplus/configurator.h>
 // standard headers
 #include <cmath>
 #include <iostream>
 
 using namespace std;
 using namespace Eigen;
+using namespace log4cplus;
 
 // fit method
 void PolyExpFit::fit()
 {
+
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
+  // fit linearly to find the slope
   PolyFit lineFit(_n, _x, _y, 1);
+  // slope
   _slope = (lineFit.c()[1] > 0 ? 1 : -1);
+  LOG4CPLUS_DEBUG(logger, "the curve slope = " << _slope);
+  // boundaries of the curve
   _xBdr = (_slope > 0 ? _x[0] : _x[_n-1]);
   _xCtr = (_slope > 0 ? _x[_n-1] : _x[0]);
+  LOG4CPLUS_DEBUG(logger, "boundary x-value = " << _xBdr);
+  LOG4CPLUS_DEBUG(logger, "center x-value = " << _xCtr);
 
+  // fit the the polynomial part of the curve
   _polyFit = new PolyFit(_n, _x, _y, _order);
   _polyFit->fit();
+  // fit the exponential tail at the boundary, i.e. lower end of the curve
   _expFitBdr = new PosZeroExpFit(_n, _x, _y);
   _expFitBdr->fit();
-  const int n = 50;
-  double mx = (_x[_n-1]-_x[0])/2;
-  double xc[n], yc[n];
-  double x1 = (_slope > 0 ? mx : _x[0]);
-  double x2 = (_slope > 0 ? _x[_n-1] : mx);
-  double dx = (x2-x1)/n;
-  double x = x1;
+  // fit the exponential tail at the center, i.e. upper end of the curve
+  const int n = 50; // number of points to fit
+  double mx = _x[0]+(_x[_n-1]-_x[0])/2; // center of the curve
+  double xc[n], yc[n]; // new arrays for points to be fitted
+  double x1 = (_slope > 0 ? mx : _x[0]); // left end of the fitting part
+  double x2 = (_slope > 0 ? _x[_n-1] : mx); // right end of the fitting part
+  LOG4CPLUS_DEBUG(logger, "x1 = " << x1 << ", x2 = " << x2);
+  double dx = (x2-x1)/(n-1); // step size
+  double x = x1; // initial position
   int i = 0;
-  while (x <= x2) {
-    xc[i] = x;
-    yc[i] = _polyFit->f(x);
-    x += dx;
-    i++;
+  for (int i = 0; i < n; i++) { // fill in the temporary arrays to be fitted
+    xc[i] = x1+i*dx;
+    yc[i] = _polyFit->f(xc[i]);
   }
+  // finally fit the exponential at the center
   _expFitCtr = new PosExpFit(n, xc, yc);
   _expFitCtr->fit();
 }
@@ -47,7 +63,7 @@ double PolyExpFit::f(double x)
 {
   return _expFitBdr->f(x)/(1+exp(-_slope/_sBdr*(-x+_xBdr)))+
          _polyFit->f(x)/(1+exp(-_slope/_sBdr*(x-_xBdr)))/
-                       (1+exp(-_slope/_sCtr*(-x+_xCtr)))+
+                        (1+exp(-_slope/_sCtr*(-x+_xCtr)))+
          _expFitCtr->f(x)/(1+exp(-_slope/_sCtr*(x-_xCtr)));
 }
 

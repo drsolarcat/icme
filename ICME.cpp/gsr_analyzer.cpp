@@ -20,6 +20,7 @@
 // standard headers
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 using namespace Eigen;
@@ -30,22 +31,20 @@ void GsrAnalyzer::analyze(Event& event) {
   DhtAnalyzer dht; // initialize dHT analyzer
   MvaAnalyzer mva; // initialize MVA analyzer
 
+  // get the logger instance
   Logger logger = Logger::getInstance("main");
-  LOG4CPLUS_WARN(logger, "GSR");
 
-  cout << "starting dHT analysis... ";
+  LOG4CPLUS_INFO(logger, "starting dHT analysis");
   dht.analyze(event); // carry dHT analysis for the event
-  cout << "done" << endl;
 
-  cout << "starting PMVAB analysis to find initial axes... ";
+  LOG4CPLUS_INFO(logger, "starting PMVAB analysis to find initial axes");
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
-  cout << "done" << endl;
 
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
-  cout << "searching for optimal axes... ";
+  LOG4CPLUS_INFO(logger, "searching for optimal axes with 1 degree step");
   GsrResults gsr = loopAxes(event, 0, 1, 90, 0, 1, 360);
-  cout << "done" << endl;
+
   // quaternions, needed to turn to optimized axes
   Quaterniond qTheta;
   Quaterniond qPhi;
@@ -58,11 +57,36 @@ void GsrAnalyzer::analyze(Event& event) {
   gsr.axes.x = (event.dht().Vht.dot(gsr.axes.z)*gsr.axes.z-
                 event.dht().Vht).normalized();
   gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
+  // flip axes if necessary
+  Data dataTmp(event.dataNarrow());
+  dataTmp.project(gsr.axes);
+  VectorXd xTmp = VectorXd::LinSpaced(dataTmp.rows().size(), 0,
+                                      dataTmp.rows().size()-1);
+  PolyFit BzTmpFit(dataTmp.rows().size(), xTmp.data(),
+                   const_cast<double*>(dataTmp.cols().Bz.data()), 2);
+  if (BzTmpFit.c()[0] > 0) {
+    gsr.axes.z = -gsr.axes.z;
+    gsr.axes.y = -gsr.axes.y;
+  }
+  LOG4CPLUS_DEBUG(logger, "magnetic cloud axes: " <<
+    setiosflags(ios::fixed) << setprecision(3) << "x[" <<
+    gsr.axes.x(0) << ", " <<
+    gsr.axes.x(1) << ", " <<
+    gsr.axes.x(2) << "], y[" <<
+    gsr.axes.y(0) << ", " <<
+    gsr.axes.y(1) << ", " <<
+    gsr.axes.y(2) << "], z[" <<
+    gsr.axes.z(0) << ", " <<
+    gsr.axes.z(1) << ", " <<
+    gsr.axes.z(2) << "]");
   // initialize and save the Pt(A) curve
+  LOG4CPLUS_INFO(logger, "initializing the Pt(A) curve");
   gsr.curve = GsrCurve(event, gsr.axes);
+  LOG4CPLUS_INFO(logger, "initializing the branches of the Pt(A) curve");
   gsr.curve.initBranches("extremums").computeResidue();
 
   // calculate the magnetic field map and save it into gsr structure
+  LOG4CPLUS_INFO(logger, "computing the magnetic field map");
   computeMap(event, gsr);
 
   // save the gsr results into event object
@@ -74,6 +98,9 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
                                double minTheta, double dTheta, double maxTheta,
                                double minPhi,   double dPhi,   double maxPhi)
 {
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
   double theta, phi; // temporary theta and phi angles
   Axes axes; // temporary coordinate system
   GsrResults gsr; // holds the information about the current run
@@ -144,11 +171,19 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
   gsr.optTheta = minTheta + iTheta*dTheta;
   gsr.optPhi = minPhi + iPhi*dPhi;
 
+  LOG4CPLUS_DEBUG(logger,
+    "optimal angles for the invariant axes [theta, phi] = [" <<
+    gsr.optTheta << ", " << gsr.optPhi << "]");
+
   return gsr; // return
 }
 
 // compute magnetic field map for a given GSR run
 GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
+
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
   // copy the data into external Dara object, we need a copy because we
   // will have to project it onto new coordinate system
   Data data(event.dataNarrow());
@@ -339,9 +374,10 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // initialize differentiator
   Differentitor differentiator;
 
-  cout << NyUp << " steps up and " << NyDown << " steps down with step size "
-       << dy << endl << Ny << " vertical nodes" << endl;
+  LOG4CPLUS_DEBUG(logger, NyUp << " steps up and " << NyDown <<
+                          " steps down with step size " << dy);
   // reconstruct the upper part of the map using recursive solver
+  LOG4CPLUS_DEBUG(logger, "reconstructint the upper part of the map");
   for (int i = 1; i <= NyUp; i++) {
     // 2nd derivative of A by x using Holoborodko2 filter, smoothed with
     // weighted average prior to differenting
@@ -358,15 +394,18 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     Axy.row(NyDown+i) = Axy.row(NyDown+i-1)+Bxy.row(NyDown+i-1)*dy+
                         d2A_dy2.transpose()*pow(dy, 2)/2;
     // smooth it with weighted average
-    Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i), 1-double(abs(i))/Ny/3);
+    Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
+                                               1-double(abs(i))/Ny/3);
     // wtite the next row of Bx
     Bxy.row(NyDown+i) = Bxy.row(NyDown+i-1)+d2A_dy2.transpose()*dy;
     // smooth it with weighted average
-    Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i), 1-double(abs(i))/Ny/3);
+    Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
+                                               1-double(abs(i))/Ny/3);
   }
 
   // reconstruct the lower part of teh map using recursive solver,
   // everything is the same as for the upper part
+  LOG4CPLUS_DEBUG(logger, "reconstructint the lower part of the map");
   for (int i = -1; i >= -NyDown; i--) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i+1), 1-double(abs(i)-1)/Ny/3), dx);
@@ -377,12 +416,16 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     d2A_dy2 = -d2A_dx2-GSL_CONST_MKSA_VACUUM_PERMEABILITY*dPt_dA;
     Axy.row(NyDown+i) = Axy.row(NyDown+i+1)-Bxy.row(NyDown+i+1)*dy+
                         d2A_dy2.transpose()*pow(dy, 2)/2;
-    Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i), 1-double(abs(i))/Ny/3);
+    Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
+                                               1-double(abs(i))/Ny/3);
     Bxy.row(NyDown+i) = Bxy.row(NyDown+i+1)-d2A_dy2.transpose()*dy;
-    Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i), 1-double(abs(i))/Ny/3);
+    Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
+                                               1-double(abs(i))/Ny/3);
   }
 
   gsr.Axy = Axy; // save vector potential
+
+  LOG4CPLUS_DEBUG(logger, "estimating Bz all over the map");
 
   // initialize the Bz(A) curve
   Curve ABzCurve(A, Bz);

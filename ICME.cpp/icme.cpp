@@ -69,20 +69,48 @@ int main(int argc, char* argv[]) {
   LOG4CPLUS_INFO(logger, "starting to iterate through events");
   for (int iEvent = 0; iEvent < config.rows().size(); iEvent++) {
 
+    LOG4CPLUS_INFO(logger, "analysing the event " << setfill('0') <<
+      config.row(iEvent).beginTime.year() << '-' <<
+      setw(2) << config.row(iEvent).beginTime.month() << '-' <<
+      setw(2) << config.row(iEvent).beginTime.day() << ' ' <<
+      config.row(iEvent).spacecraft);
+    LOG4CPLUS_INFO(logger, "the event length is " <<
+      setiosflags(ios::fixed) << setprecision(2) <<
+      double(config.row(iEvent).endTime-config.row(iEvent).beginTime)/3600 <<
+      " hours");
+    LOG4CPLUS_DEBUG(logger, "sampling interval = " <<
+                            config.row(iEvent).samplingInterval << " seconds");
+    LOG4CPLUS_DEBUG(logger, "fitting function = " <<
+                            config.row(iEvent).fittingFuntion);
+    LOG4CPLUS_DEBUG(logger, "polynomial order = " <<
+                            config.row(iEvent).order);
+    LOG4CPLUS_DEBUG(logger, "fitting parameters [boundary, center] = [" <<
+                            config.row(iEvent).fittingParameterBdr << ", " <<
+                            config.row(iEvent).fittingParameterCtr << ']');
+    LOG4CPLUS_DEBUG(logger, "Nx = " << config.row(iEvent).Nx << " points");
+    LOG4CPLUS_DEBUG(logger, "dy/dx = " << config.row(iEvent).ratio);
+    LOG4CPLUS_DEBUG(logger, "minY = " << config.row(iEvent).minY << " AU");
+    LOG4CPLUS_DEBUG(logger, "maxY = " << config.row(iEvent).maxY << " AU");
+
     LOG4CPLUS_INFO(logger, "determining the path to the data");
     // determine the path to the data file dependant on spacecraft
     // push the path to data files
     dataPathStream << dataDir << '/';
     if (config.row(iEvent).spacecraft == "WIND") {
       dataPathStream << "wind_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
     } else if (config.row(iEvent).spacecraft == "ACE") {
       dataPathStream << "ace_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
     } else if (config.row(iEvent).spacecraft == "STA") {
       dataPathStream << "stereo_a_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in RTN");
     } else if (config.row(iEvent).spacecraft == "STB") {
       dataPathStream << "stereo_b_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in RTN");
     } else { // throw an error - unknown spacecraft
-      cout << "Unknown spacecraft" << endl;
+      LOG4CPLUS_ERROR(logger, "unknown spacecraft: " <<
+                              config.row(iEvent).spacecraft);
     }
     // finalize by adding resolution
     dataPathStream << config.row(iEvent).samplingInterval << ".dat";
@@ -126,34 +154,37 @@ int main(int argc, char* argv[]) {
         // plot residue maps through Matlab
         Plotter plotter;
 
-        cout << "plotting residual maps... ";
+        LOG4CPLUS_INFO(logger, "plotting the residual maps");
         // angle arrays
         VectorXd phi, theta;
 
+        // initialize theta array
         theta = VectorXd::LinSpaced(
           ((*event).gsr().maxTheta-(*event).gsr().minTheta)/
             (*event).gsr().dTheta+1,
           (*event).gsr().minTheta,
           (*event).gsr().maxTheta);
 
+        // initialize phi array
         phi = VectorXd::LinSpaced(
           ((*event).gsr().maxPhi-(*event).gsr().minPhi)/
             (*event).gsr().dPhi+1,
           (*event).gsr().minPhi,
           (*event).gsr().maxPhi);
 
+        // plot the original residual map
         plotter.plotResidueMap((*event).gsr().originalResidue,
                                theta, phi,
                                (*event).gsr().optTheta,
                                (*event).gsr().optPhi);
 
+        // plot the combined residual map
         plotter.plotResidueMap((*event).gsr().combinedResidue,
                                theta, phi,
                                (*event).gsr().optTheta,
                                (*event).gsr().optPhi);
-        cout << "done" << endl;
 
-        cout << "plotting Pt(A), dPt/dA(A) and Bz(A) curves... ";
+        LOG4CPLUS_INFO(logger, "plotting Pt(A), dPt/dA(A) and Bz(A) curves");
         // plot Pt(A) through Gnuplot
         Gnuplot APt("gnuplot -persist");
         APt << "p '-' w p t 'Pt(A) in', "
@@ -173,25 +204,23 @@ int main(int argc, char* argv[]) {
         ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
         ABz.send((*event).gsr().ABzCurve).
             send((*event).gsr().ABzFitCurve);
-        cout << "done" << endl;
 
-        cout << "plotting magnetic field map... ";
+        LOG4CPLUS_INFO(logger, "plotting magnetic field map");
         // plot magnetic field map through Matlab
         plotter.plotMagneticMap((*event).gsr().Axy,
                                 (*event).gsr().Bz,
                                 (*event).gsr().X,
                                 (*event).gsr().Y);
-        cout << "done" << endl;
-        cout << "done GSR plotting" << endl;
       }
     }
 
     // perform MVA analysis if required
     if (config.row(iEvent).toMva) {
-      cout << "starting MVA analysis" << endl;
+      LOG4CPLUS_INFO(logger, "starting MVA analysis");
       mva.analyze(*event);
-      cout << "done MVA analysis" << endl;
     }
+
+    LOG4CPLUS_INFO(logger, "everything is done");
 
     // delete dynamic objects
     delete dataWide;

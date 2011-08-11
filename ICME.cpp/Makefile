@@ -1,19 +1,31 @@
 
-ifeq ($(HOSTNAME),flspa-milkyway)
+# check where we are compiling the project
+ifeq ($(USERNAME),isavnin) # at work
 	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/usr/local/matlab2009b/extern/include
-	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnx86:/usr/local/matlab2009b/bin/glnx86
-	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnx86
-else
+	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnxa64:/usr/local/matlab2009b/bin/glnxa64
+	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64
+endif
+
+ifeq ($(HOSTNAME),inferno-desktop) # on my desktop
 	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2010b/extern/include
 	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnxa64:/usr/local/MATLAB/R2010b/bin/glnxa64
 	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
 endif
 
+ifeq ($(HOSTNAME),inferno-laptop) # on my laptop
+	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2010b/extern/include
+	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnx86:/usr/local/MATLAB/R2010b/bin/glnx86
+	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnx86
+endif
+
+# export the paths
 export CPLUS_INCLUDE_PATH LIBRARY_PATH
 
+# names of executables
 PROGRAM = icme
 BENCHMARK = bench
 
+# sources
 CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
@@ -21,6 +33,7 @@ CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
 	plotter.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
+#flags
 CXX = g++
 GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams

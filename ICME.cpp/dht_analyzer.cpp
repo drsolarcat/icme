@@ -4,38 +4,66 @@
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_statistics.h>
+#include <log4cplus/logger.h>
+#include <log4cplus/configurator.h>
 // standard headers
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace Eigen;
+using namespace log4cplus;
 
 // main trigger function for the dHT analysis
 void DhtAnalyzer::analyze(Event& event) {
 
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
   DhtResults dht; // initialize dHT structure for storing results of analysis
   // first run of the search loop, all range of possible speeds
   // with 10km/s step
+  LOG4CPLUS_DEBUG(logger, "starting the first search loop with 10km/s step");
   dht.Vht = loop(event, event.dataNarrow().cols().Vx.minCoeff(), 10e3,
                         event.dataNarrow().cols().Vx.maxCoeff(),
                         event.dataNarrow().cols().Vy.minCoeff(), 10e3,
                         event.dataNarrow().cols().Vy.maxCoeff(),
                         event.dataNarrow().cols().Vz.minCoeff(), 10e3,
                         event.dataNarrow().cols().Vz.maxCoeff());
+  LOG4CPLUS_DEBUG(logger, "estimated dHT speed = [" <<
+                          setiosflags(ios::fixed) << setprecision(1) <<
+                          dht.Vht(0)/1e3 << ", " <<
+                          dht.Vht(1)/1e3 << ", " <<
+                          dht.Vht(2)/1e3 << "] km/s");
   // second run of the search loop 10km/s around previously found speed
   // with 1km/s step
+  LOG4CPLUS_DEBUG(logger, "starting the second search loop with 1km/s step");
   dht.Vht = loop(event, dht.Vht(0)-10e3, 1e3, dht.Vht(0)+10e3,
                         dht.Vht(1)-10e3, 1e3, dht.Vht(1)+10e3,
                         dht.Vht(2)-10e3, 1e3, dht.Vht(2)+10e3);
+  LOG4CPLUS_DEBUG(logger, "estimated dHT speed = [" <<
+                          setiosflags(ios::fixed) << setprecision(1) <<
+                          dht.Vht(0)/1e3 << ", " <<
+                          dht.Vht(1)/1e3 << ", " <<
+                          dht.Vht(2)/1e3 << "] km/s");
   // third run of the search loop 1km/s around previously found speed
   // with 0.1km/s step
+  LOG4CPLUS_DEBUG(logger, "starting the third search loop with 0.1km/s step");
   dht.Vht = loop(event, dht.Vht(0)-1e3, 0.1e3, dht.Vht(0)+1e3,
                         dht.Vht(1)-1e3, 0.1e3, dht.Vht(1)+1e3,
                         dht.Vht(2)-1e3, 0.1e3, dht.Vht(2)+1e3);
+  LOG4CPLUS_DEBUG(logger, "final estimated dHT speed = [" <<
+                          setiosflags(ios::fixed) << setprecision(1) <<
+                          dht.Vht(0)/1e3 << ", " <<
+                          dht.Vht(1)/1e3 << ", " <<
+                          dht.Vht(2)/1e3 << "] km/s");
 
   // calculate Pearson's correlation coefficient between real electrical field
   // and estimated in a system moving with deHoffmann-Teller speed
+  LOG4CPLUS_DEBUG(logger, "calculating the correlation coefficient");
   dht.cc = corr(event, dht.Vht);
+  LOG4CPLUS_DEBUG(logger, "estimated correlation coefficient = " <<
+                          setiosflags(ios::fixed) << setprecision(3) << dht.cc);
 
   // save dHT analysis results in the event object
   event.dht(dht);
