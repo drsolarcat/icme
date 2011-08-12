@@ -34,15 +34,15 @@ void GsrAnalyzer::analyze(Event& event) {
   // get the logger instance
   Logger logger = Logger::getInstance("main");
 
-  LOG4CPLUS_INFO(logger, "starting dHT analysis");
+  LOG4CPLUS_DEBUG(logger, "starting dHT analysis");
   dht.analyze(event); // carry dHT analysis for the event
 
-  LOG4CPLUS_INFO(logger, "starting PMVAB analysis to find initial axes");
+  LOG4CPLUS_DEBUG(logger, "starting PMVAB analysis to find initial axes");
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
 
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
-  LOG4CPLUS_INFO(logger, "searching for optimal axes with 1 degree step");
+  LOG4CPLUS_DEBUG(logger, "searching for optimal axes with 1 degree step");
   GsrResults gsr = loopAxes(event, 0, 1, 90, 0, 1, 360);
 
   // quaternions, needed to turn to optimized axes
@@ -64,7 +64,8 @@ void GsrAnalyzer::analyze(Event& event) {
                                       dataTmp.rows().size()-1);
   PolyFit BzTmpFit(dataTmp.rows().size(), xTmp.data(),
                    const_cast<double*>(dataTmp.cols().Bz.data()), 2);
-  if (BzTmpFit.c()[0] > 0) {
+  BzTmpFit.fit();
+  if (BzTmpFit.c()[2] > 0) {
     gsr.axes.z = -gsr.axes.z;
     gsr.axes.y = -gsr.axes.y;
   }
@@ -80,13 +81,13 @@ void GsrAnalyzer::analyze(Event& event) {
     gsr.axes.z(1) << ", " <<
     gsr.axes.z(2) << "]");
   // initialize and save the Pt(A) curve
-  LOG4CPLUS_INFO(logger, "initializing the Pt(A) curve");
+  LOG4CPLUS_DEBUG(logger, "initializing the Pt(A) curve");
   gsr.curve = GsrCurve(event, gsr.axes);
-  LOG4CPLUS_INFO(logger, "initializing the branches of the Pt(A) curve");
+  LOG4CPLUS_DEBUG(logger, "initializing the branches of the Pt(A) curve");
   gsr.curve.initBranches("extremums").computeResidue();
 
   // calculate the magnetic field map and save it into gsr structure
-  LOG4CPLUS_INFO(logger, "computing the magnetic field map");
+  LOG4CPLUS_DEBUG(logger, "computing the magnetic field map");
   computeMap(event, gsr);
 
   // save the gsr results into event object
@@ -295,7 +296,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     Ab = APtAllCurve.cols().x.maxCoeff(&AbIndex);
     Ac = APtAllCurve.cols().x.minCoeff();
     Atmp = VectorXd::LinSpaced(1000, APtAllCurve.cols().x(0)-50,
-                                     APtAllCurve.cols().x(nAll-1)+150);
+                                     APtAllCurve.cols().x(nAll-1)+250);
   }
 
   // do not allow the Ab to pass the zero derivative point of the polynomial

@@ -34,9 +34,8 @@ int main(int argc, char* argv[]) {
   // get logger instance
   Logger logger = Logger::getInstance("main");
 
-  // set logger level to info
-//  logger.setLogLevel(INFO_LOG_LEVEL);
-  logger.setLogLevel(DEBUG_LOG_LEVEL);
+  // setting the log level
+  logger.setLogLevel(ALL_LOG_LEVEL);
 
   // parse command line arguments
   LOG4CPLUS_INFO(logger, "reading command line arguments");
@@ -74,7 +73,7 @@ int main(int argc, char* argv[]) {
       setw(2) << config.row(iEvent).beginTime.month() << '-' <<
       setw(2) << config.row(iEvent).beginTime.day() << ' ' <<
       config.row(iEvent).spacecraft);
-    LOG4CPLUS_INFO(logger, "the event length is " <<
+    LOG4CPLUS_DEBUG(logger, "the event length is " <<
       setiosflags(ios::fixed) << setprecision(2) <<
       double(config.row(iEvent).endTime-config.row(iEvent).beginTime)/3600 <<
       " hours");
@@ -109,7 +108,7 @@ int main(int argc, char* argv[]) {
       dataPathStream << "stereo_b_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in RTN");
     } else { // throw an error - unknown spacecraft
-      LOG4CPLUS_ERROR(logger, "unknown spacecraft: " <<
+      LOG4CPLUS_FATAL(logger, "unknown spacecraft: " <<
                               config.row(iEvent).spacecraft);
     }
     // finalize by adding resolution
@@ -119,6 +118,7 @@ int main(int argc, char* argv[]) {
     LOG4CPLUS_DEBUG(logger, "path to the data file = " << dataPath);
     // clear the stream
     dataPathStream.clear();
+    dataPathStream.str("");
 
     // create Time objects for wider limits of the event, initially copy
     // existing time limits
@@ -129,13 +129,14 @@ int main(int argc, char* argv[]) {
     postEndTime->add(3, "hour");
     // create Data object for wider time limits
     Data* dataWide = new Data(); // create dynamic object for data
-    LOG4CPLUS_INFO(logger, "reading the data, filtered by a wider time period");
+    LOG4CPLUS_INFO(logger, "processing the data");
+    LOG4CPLUS_DEBUG(logger, "reading the data, filtered by a wider time period");
     dataWide->readFile(dataPath, *preBeginTime, *postEndTime);
     // create Data object for original time limits
     LOG4CPLUS_DEBUG(logger, "wide data size = " << dataWide->rows().size());
     Data* dataNarrow = new Data(*dataWide);
     // filter narrow Data object out of wider one
-    LOG4CPLUS_INFO(logger, "filtering the data to a narrower time period");
+    LOG4CPLUS_DEBUG(logger, "filtering the data to a narrower time period");
     dataNarrow->filter(config.row(iEvent).beginTime,
                        config.row(iEvent).endTime);
     LOG4CPLUS_DEBUG(logger, "narrow data size = " << dataNarrow->rows().size());
@@ -145,7 +146,7 @@ int main(int argc, char* argv[]) {
     // perform GSR analysis if required
     if (config.row(iEvent).toGsr) {
 
-      LOG4CPLUS_INFO(logger, "starting GSR analysis");
+      LOG4CPLUS_INFO(logger, "doing GSR analysis");
       gsr.analyze(*event); // do GSR analysis
 
       if (config.row(iEvent).toPlot) { // plot
@@ -154,7 +155,7 @@ int main(int argc, char* argv[]) {
         // plot residue maps through Matlab
         Plotter plotter;
 
-        LOG4CPLUS_INFO(logger, "plotting the residual maps");
+        LOG4CPLUS_DEBUG(logger, "plotting the residual maps");
         // angle arrays
         VectorXd phi, theta;
 
@@ -184,8 +185,8 @@ int main(int argc, char* argv[]) {
                                (*event).gsr().optTheta,
                                (*event).gsr().optPhi);
 
-        LOG4CPLUS_INFO(logger, "plotting Pt(A), dPt/dA(A) and Bz(A) curves");
         // plot Pt(A) through Gnuplot
+        LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
         Gnuplot APt("gnuplot -persist");
         APt << "p '-' w p t 'Pt(A) in', "
               << "'-' w p t 'Pt(A) out', "
@@ -195,17 +196,19 @@ int main(int argc, char* argv[]) {
             send((*event).gsr().APtFitCurve);
 
         // plot dPt/dA through Gnuplot
+        LOG4CPLUS_DEBUG(logger, "plotting dPt/dA(A)");
         Gnuplot AdPt("gnuplot -persist");
         AdPt << "p '-' w l t 'dPt/dA fit'\n";
         AdPt.send((*event).gsr().AdPtFitCurve);
 
         // plot Bz(A) through Gnuplot
+        LOG4CPLUS_DEBUG(logger, "plotting Bz(A)");
         Gnuplot ABz("gnuplot -persist");
         ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
         ABz.send((*event).gsr().ABzCurve).
             send((*event).gsr().ABzFitCurve);
 
-        LOG4CPLUS_INFO(logger, "plotting magnetic field map");
+        LOG4CPLUS_DEBUG(logger, "plotting magnetic field map");
         // plot magnetic field map through Matlab
         plotter.plotMagneticMap((*event).gsr().Axy,
                                 (*event).gsr().Bz,
@@ -216,7 +219,7 @@ int main(int argc, char* argv[]) {
 
     // perform MVA analysis if required
     if (config.row(iEvent).toMva) {
-      LOG4CPLUS_INFO(logger, "starting MVA analysis");
+      LOG4CPLUS_INFO(logger, "doing MVA analysis");
       mva.analyze(*event);
     }
 

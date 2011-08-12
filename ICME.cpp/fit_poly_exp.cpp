@@ -24,21 +24,42 @@ void PolyExpFit::fit()
 
   // fit linearly to find the slope
   PolyFit lineFit(_n, _x, _y, 1);
+  lineFit.fit();
   // slope
   _slope = (lineFit.c()[1] > 0 ? 1 : -1);
-  LOG4CPLUS_DEBUG(logger, "the curve slope = " << _slope);
+  LOG4CPLUS_TRACE(logger, "the curve slope = " << _slope);
   // boundaries of the curve
   _xBdr = (_slope > 0 ? _x[0] : _x[_n-1]);
   _xCtr = (_slope > 0 ? _x[_n-1] : _x[0]);
-  LOG4CPLUS_DEBUG(logger, "boundary x-value = " << _xBdr);
-  LOG4CPLUS_DEBUG(logger, "center x-value = " << _xCtr);
+  LOG4CPLUS_TRACE(logger, "boundary x-value = " << _xBdr);
+  LOG4CPLUS_TRACE(logger, "boundary s-param = " << _sBdr);
+  LOG4CPLUS_TRACE(logger, "center x-value = " << _xCtr);
+  LOG4CPLUS_TRACE(logger, "center s-param = " << _sCtr);
 
   // fit the the polynomial part of the curve
   _polyFit = new PolyFit(_n, _x, _y, _order);
   _polyFit->fit();
+  LOG4CPLUS_TRACE(logger, "polynomial order = " << _order);
+  if (_order == 2) {
+    LOG4CPLUS_TRACE(logger, "polynomial params = [" <<
+                            _polyFit->c()[0] << ", " <<
+                            _polyFit->c()[1] << ", " <<
+                            _polyFit->c()[2] << "]");
+  } else if (_order == 3) {
+    LOG4CPLUS_TRACE(logger, "polynomial params = [" <<
+                            _polyFit->c()[0] << ", " <<
+                            _polyFit->c()[1] << ", " <<
+                            _polyFit->c()[2] << ", " <<
+                            _polyFit->c()[3] << "]");
+  }
+
   // fit the exponential tail at the boundary, i.e. lower end of the curve
   _expFitBdr = new PosZeroExpFit(_n, _x, _y);
   _expFitBdr->fit();
+  LOG4CPLUS_TRACE(logger, "boundary exponent params = [" <<
+                          _expFitBdr->c()[0] << ", " <<
+                          _expFitBdr->c()[1] << "]");
+
   // fit the exponential tail at the center, i.e. upper end of the curve
   const int n = 50; // number of points to fit
   double mx = _x[0]+(_x[_n-1]-_x[0])/2; // center of the curve
@@ -56,6 +77,12 @@ void PolyExpFit::fit()
   // finally fit the exponential at the center
   _expFitCtr = new PosExpFit(n, xc, yc);
   _expFitCtr->fit();
+  LOG4CPLUS_TRACE(logger, "center exponent params = [" <<
+                          _expFitCtr->c()[0] << ", " <<
+                          _expFitCtr->c()[1] << ", " <<
+                          _expFitCtr->c()[2] << "]");
+
+  cout << f(200) << ' ' << _expFitBdr->f(200) << endl;
 }
 
 // evaluate function at point X
