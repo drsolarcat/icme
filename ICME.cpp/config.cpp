@@ -48,14 +48,13 @@ Config& Config::readFile(string configFilePath) {
         // get the columned data from the string stream and write it to the
         // ConfigRow structure
         configFileLineStream >> configRow.flag >> configRow.quality >>
-          configRow.toPlot >> configRow.toGsr >> configRow.toMva >>
-          configRow.toCm >> configRow.toTm >> configRow.toHm >>
-          configRow.toOm >> configRow.toSave >> configRow.spacecraft >>
-          beginDate >> beginTime >> endDate >> endTime >>
-          configRow.samplingInterval >> configRow.fittingFuntion >>
-          configRow.fittingParameterBdr >> configRow.fittingParameterCtr >>
-          configRow.Nx >> configRow.ratio >> configRow.minY >>
-          configRow.maxY >> configRow.order;
+          configRow.toGsr >> configRow.toMva >> configRow.toCm >>
+          configRow.toTm >> configRow.toHm >> configRow.toOm >>
+          configRow.toSave >> configRow.spacecraft >> beginDate >> beginTime >>
+          endDate >> endTime >> configRow.samplingInterval >>
+          configRow.fittingFuntion >> configRow.fittingParameterBdr >>
+          configRow.fittingParameterCtr >> configRow.Nx >> configRow.ratio >>
+          configRow.minY >> configRow.maxY >> configRow.order;
         // calculate begin and end Time objects instead of strings
         configRow.beginTime = Time(beginDate+' '+beginTime);
         configRow.endTime = Time(endDate+' '+endTime);

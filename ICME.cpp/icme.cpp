@@ -47,10 +47,15 @@ int main(int argc, char* argv[]) {
   // path to directory with data files
   const string dataDir = (argc > 3 ? argv[3] : "./res");
   LOG4CPLUS_DEBUG(logger, "path to data files = " << dataDir);
+  // path to directory with results
+  const string resultsDir = (argc > 4 ? argv[4] : "./res");
+  LOG4CPLUS_DEBUG(logger, "path to results files = " << resultsDir);
 
   Config config; // config object, holds config for all events
   ostringstream dataPathStream; // srting stream for data path string
   string dataPath; // path to data file
+  ostringstream eventResultsDirStream; // srting stream for results directory
+  string eventResultsDir; // path to results directory
 
   // initialize analyzers
   MvaAnalyzer mva; // MVA analysis class
@@ -143,79 +148,85 @@ int main(int argc, char* argv[]) {
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
 
+    // initialize the directory for results
+    eventResultsDirStream << resultsDir << "/" << setfill('0') <<
+      config.row(iEvent).beginTime.year() << "-" <<
+      setw(2) << config.row(iEvent).beginTime.month() << "-" <<
+      setw(2) << config.row(iEvent).beginTime.day() << "_" <<
+      config.row(iEvent).spacecraft;
+    // save the results directory
+    eventResultsDir = eventResultsDirStream.str();
+    LOG4CPLUS_DEBUG(logger, "results directory = " << eventResultsDir);
+    // clear the stream
+    eventResultsDirStream.clear();
+    eventResultsDirStream.str("");
+
     // perform GSR analysis if required
     if (config.row(iEvent).toGsr) {
 
       LOG4CPLUS_INFO(logger, "doing GSR analysis");
       gsr.analyze(*event); // do GSR analysis
 
-      if (config.row(iEvent).toPlot) { // plot
+      LOG4CPLUS_INFO(logger, "plotting results of GSR analysis");
+      // plot residue maps through Matlab
+      Plotter plotter(config.row(iEvent).toSave, eventResultsDir);
 
-        LOG4CPLUS_INFO(logger, "plotting results of GSR analysis");
-        // plot residue maps through Matlab
-        Plotter plotter;
+      LOG4CPLUS_DEBUG(logger, "plotting the residual maps");
+      // angle arrays
+      VectorXd phi, theta;
 
-        LOG4CPLUS_DEBUG(logger, "plotting the residual maps");
-        // angle arrays
-        VectorXd phi, theta;
+      // initialize theta array
+      theta = VectorXd::LinSpaced(
+        ((*event).gsr().maxTheta-(*event).gsr().minTheta)/
+          (*event).gsr().dTheta+1,
+        (*event).gsr().minTheta,
+        (*event).gsr().maxTheta);
 
-        // initialize theta array
-        theta = VectorXd::LinSpaced(
-          ((*event).gsr().maxTheta-(*event).gsr().minTheta)/
-            (*event).gsr().dTheta+1,
-          (*event).gsr().minTheta,
-          (*event).gsr().maxTheta);
+      // initialize phi array
+      phi = VectorXd::LinSpaced(
+        ((*event).gsr().maxPhi-(*event).gsr().minPhi)/
+          (*event).gsr().dPhi+1,
+        (*event).gsr().minPhi,
+        (*event).gsr().maxPhi);
 
-        // initialize phi array
-        phi = VectorXd::LinSpaced(
-          ((*event).gsr().maxPhi-(*event).gsr().minPhi)/
-            (*event).gsr().dPhi+1,
-          (*event).gsr().minPhi,
-          (*event).gsr().maxPhi);
+      // plot the original residual map
+      plotter.plotResidueMap((*event).gsr().originalResidue,
+                             theta, phi,
+                             (*event).gsr().optTheta,
+                             (*event).gsr().optPhi);
 
-        // plot the original residual map
-        plotter.plotResidueMap((*event).gsr().originalResidue,
-                               theta, phi,
-                               (*event).gsr().optTheta,
-                               (*event).gsr().optPhi);
+      // plot the combined residual map
+      plotter.plotResidueMap((*event).gsr().combinedResidue,
+                             theta, phi,
+                             (*event).gsr().optTheta,
+                             (*event).gsr().optPhi);
 
-        // plot the combined residual map
-        plotter.plotResidueMap((*event).gsr().combinedResidue,
-                               theta, phi,
-                               (*event).gsr().optTheta,
-                               (*event).gsr().optPhi);
+      // plot Pt(A) through Gnuplot
+      LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
+      plotter.plotGsrAPt((*event).gsr().APtInCurve,
+                         (*event).gsr().APtOutCurve,
+                         (*event).gsr().APtFitCurve);
 
-        // plot Pt(A) through Gnuplot
-        LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
-        Gnuplot APt("gnuplot -persist");
-        APt << "p '-' w p t 'Pt(A) in', "
-              << "'-' w p t 'Pt(A) out', "
-              << "'-' w l t 'Pt(A) fit'\n";
-        APt.send((*event).gsr().APtInCurve).
-            send((*event).gsr().APtOutCurve).
-            send((*event).gsr().APtFitCurve);
+      // plot dPt/dA through Gnuplot
+      LOG4CPLUS_DEBUG(logger, "plotting dPt/dA(A)");
+      Gnuplot AdPt("gnuplot -persist");
+      AdPt << "p '-' w l t 'dPt/dA fit'\n";
+      AdPt.send((*event).gsr().AdPtFitCurve);
 
-        // plot dPt/dA through Gnuplot
-        LOG4CPLUS_DEBUG(logger, "plotting dPt/dA(A)");
-        Gnuplot AdPt("gnuplot -persist");
-        AdPt << "p '-' w l t 'dPt/dA fit'\n";
-        AdPt.send((*event).gsr().AdPtFitCurve);
+      // plot Bz(A) through Gnuplot
+      LOG4CPLUS_DEBUG(logger, "plotting Bz(A)");
+      Gnuplot ABz("gnuplot -persist");
+      ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
+      ABz.send((*event).gsr().ABzCurve).
+          send((*event).gsr().ABzFitCurve);
 
-        // plot Bz(A) through Gnuplot
-        LOG4CPLUS_DEBUG(logger, "plotting Bz(A)");
-        Gnuplot ABz("gnuplot -persist");
-        ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
-        ABz.send((*event).gsr().ABzCurve).
-            send((*event).gsr().ABzFitCurve);
-
-        LOG4CPLUS_DEBUG(logger, "plotting magnetic field map");
-        // plot magnetic field map through Matlab
-        plotter.plotMagneticMap((*event).gsr().Axy,
-                                (*event).gsr().Bz,
-                                (*event).gsr().X,
-                                (*event).gsr().Y,
-                                (*event).gsr().Ab);
-      }
+      LOG4CPLUS_DEBUG(logger, "plotting magnetic field map");
+      // plot magnetic field map through Matlab
+      plotter.plotMagneticMap((*event).gsr().Axy,
+                              (*event).gsr().Bz,
+                              (*event).gsr().X,
+                              (*event).gsr().Y,
+                              (*event).gsr().Ab);
     }
 
     // perform MVA analysis if required

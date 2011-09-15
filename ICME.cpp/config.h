@@ -12,7 +12,7 @@
 struct ConfigRow {
   int flag, samplingInterval, Nx, order;
   char quality;
-  bool toPlot, toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
+  bool toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
   std::string spacecraft, fittingFuntion;
   double ratio, minY, maxY, fittingParameterCtr, fittingParameterBdr;
   My::Time beginTime, endTime;

@@ -1,22 +1,47 @@
 
 // project headers
 #include "plotter.h"
+#include "gnuplot.h"
 // standard headers
 #include <iostream>
+#include <string>
+#include <sys/stat.h>
 
 using namespace std;
 using namespace Eigen;
 
 // plotter constructor
 Plotter::Plotter() {
-  // open Matlab egine
-  _matlab = engOpen(NULL);
-  engOutputBuffer(_matlab, NULL, 0);
+  // initialize Matlab egine
+  _initMatlab();
+}
+
+// plotter constructor
+Plotter::Plotter(bool toSave, string resultsDir) :
+  _toSave(toSave), _resultsDir(resultsDir)
+{
+  // initialize Matlab egine
+  _initMatlab();
+  // initialize results directory if asked to save the plots
+  if (_toSave) _initResultsDir();
 }
 
 // plotter destructor
 Plotter::~Plotter() {
 //  engClose(_matlab);
+}
+
+// initialize Matlab engine
+void Plotter::_initMatlab() {
+  // open matlab engine
+  _matlab = engOpen(NULL);
+  // init output buffer
+  engOutputBuffer(_matlab, NULL, 0);
+}
+
+// initialize results directory
+void Plotter::_initResultsDir() {
+  mkdir(_resultsDir.c_str(), S_IRWXU|S_IRWXG|S_IRWXO);
 }
 
 // plot the residual map, done with Matlab
@@ -152,5 +177,25 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
 
   // run the final command
   engEvalString(_matlab, matlabCommand);
+}
+
+// plot Pt(A) for GSR
+void Plotter::plotGsrAPt(const Curve& APtInCurve,
+                const Curve& APtOutCurve,
+                const Curve& APtFitCurve) {
+  Gnuplot APt("gnuplot -persist");
+  if (_toSave) {
+    APt << "set term post enhanced color eps\n"
+        << "set output '" << _resultsDir << "/gsr_Pt_A.eps'\n";
+  }
+  APt << "p '-' w p t 'Pt(A) in', "
+        << "'-' w p t 'Pt(A) out', "
+        << "'-' w l t 'Pt(A) fit'\n";
+  APt.send(APtInCurve).send(APtOutCurve).send(APtFitCurve);
+  if (_toSave) {
+    APt << "set term png\n"
+        << "set output '" << _resultsDir << "/gsr_Pt_A.png'\n";
+    APt << "replot";
+  }
 }
 
