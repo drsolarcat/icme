@@ -13,6 +13,7 @@ class Plotter {
                         const Eigen::VectorXd&, const Eigen::VectorXd&,
                         double, double);
     void plotMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
-                         const Eigen::VectorXd&, const Eigen::VectorXd&);
+                         const Eigen::VectorXd&, const Eigen::VectorXd&,
+                         const double);
 };
 

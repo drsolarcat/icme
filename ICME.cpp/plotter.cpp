@@ -7,44 +7,57 @@
 using namespace std;
 using namespace Eigen;
 
+// plotter constructor
 Plotter::Plotter() {
+  // open Matlab egine
   _matlab = engOpen(NULL);
   engOutputBuffer(_matlab, NULL, 0);
 }
 
+// plotter destructor
 Plotter::~Plotter() {
 //  engClose(_matlab);
 }
 
-void Plotter::plotResidueMap(const MatrixXd& residue, const VectorXd& theta,
-                             const VectorXd& phi,
+// plot the residual map, done with Matlab
+void Plotter::plotResidueMap(const MatrixXd& residue,
+                             const VectorXd& theta, const VectorXd& phi,
                              double optTheta, double optPhi) {
 
+  // initialize mx pointers to use inside Matlab
   mxArray *mResidue, *mTheta, *mPhi, *mOptTheta, *mOptPhi;
 
+  // theta and phi m-arrays  for residual maps
   mTheta = mxCreateDoubleMatrix(1, theta.size(), mxREAL);
   mPhi = mxCreateDoubleMatrix(1, phi.size(), mxREAL);
 
+  // optimal angle for the residual maps (by GSR)
   mOptTheta = mxCreateDoubleScalar(optTheta);
   mOptPhi = mxCreateDoubleScalar(optPhi);
 
+  // copy data into the pointer destination for the theta and phi m-arrays
   memcpy((double*)mxGetPr(mTheta), (double*)theta.data(),
          theta.size()*sizeof(double));
   memcpy((double*)mxGetPr(mPhi), (double*)phi.data(),
          phi.size()*sizeof(double));
 
+  // put variables inside Matlab
   engPutVariable(_matlab, "theta", mTheta);
   engPutVariable(_matlab, "phi", mPhi);
   engPutVariable(_matlab, "optTheta", mOptTheta);
   engPutVariable(_matlab, "optPhi", mOptPhi);
 
+  // m-array for the residuals
   mResidue = mxCreateDoubleMatrix(residue.rows(), residue.cols(), mxREAL);
 
+  // copy resiuals to Matlab
   memcpy((double*)mxGetPr(mResidue), (double*)residue.data(),
          residue.rows()*residue.cols()*sizeof(double));
 
+  // ... and put it inside Matlab
   engPutVariable(_matlab, "R", mResidue);
 
+  // Matlab command to plot the residual map
   char matlabCommand[] =
   "R = R.^-1;\n"
   "figure\n"
@@ -73,36 +86,55 @@ void Plotter::plotResidueMap(const MatrixXd& residue, const VectorXd& theta,
   "set(get(cbar_handle,'xlabel'),'string','1/R');\n"
   "hold off\n";
 
+  // run the command
   engEvalString(_matlab, matlabCommand);
 }
 
+// plot the magnetic field map, done with Matlab
 void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
-                              const VectorXd& X, const VectorXd& Y) {
+                              const VectorXd& X, const VectorXd& Y,
+                              const double Ab) {
 
-  mxArray *mAxy, *mBz, *mX, *mY;
+  // initialize the pointers to the m-variables
+  mxArray *mAxy, *mBz, *mX, *mY, *mAb;
+
+  // initialize boundary vector potential
+  mAb = mxCreateDoubleScalar(Ab);
+
+  // initialize m-arrays for the X and Y coordinates in the magnetic field map
   mX = mxCreateDoubleMatrix(1, X.size(), mxREAL);
   mY = mxCreateDoubleMatrix(1, Y.size(), mxREAL);
 
+  // copy the coordinates to the m-arrays
   memcpy((double*)mxGetPr(mX), (double*)X.data(), X.size()*sizeof(double));
   memcpy((double*)mxGetPr(mY), (double*)Y.data(), Y.size()*sizeof(double));
 
+  // put the coordinates into Matlab
+  engPutVariable(_matlab, "Ab", mAb);
   engPutVariable(_matlab, "X", mX);
   engPutVariable(_matlab, "Y", mY);
 
+  // create the m-matrix for the vector potential
   mAxy = mxCreateDoubleMatrix(Axy.rows(), Axy.cols(), mxREAL);
 
+  // copy vector potential data into the m-matrix
   memcpy((double*)mxGetPr(mAxy), (double*)Axy.data(),
          Axy.rows()*Axy.cols()*sizeof(double));
 
+  // put it into Matlab
   engPutVariable(_matlab, "Axy", mAxy);
 
+  // create m-matrix for the magnetic field data
   mBz = mxCreateDoubleMatrix(Bz.rows(), Bz.cols(), mxREAL);
 
+  // copy the magnetic field data into the m-matrix
   memcpy((double*)mxGetPr(mBz), (double*)Bz.data(),
          Bz.rows()*Bz.cols()*sizeof(double));
 
+  // ... and put it inside Matlab
   engPutVariable(_matlab, "Bz", mBz);
 
+  // Matlab command for plotting the magnetic field map
   char matlabCommand[] =
   "figure\n"
   "contour(X, Y, Bz, linspace(min(Bz(:)), max(Bz(:)), 100), ...\n"
@@ -110,6 +142,7 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   "colorbar\n"
   "hold on\n"
   "contour(X, Y, Axy, 50, 'LineColor', 'black');\n"
+  "contour(X, Y, Axy, [Ab Ab], 'LineColor', 'white', 'LineWidth', 3);\n"
   "caxis([min(Bz(:)) max(Bz(:))]);\n"
   "set(gca, 'Color', [0 0 .5]);\n"
   "set(gcf, 'Color', 'white');\n"
@@ -117,6 +150,7 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   "xlabel 'X_{MC} (AU)'\n"
   "ylabel 'Y_{MC} (AU)'\n";
 
+  // run the final command
   engEvalString(_matlab, matlabCommand);
 }
 

@@ -310,6 +310,10 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     }
   }
 
+  // save central and boundary values of the vector potential
+  gsr.Ac = Ac;
+  gsr.Ab = Ab;
+
   // polyexp fitting
   PolyExpFit APtFit(nAll, AarrAll, PtArrAll, event.config().order,
     event.config().fittingParameterCtr, event.config().fittingParameterBdr);

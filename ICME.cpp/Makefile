@@ -6,17 +6,17 @@ ifeq ($(USERNAME),isavnin) # at work
 	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64
 endif
 
-ifeq ($(USERNAME),inferno) # on my desktop
-	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2010b/extern/include
-	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnxa64:/usr/local/MATLAB/R2010b/bin/glnxa64
-	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
-endif
-
-#ifeq ($(HOSTNAME),inferno-laptop) # on my laptop
+#ifeq ($(USERNAME),inferno) # on my desktop
 #	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2010b/extern/include
-#	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnx86:/usr/local/MATLAB/R2010b/bin/glnx86
-#	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnx86
+#	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnxa64:/usr/local/MATLAB/R2010b/bin/glnxa64
+#	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
 #endif
+
+ifeq ($(USERNAME),inferno) # on my laptop
+	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2011a/extern/include
+	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2011a/extern/lib/glnx86:/usr/local/MATLAB/R2011a/bin/glnx86
+	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2011a/bin/glnx86
+endif
 
 # export the paths
 export CPLUS_INCLUDE_PATH LIBRARY_PATH

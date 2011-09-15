@@ -65,8 +65,8 @@ int main(int argc, char **argv) {
     By(0)    = (A0(1)-A0(0))/(x(1)-x(0));
     By(nx-1) = (A0(nx-1)-A0(nx-2))/(x(nx-1)-x(nx-2));
 
-    Plotter plotter;
-    plotter.plotMagneticMap(A.transpose(), Bzz.transpose(), x, y);
+//    Plotter plotter;
+//    plotter.plotMagneticMap(A.transpose(), Bzz.transpose(), x, y);
   }
 
   return 0;

@@ -47,6 +47,7 @@ struct GsrResults {
   Axes axes; // MC axes
   BranchedCurve curve; // Pt(A) curve
   double dx, dy; // steps used for reconstruction
+  double Ab, Ac; // boundary and central values of the vector potential
   int Nx, Ny; // number of steps
   Eigen::VectorXd X, Y; // reconstruction coordinates
   Eigen::MatrixXd Axy, Bz; // potential and magnetic field maps

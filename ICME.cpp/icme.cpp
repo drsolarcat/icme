@@ -213,7 +213,8 @@ int main(int argc, char* argv[]) {
         plotter.plotMagneticMap((*event).gsr().Axy,
                                 (*event).gsr().Bz,
                                 (*event).gsr().X,
-                                (*event).gsr().Y);
+                                (*event).gsr().Y,
+                                (*event).gsr().Ab);
       }
     }
 
