@@ -2,6 +2,9 @@
 // project headers
 #include "plotter.h"
 #include "gnuplot.h"
+// library headers
+#include <Python.h>
+#include <numpy/arrayobject.h>
 // standard headers
 #include <iostream>
 #include <string>
@@ -14,6 +17,8 @@ using namespace Eigen;
 Plotter::Plotter() {
   // initialize Matlab egine
   _initMatlab();
+  // initialize Python
+  _initPython();
 }
 
 // plotter constructor
@@ -22,6 +27,8 @@ Plotter::Plotter(bool toSave, string resultsDir) :
 {
   // initialize Matlab egine
   _initMatlab();
+  // initialize Python
+  _initPython();
   // initialize results directory if asked to save the plots
   if (_toSave) _initResultsDir();
 }
@@ -37,6 +44,24 @@ void Plotter::_initMatlab() {
   _matlab = engOpen(NULL);
   // init output buffer
   engOutputBuffer(_matlab, NULL, 0);
+}
+
+int Plotter::_initPython() {
+  // launch the python interpreter                                              !
+  Py_Initialize();
+  // this macro is defined be NumPy and must be included
+  import_array1(-1);
+  // update module search path
+  PyObject *sys_module = PyImport_ImportModule("sys");
+  PyObject *sys_dict = PyModule_GetDict(sys_module);
+  PyObject *sys_path = PyMapping_GetItemString(sys_dict, "path");
+  PyObject *add_value = PyString_FromString("./");
+  PyList_Append(sys_path, add_value);
+  Py_DECREF(add_value);
+  Py_DECREF(sys_path);
+  Py_DECREF(sys_module);
+  _python_module = PyImport_ImportModule("plotter");
+  _python_dictionary = PyModule_GetDict(_python_module);
 }
 
 // initialize results directory
@@ -120,82 +145,166 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
                               const VectorXd& X, const VectorXd& Y,
                               const double Ab) {
 
-  // initialize the pointers to the m-variables
-  mxArray *mAxy, *mBz, *mX, *mY, *mAb;
+//  // initialize the pointers to the m-variables
+//  mxArray *mAxy, *mBz, *mX, *mY, *mAb;
 
-  // initialize boundary vector potential
-  mAb = mxCreateDoubleScalar(Ab);
+//  // initialize boundary vector potential
+//  mAb = mxCreateDoubleScalar(Ab);
 
-  // initialize m-arrays for the X and Y coordinates in the magnetic field map
-  mX = mxCreateDoubleMatrix(1, X.size(), mxREAL);
-  mY = mxCreateDoubleMatrix(1, Y.size(), mxREAL);
+//  // initialize m-arrays for the X and Y coordinates in the magnetic field map
+//  mX = mxCreateDoubleMatrix(1, X.size(), mxREAL);
+//  mY = mxCreateDoubleMatrix(1, Y.size(), mxREAL);
 
-  // copy the coordinates to the m-arrays
-  memcpy((double*)mxGetPr(mX), (double*)X.data(), X.size()*sizeof(double));
-  memcpy((double*)mxGetPr(mY), (double*)Y.data(), Y.size()*sizeof(double));
+//  // copy the coordinates to the m-arrays
+//  memcpy((double*)mxGetPr(mX), (double*)X.data(), X.size()*sizeof(double));
+//  memcpy((double*)mxGetPr(mY), (double*)Y.data(), Y.size()*sizeof(double));
 
-  // put the coordinates into Matlab
-  engPutVariable(_matlab, "Ab", mAb);
-  engPutVariable(_matlab, "X", mX);
-  engPutVariable(_matlab, "Y", mY);
+//  // put the coordinates into Matlab
+//  engPutVariable(_matlab, "Ab", mAb);
+//  engPutVariable(_matlab, "X", mX);
+//  engPutVariable(_matlab, "Y", mY);
 
-  // create the m-matrix for the vector potential
-  mAxy = mxCreateDoubleMatrix(Axy.rows(), Axy.cols(), mxREAL);
+//  // create the m-matrix for the vector potential
+//  mAxy = mxCreateDoubleMatrix(Axy.rows(), Axy.cols(), mxREAL);
 
-  // copy vector potential data into the m-matrix
-  memcpy((double*)mxGetPr(mAxy), (double*)Axy.data(),
-         Axy.rows()*Axy.cols()*sizeof(double));
+//  // copy vector potential data into the m-matrix
+//  memcpy((double*)mxGetPr(mAxy), (double*)Axy.data(),
+//         Axy.rows()*Axy.cols()*sizeof(double));
 
-  // put it into Matlab
-  engPutVariable(_matlab, "Axy", mAxy);
+//  // put it into Matlab
+//  engPutVariable(_matlab, "Axy", mAxy);
 
-  // create m-matrix for the magnetic field data
-  mBz = mxCreateDoubleMatrix(Bz.rows(), Bz.cols(), mxREAL);
+//  // create m-matrix for the magnetic field data
+//  mBz = mxCreateDoubleMatrix(Bz.rows(), Bz.cols(), mxREAL);
 
-  // copy the magnetic field data into the m-matrix
-  memcpy((double*)mxGetPr(mBz), (double*)Bz.data(),
-         Bz.rows()*Bz.cols()*sizeof(double));
+//  // copy the magnetic field data into the m-matrix
+//  memcpy((double*)mxGetPr(mBz), (double*)Bz.data(),
+//         Bz.rows()*Bz.cols()*sizeof(double));
 
-  // ... and put it inside Matlab
-  engPutVariable(_matlab, "Bz", mBz);
+//  // ... and put it inside Matlab
+//  engPutVariable(_matlab, "Bz", mBz);
 
-  // Matlab command for plotting the magnetic field map
-  char matlabCommand[] =
-  "figure\n"
-  "contour(X, Y, Bz, linspace(min(Bz(:)), max(Bz(:)), 100), ...\n"
-  "  'Fill', 'on', 'LineStyle', 'none');\n"
-  "colorbar\n"
-  "hold on\n"
-  "contour(X, Y, Axy, 50, 'LineColor', 'black');\n"
-  "contour(X, Y, Axy, [Ab Ab], 'LineColor', 'white', 'LineWidth', 3);\n"
-  "caxis([min(Bz(:)) max(Bz(:))]);\n"
-  "set(gca, 'Color', [0 0 .5]);\n"
-  "set(gcf, 'Color', 'white');\n"
-  "set(gcf, 'InvertHardCopy', 'off');\n"
-  "xlabel 'X_{MC} (AU)'\n"
-  "ylabel 'Y_{MC} (AU)'\n";
+//  // Matlab command for plotting the magnetic field map
+//  char matlabCommand[] =
+//  "figure\n"
+//  "contour(X, Y, Bz, linspace(min(Bz(:)), max(Bz(:)), 100), ...\n"
+//  "  'Fill', 'on', 'LineStyle', 'none');\n"
+//  "colorbar\n"
+//  "hold on\n"
+//  "contour(X, Y, Axy, 50, 'LineColor', 'black');\n"
+//  "contour(X, Y, Axy, [Ab Ab], 'LineColor', 'white', 'LineWidth', 3);\n"
+//  "caxis([min(Bz(:)) max(Bz(:))]);\n"
+//  "set(gca, 'Color', [0 0 .5]);\n"
+//  "set(gcf, 'Color', 'white');\n"
+//  "set(gcf, 'InvertHardCopy', 'off');\n"
+//  "xlabel 'X_{MC} (AU)'\n"
+//  "ylabel 'Y_{MC} (AU)'\n";
 
-  // run the final command
-  engEvalString(_matlab, matlabCommand);
+//  // run the final command
+//  engEvalString(_matlab, matlabCommand);
+
+  PyObject *pArgs, *func;
+
+  npy_intp pXDim[] = {X.size()};
+  npy_intp pYDim[] = {Y.size()};
+  npy_intp pAxyDim[] = {Axy.rows()*Axy.cols()};
+
+  pArgs = PyTuple_New(3);
+
+  cout << "args tuple created" << endl;
+
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pXDim, PyArray_DOUBLE,
+      const_cast<double*>(X.data())));
+
+  cout << "X loaded" << endl;
+
+  PyTuple_SetItem(pArgs, 1,
+    PyArray_SimpleNewFromData(1, pYDim, PyArray_DOUBLE,
+      const_cast<double*>(Y.data())));
+
+  cout << "Y loaded" << endl;
+
+  PyTuple_SetItem(pArgs, 2,
+    PyArray_SimpleNewFromData(1, pAxyDim, PyArray_DOUBLE,
+      const_cast<double*>(Axy.data())));
+
+  cout << "Axy loaded" << endl;
+
+  func = PyDict_GetItemString(_python_dictionary, "plotBzMap");
+  PyObject_CallObject(func, pArgs);
+
+  Py_XDECREF(pArgs);
+  Py_XDECREF(func);
 }
 
 // plot Pt(A) for GSR
 void Plotter::plotGsrAPt(const Curve& APtInCurve,
-                const Curve& APtOutCurve,
-                const Curve& APtFitCurve) {
-  Gnuplot APt("gnuplot -persist");
+                         const Curve& APtOutCurve,
+                         const Curve& APtFitCurve) {
+  PyObject *pAPtIn, *pAPtOut, *pAPtFit, *pArgs, *func;
+
+  pAPtIn = PyDict_New();
+  npy_intp pAPtInDim[] = {APtInCurve.size()};
+  PyDict_SetItemString(pAPtIn, "x",
+    PyArray_SimpleNewFromData(1, pAPtInDim, PyArray_DOUBLE,
+      const_cast<double*>(APtInCurve.cols().x.data())));
+  PyDict_SetItemString(pAPtIn, "y",
+    PyArray_SimpleNewFromData(1, pAPtInDim, PyArray_DOUBLE,
+      const_cast<double*>(APtInCurve.cols().y.data())));
+
+  pAPtOut = PyDict_New();
+  npy_intp pAPtOutDim[] = {APtOutCurve.size()};
+  PyDict_SetItemString(pAPtOut, "x",
+    PyArray_SimpleNewFromData(1, pAPtOutDim, PyArray_DOUBLE,
+      const_cast<double*>(APtOutCurve.cols().x.data())));
+  PyDict_SetItemString(pAPtOut, "y",
+    PyArray_SimpleNewFromData(1, pAPtOutDim, PyArray_DOUBLE,
+      const_cast<double*>(APtOutCurve.cols().y.data())));
+
+  pAPtFit = PyDict_New();
+  npy_intp pAPtFitDim[] = {APtFitCurve.size()};
+  PyDict_SetItemString(pAPtFit, "x",
+    PyArray_SimpleNewFromData(1, pAPtFitDim, PyArray_DOUBLE,
+      const_cast<double*>(APtFitCurve.cols().x.data())));
+  PyDict_SetItemString(pAPtFit, "y",
+    PyArray_SimpleNewFromData(1, pAPtFitDim, PyArray_DOUBLE,
+      const_cast<double*>(APtFitCurve.cols().y.data())));
+
+  pArgs = PyTuple_New(3);
+  PyTuple_SetItem(pArgs, 0, pAPtIn);
+  PyTuple_SetItem(pArgs, 1, pAPtOut);
+  PyTuple_SetItem(pArgs, 2, pAPtFit);
+  func = PyDict_GetItemString(_python_dictionary, "plotGsrAPt");
+  PyObject_CallObject(func, pArgs);
+
+  Py_XDECREF(pAPtIn);
+  Py_XDECREF(pAPtOut);
+  Py_XDECREF(pAPtFit);
+  Py_XDECREF(pArgs);
+  Py_XDECREF(func);
+}
+
+// plot dPt/dA(A) for GSR
+void Plotter::plotGsrAdPt(const Curve& AdPtFitCurve) {
+  Gnuplot AdPt("gnuplot -persist");
   if (_toSave) {
-    APt << "set term post enhanced color eps\n"
-        << "set output '" << _resultsDir << "/gsr_Pt_A.eps'\n";
+    AdPt << "set term post enhanced color eps\n"
+        << "set output '" << _resultsDir << "/gsr_A_dPt.eps'\n";
   }
-  APt << "p '-' w p t 'Pt(A) in', "
-        << "'-' w p t 'Pt(A) out', "
-        << "'-' w l t 'Pt(A) fit'\n";
-  APt.send(APtInCurve).send(APtOutCurve).send(APtFitCurve);
+  AdPt << "p '-' w l t 'dPt/dA fit'\n";
+  AdPt.send(AdPtFitCurve);
+}
+
+// plot Bz(A) for GSR
+void Plotter::plotGsrABz(const Curve& ABzCurve, const Curve& ABzFitCurve) {
+  Gnuplot ABz("gnuplot -persist");
   if (_toSave) {
-    APt << "set term png\n"
-        << "set output '" << _resultsDir << "/gsr_Pt_A.png'\n";
-    APt << "replot";
+    ABz << "set term post enhanced color eps\n"
+        << "set output '" << _resultsDir << "/gsr_A_Bz.eps'\n";
   }
+  ABz << "p '-' w p t 'Bz(A)', "
+      << "'-' w l t 'Bz(A) fit'\n";
+  ABz.send(ABzCurve).send(ABzFitCurve);
 }
 

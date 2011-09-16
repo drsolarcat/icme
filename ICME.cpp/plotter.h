@@ -4,12 +4,15 @@
 // library headers
 #include "engine.h"
 #include <eigen3/Eigen/Dense>
+#include <Python.h>
 // standard headers
 #include <string>
 
 // a class for drawing different kinds of plots
 class Plotter {
   Engine* _matlab; // matlab engine object
+  PyObject* _python_module; // python module
+  PyObject* _python_dictionary; // python dictionary
   public:
     // constructors
     Plotter();
@@ -30,9 +33,15 @@ class Plotter {
                          const double);
     // plot Pt(A) plot for GSR
     void plotGsrAPt(const Curve&, const Curve&, const Curve&);
+    // plot dPt/dA(A) plot for GSR
+    void plotGsrAdPt(const Curve&);
+    // plot Bz(A) plot for GSR
+    void plotGsrABz(const Curve&, const Curve&);
   protected:
     // initialize Matlab engine
     void _initMatlab();
+    // initialize Python
+    int _initPython();
     // initialize results directory
     void _initResultsDir();
 };

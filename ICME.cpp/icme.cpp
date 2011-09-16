@@ -190,35 +190,31 @@ int main(int argc, char* argv[]) {
         (*event).gsr().maxPhi);
 
       // plot the original residual map
-      plotter.plotResidueMap((*event).gsr().originalResidue,
-                             theta, phi,
-                             (*event).gsr().optTheta,
-                             (*event).gsr().optPhi);
+//      plotter.plotResidueMap((*event).gsr().originalResidue,
+//                             theta, phi,
+//                             (*event).gsr().optTheta,
+//                             (*event).gsr().optPhi);
 
       // plot the combined residual map
-      plotter.plotResidueMap((*event).gsr().combinedResidue,
-                             theta, phi,
-                             (*event).gsr().optTheta,
-                             (*event).gsr().optPhi);
+//      plotter.plotResidueMap((*event).gsr().combinedResidue,
+//                             theta, phi,
+//                             (*event).gsr().optTheta,
+//                             (*event).gsr().optPhi);
 
       // plot Pt(A) through Gnuplot
-      LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
-      plotter.plotGsrAPt((*event).gsr().APtInCurve,
-                         (*event).gsr().APtOutCurve,
-                         (*event).gsr().APtFitCurve);
+//      LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
+//      plotter.plotGsrAPt((*event).gsr().APtInCurve,
+//                         (*event).gsr().APtOutCurve,
+//                         (*event).gsr().APtFitCurve);
 
       // plot dPt/dA through Gnuplot
       LOG4CPLUS_DEBUG(logger, "plotting dPt/dA(A)");
-      Gnuplot AdPt("gnuplot -persist");
-      AdPt << "p '-' w l t 'dPt/dA fit'\n";
-      AdPt.send((*event).gsr().AdPtFitCurve);
+      plotter.plotGsrAdPt((*event).gsr().AdPtFitCurve);
 
       // plot Bz(A) through Gnuplot
       LOG4CPLUS_DEBUG(logger, "plotting Bz(A)");
-      Gnuplot ABz("gnuplot -persist");
-      ABz << "p '-' w p t 'Bz(A)', '-' w l t 'Bz(A) fit'\n";
-      ABz.send((*event).gsr().ABzCurve).
-          send((*event).gsr().ABzFitCurve);
+      plotter.plotGsrABz((*event).gsr().ABzCurve,
+                         (*event).gsr().ABzFitCurve);
 
       LOG4CPLUS_DEBUG(logger, "plotting magnetic field map");
       // plot magnetic field map through Matlab

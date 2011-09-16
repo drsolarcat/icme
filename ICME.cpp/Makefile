@@ -1,7 +1,7 @@
 
 # check where we are compiling the project
 ifeq ($(USERNAME),isavnin) # at work
-	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/usr/local/matlab2009b/extern/include
+	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/usr/local/matlab2009b/extern/include:/usr/include/python2.6
 	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnxa64:/usr/local/matlab2009b/bin/glnxa64
 	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64
 endif
@@ -13,10 +13,12 @@ endif
 #endif
 
 ifeq ($(USERNAME),inferno) # on my laptop
-	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2011a/extern/include
+	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2011a/extern/include:/usr/include/python2.6
 	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2011a/extern/lib/glnx86:/usr/local/MATLAB/R2011a/bin/glnx86
 	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2011a/bin/glnx86
 endif
+
+# export CPLUS_INCLUDE_PATH=/usr/include/python2.6 && g++ -o test_python test_python.cpp -lpython2.6 -Wno-write-strings && ./test_python
 
 # export the paths
 export CPLUS_INCLUDE_PATH LIBRARY_PATH
@@ -38,16 +40,17 @@ CXX = g++
 GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams
 MATLAB = -lmx -leng -lmat -lut
+PYTHON = -lpython2.6
 LOG4CPLUS = -llog4cplus
-CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH)
+CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH) -Wno-write-strings
 
 all: $(PROGRAM) $(BENCHMARK)
 
 $(PROGRAM): $(CXXOBJECTS) $(PROGRAM).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
 
 $(BENCHMARK): $(CXXOBJECTS) $(BENCHMARK).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
 
 $(PROGRAM).o: icme.cpp
 	$(CXX) -c -o icme.o icme.cpp $(CXXFLAGS)
