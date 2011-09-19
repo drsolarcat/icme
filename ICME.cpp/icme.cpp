@@ -201,11 +201,11 @@ int main(int argc, char* argv[]) {
 //                             (*event).gsr().optTheta,
 //                             (*event).gsr().optPhi);
 
-      // plot Pt(A) through Gnuplot
-//      LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
-//      plotter.plotGsrAPt((*event).gsr().APtInCurve,
-//                         (*event).gsr().APtOutCurve,
-//                         (*event).gsr().APtFitCurve);
+      // plot Pt(A) through matplotlib
+      LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
+      plotter.plotGsrAPt((*event).gsr().APtInCurve,
+                         (*event).gsr().APtOutCurve,
+                         (*event).gsr().APtFitCurve);
 
       // plot dPt/dA through Gnuplot
       LOG4CPLUS_DEBUG(logger, "plotting dPt/dA(A)");

@@ -25,16 +25,18 @@ Plotter::Plotter() {
 Plotter::Plotter(bool toSave, string resultsDir) :
   _toSave(toSave), _resultsDir(resultsDir)
 {
+  // initialize results directory if asked to save the plots
+  if (_toSave) _initResultsDir();
   // initialize Matlab egine
   _initMatlab();
   // initialize Python
   _initPython();
-  // initialize results directory if asked to save the plots
-  if (_toSave) _initResultsDir();
 }
 
 // plotter destructor
 Plotter::~Plotter() {
+  PyObject_CallObject(
+    PyDict_GetItemString(_python_dictionary, "showPlots"), NULL);
 //  engClose(_matlab);
 }
 
@@ -47,7 +49,7 @@ void Plotter::_initMatlab() {
 }
 
 int Plotter::_initPython() {
-  // launch the python interpreter                                              !
+  // launch the python interpreter
   Py_Initialize();
   // this macro is defined be NumPy and must be included
   import_array1(-1);
@@ -62,11 +64,27 @@ int Plotter::_initPython() {
   Py_DECREF(sys_module);
   _python_module = PyImport_ImportModule("plotter");
   _python_dictionary = PyModule_GetDict(_python_module);
+
+  PyObject *pArgs;
+  pArgs = PyTuple_New(2);
+  PyTuple_SetItem(pArgs, 0, (_toSave ? Py_True : Py_False));
+  PyTuple_SetItem(pArgs, 1, PyString_FromString(_resultsDir.c_str()));
+  PyObject_CallObject(
+    PyDict_GetItemString(_python_dictionary, "initPlotter"), pArgs);
+  Py_XDECREF(pArgs);
 }
 
 // initialize results directory
 void Plotter::_initResultsDir() {
+  char strDirEps[256];
+  char strDirPng[256];
+  strcpy(strDirEps, _resultsDir.c_str());
+  strcat(strDirEps, "/eps");
+  strcpy(strDirPng, _resultsDir.c_str());
+  strcat(strDirPng, "/png");
   mkdir(_resultsDir.c_str(), S_IRWXU|S_IRWXG|S_IRWXO);
+  mkdir(strDirEps, S_IRWXU|S_IRWXG|S_IRWXO);
+  mkdir(strDirPng, S_IRWXU|S_IRWXG|S_IRWXO);
 }
 
 // plot the residual map, done with Matlab
@@ -242,6 +260,7 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
 void Plotter::plotGsrAPt(const Curve& APtInCurve,
                          const Curve& APtOutCurve,
                          const Curve& APtFitCurve) {
+
   PyObject *pAPtIn, *pAPtOut, *pAPtFit, *pArgs, *func;
 
   pAPtIn = PyDict_New();

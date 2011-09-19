@@ -13,13 +13,13 @@ class Plotter {
   Engine* _matlab; // matlab engine object
   PyObject* _python_module; // python module
   PyObject* _python_dictionary; // python dictionary
+  bool _toSave; // whether to save the plot or not
+  std::string _resultsDir; // directory for resulting plots to be saved into
   public:
     // constructors
     Plotter();
     Plotter(bool, std::string);
     ~Plotter(); // destructor
-    bool _toSave; // whether to save the plot or not
-    std::string _resultsDir; // directory for resulting plots to be saved into
     // accessors
     const bool toSave() const {return _toSave;}
     const std::string resultsDir() const {return _resultsDir;}
