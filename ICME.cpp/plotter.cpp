@@ -16,7 +16,7 @@ using namespace Eigen;
 // plotter constructor
 Plotter::Plotter() {
   // initialize Matlab egine
-  _initMatlab();
+//  _initMatlab();
   // initialize Python
   _initPython();
 }
@@ -28,7 +28,7 @@ Plotter::Plotter(bool toSave, string resultsDir) :
   // initialize results directory if asked to save the plots
   if (_toSave) _initResultsDir();
   // initialize Matlab egine
-  _initMatlab();
+//  _initMatlab();
   // initialize Python
   _initPython();
 }
@@ -226,28 +226,27 @@ void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   npy_intp pXDim[] = {X.size()};
   npy_intp pYDim[] = {Y.size()};
   npy_intp pAxyDim[] = {Axy.rows()*Axy.cols()};
+  npy_intp pBzDim[] = {Bz.rows()*Bz.cols()};
 
-  pArgs = PyTuple_New(3);
-
-  cout << "args tuple created" << endl;
+  pArgs = PyTuple_New(5);
 
   PyTuple_SetItem(pArgs, 0,
     PyArray_SimpleNewFromData(1, pXDim, PyArray_DOUBLE,
       const_cast<double*>(X.data())));
 
-  cout << "X loaded" << endl;
-
   PyTuple_SetItem(pArgs, 1,
     PyArray_SimpleNewFromData(1, pYDim, PyArray_DOUBLE,
       const_cast<double*>(Y.data())));
-
-  cout << "Y loaded" << endl;
 
   PyTuple_SetItem(pArgs, 2,
     PyArray_SimpleNewFromData(1, pAxyDim, PyArray_DOUBLE,
       const_cast<double*>(Axy.data())));
 
-  cout << "Axy loaded" << endl;
+  PyTuple_SetItem(pArgs, 3,
+    PyArray_SimpleNewFromData(1, pBzDim, PyArray_DOUBLE,
+      const_cast<double*>(Bz.data())));
+
+  PyTuple_SetItem(pArgs, 4, PyFloat_FromDouble(Ab));
 
   func = PyDict_GetItemString(_python_dictionary, "plotBzMap");
   PyObject_CallObject(func, pArgs);

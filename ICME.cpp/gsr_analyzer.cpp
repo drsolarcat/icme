@@ -69,6 +69,7 @@ void GsrAnalyzer::analyze(Event& event) {
     gsr.axes.z = -gsr.axes.z;
     gsr.axes.y = -gsr.axes.y;
   }
+
   LOG4CPLUS_DEBUG(logger, "magnetic cloud axes: " <<
     setiosflags(ios::fixed) << setprecision(3) << "x[" <<
     gsr.axes.x(0) << ", " <<
