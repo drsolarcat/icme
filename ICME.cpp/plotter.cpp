@@ -92,134 +92,102 @@ void Plotter::plotResidueMap(const MatrixXd& residue,
                              const VectorXd& theta, const VectorXd& phi,
                              double optTheta, double optPhi) {
 
-  // initialize mx pointers to use inside Matlab
-  mxArray *mResidue, *mTheta, *mPhi, *mOptTheta, *mOptPhi;
+//  // initialize mx pointers to use inside Matlab
+//  mxArray *mResidue, *mTheta, *mPhi, *mOptTheta, *mOptPhi;
 
-  // theta and phi m-arrays  for residual maps
-  mTheta = mxCreateDoubleMatrix(1, theta.size(), mxREAL);
-  mPhi = mxCreateDoubleMatrix(1, phi.size(), mxREAL);
+//  // theta and phi m-arrays  for residual maps
+//  mTheta = mxCreateDoubleMatrix(1, theta.size(), mxREAL);
+//  mPhi = mxCreateDoubleMatrix(1, phi.size(), mxREAL);
 
-  // optimal angle for the residual maps (by GSR)
-  mOptTheta = mxCreateDoubleScalar(optTheta);
-  mOptPhi = mxCreateDoubleScalar(optPhi);
+//  // optimal angle for the residual maps (by GSR)
+//  mOptTheta = mxCreateDoubleScalar(optTheta);
+//  mOptPhi = mxCreateDoubleScalar(optPhi);
 
-  // copy data into the pointer destination for the theta and phi m-arrays
-  memcpy((double*)mxGetPr(mTheta), (double*)theta.data(),
-         theta.size()*sizeof(double));
-  memcpy((double*)mxGetPr(mPhi), (double*)phi.data(),
-         phi.size()*sizeof(double));
+//  // copy data into the pointer destination for the theta and phi m-arrays
+//  memcpy((double*)mxGetPr(mTheta), (double*)theta.data(),
+//         theta.size()*sizeof(double));
+//  memcpy((double*)mxGetPr(mPhi), (double*)phi.data(),
+//         phi.size()*sizeof(double));
 
-  // put variables inside Matlab
-  engPutVariable(_matlab, "theta", mTheta);
-  engPutVariable(_matlab, "phi", mPhi);
-  engPutVariable(_matlab, "optTheta", mOptTheta);
-  engPutVariable(_matlab, "optPhi", mOptPhi);
+//  // put variables inside Matlab
+//  engPutVariable(_matlab, "theta", mTheta);
+//  engPutVariable(_matlab, "phi", mPhi);
+//  engPutVariable(_matlab, "optTheta", mOptTheta);
+//  engPutVariable(_matlab, "optPhi", mOptPhi);
 
-  // m-array for the residuals
-  mResidue = mxCreateDoubleMatrix(residue.rows(), residue.cols(), mxREAL);
+//  // m-array for the residuals
+//  mResidue = mxCreateDoubleMatrix(residue.rows(), residue.cols(), mxREAL);
 
-  // copy resiuals to Matlab
-  memcpy((double*)mxGetPr(mResidue), (double*)residue.data(),
-         residue.rows()*residue.cols()*sizeof(double));
+//  // copy resiuals to Matlab
+//  memcpy((double*)mxGetPr(mResidue), (double*)residue.data(),
+//         residue.rows()*residue.cols()*sizeof(double));
 
-  // ... and put it inside Matlab
-  engPutVariable(_matlab, "R", mResidue);
+//  // ... and put it inside Matlab
+//  engPutVariable(_matlab, "R", mResidue);
 
-  // Matlab command to plot the residual map
-  char matlabCommand[] =
-  "R = R.^-1;\n"
-  "figure\n"
-  "h = polar([0 2*pi], [0 90]);\n"
-  "ph = findall(gca, 'type', 'patch');\n"
-  "set(ph, 'facecolor', [0 0 .5], 'edgecolor', [0 0 .5]);\n"
-  "set(gcf, 'Color', 'white');\n"
-  "set(gcf, 'Renderer', 'Painters');\n"
-  "pl = findobj(allchild(gca));\n"
-  "hold on\n"
-  "contour(theta'*cos(phi*pi/180), theta'*sin(phi*pi/180), R, ...\n"
-  "        linspace(min(R(:)), max(R(:)), 500), 'Fill', 'on');\n"
-  "plot(optTheta*cos(optPhi*pi/180), optTheta*sin(optPhi*pi/180), ...\n"
-  "  '.w', 'MarkerSize', 20);\n"
-  "colorbar\n"
-  "for i = 1:length(pl)-1\n"
-  "  if strcmpi(get(pl(i), 'Type'), 'line')\n"
-  "    set(pl(i), 'Color', 'white');\n"
-  "  elseif strcmpi(get(pl(i), 'Type'), 'text') && i > 25\n"
-  "    set(pl(i), 'Color', 'white');\n"
-  "  end\n"
-  "  uistack(pl(i), 'top');\n"
-  "end\n"
-  "delete(h)\n"
-  "cbar_handle = findobj(gcf, 'Tag', 'Colorbar');\n"
-  "set(get(cbar_handle,'xlabel'),'string','1/R');\n"
-  "hold off\n";
+//  // Matlab command to plot the residual map
+//  char matlabCommand[] =
+//  "R = R.^-1;\n"
+//  "figure\n"
+//  "h = polar([0 2*pi], [0 90]);\n"
+//  "ph = findall(gca, 'type', 'patch');\n"
+//  "set(ph, 'facecolor', [0 0 .5], 'edgecolor', [0 0 .5]);\n"
+//  "set(gcf, 'Color', 'white');\n"
+//  "set(gcf, 'Renderer', 'Painters');\n"
+//  "pl = findobj(allchild(gca));\n"
+//  "hold on\n"
+//  "contour(theta'*cos(phi*pi/180), theta'*sin(phi*pi/180), R, ...\n"
+//  "        linspace(min(R(:)), max(R(:)), 500), 'Fill', 'on');\n"
+//  "plot(optTheta*cos(optPhi*pi/180), optTheta*sin(optPhi*pi/180), ...\n"
+//  "  '.w', 'MarkerSize', 20);\n"
+//  "colorbar\n"
+//  "for i = 1:length(pl)-1\n"
+//  "  if strcmpi(get(pl(i), 'Type'), 'line')\n"
+//  "    set(pl(i), 'Color', 'white');\n"
+//  "  elseif strcmpi(get(pl(i), 'Type'), 'text') && i > 25\n"
+//  "    set(pl(i), 'Color', 'white');\n"
+//  "  end\n"
+//  "  uistack(pl(i), 'top');\n"
+//  "end\n"
+//  "delete(h)\n"
+//  "cbar_handle = findobj(gcf, 'Tag', 'Colorbar');\n"
+//  "set(get(cbar_handle,'xlabel'),'string','1/R');\n"
+//  "hold off\n";
 
-  // run the command
-  engEvalString(_matlab, matlabCommand);
+//  // run the command
+//  engEvalString(_matlab, matlabCommand);
+
+  PyObject *pArgs, *func;
+
+  npy_intp pThetaDim[] = {theta.size()};
+  npy_intp pPhiDim[] = {phi.size()};
+  npy_intp pResidueDim[] = {residue.rows()*residue.cols()};
+
+  pArgs = PyTuple_New(3);
+
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pThetaDim, PyArray_DOUBLE,
+      const_cast<double*>(theta.data())));
+
+  PyTuple_SetItem(pArgs, 1,
+    PyArray_SimpleNewFromData(1, pPhiDim, PyArray_DOUBLE,
+      const_cast<double*>(phi.data())));
+
+  PyTuple_SetItem(pArgs, 2,
+    PyArray_SimpleNewFromData(1, pResidueDim, PyArray_DOUBLE,
+      const_cast<double*>(residue.data())));
+
+  func = PyDict_GetItemString(_python_dictionary, "plotGsrResidue");
+  PyObject_CallObject(func, pArgs);
+
+  Py_XDECREF(pArgs);
+  Py_XDECREF(func);
 }
 
 // plot the magnetic field map, done with Matlab
 void Plotter::plotMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
                               const VectorXd& X, const VectorXd& Y,
                               const double Ab) {
-
-//  // initialize the pointers to the m-variables
-//  mxArray *mAxy, *mBz, *mX, *mY, *mAb;
-
-//  // initialize boundary vector potential
-//  mAb = mxCreateDoubleScalar(Ab);
-
-//  // initialize m-arrays for the X and Y coordinates in the magnetic field map
-//  mX = mxCreateDoubleMatrix(1, X.size(), mxREAL);
-//  mY = mxCreateDoubleMatrix(1, Y.size(), mxREAL);
-
-//  // copy the coordinates to the m-arrays
-//  memcpy((double*)mxGetPr(mX), (double*)X.data(), X.size()*sizeof(double));
-//  memcpy((double*)mxGetPr(mY), (double*)Y.data(), Y.size()*sizeof(double));
-
-//  // put the coordinates into Matlab
-//  engPutVariable(_matlab, "Ab", mAb);
-//  engPutVariable(_matlab, "X", mX);
-//  engPutVariable(_matlab, "Y", mY);
-
-//  // create the m-matrix for the vector potential
-//  mAxy = mxCreateDoubleMatrix(Axy.rows(), Axy.cols(), mxREAL);
-
-//  // copy vector potential data into the m-matrix
-//  memcpy((double*)mxGetPr(mAxy), (double*)Axy.data(),
-//         Axy.rows()*Axy.cols()*sizeof(double));
-
-//  // put it into Matlab
-//  engPutVariable(_matlab, "Axy", mAxy);
-
-//  // create m-matrix for the magnetic field data
-//  mBz = mxCreateDoubleMatrix(Bz.rows(), Bz.cols(), mxREAL);
-
-//  // copy the magnetic field data into the m-matrix
-//  memcpy((double*)mxGetPr(mBz), (double*)Bz.data(),
-//         Bz.rows()*Bz.cols()*sizeof(double));
-
-//  // ... and put it inside Matlab
-//  engPutVariable(_matlab, "Bz", mBz);
-
-//  // Matlab command for plotting the magnetic field map
-//  char matlabCommand[] =
-//  "figure\n"
-//  "contour(X, Y, Bz, linspace(min(Bz(:)), max(Bz(:)), 100), ...\n"
-//  "  'Fill', 'on', 'LineStyle', 'none');\n"
-//  "colorbar\n"
-//  "hold on\n"
-//  "contour(X, Y, Axy, 50, 'LineColor', 'black');\n"
-//  "contour(X, Y, Axy, [Ab Ab], 'LineColor', 'white', 'LineWidth', 3);\n"
-//  "caxis([min(Bz(:)) max(Bz(:))]);\n"
-//  "set(gca, 'Color', [0 0 .5]);\n"
-//  "set(gcf, 'Color', 'white');\n"
-//  "set(gcf, 'InvertHardCopy', 'off');\n"
-//  "xlabel 'X_{MC} (AU)'\n"
-//  "ylabel 'Y_{MC} (AU)'\n";
-
-//  // run the final command
-//  engEvalString(_matlab, matlabCommand);
 
   PyObject *pArgs, *func;
 

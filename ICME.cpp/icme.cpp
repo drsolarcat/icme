@@ -196,10 +196,10 @@ int main(int argc, char* argv[]) {
 //                             (*event).gsr().optPhi);
 
       // plot the combined residual map
-//      plotter.plotResidueMap((*event).gsr().combinedResidue,
-//                             theta, phi,
-//                             (*event).gsr().optTheta,
-//                             (*event).gsr().optPhi);
+      plotter.plotResidueMap((*event).gsr().combinedResidue,
+                             theta, phi,
+                             (*event).gsr().optTheta,
+                             (*event).gsr().optPhi);
 
       // plot Pt(A) through matplotlib
       LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
