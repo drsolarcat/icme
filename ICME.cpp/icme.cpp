@@ -8,7 +8,6 @@
 #include "gnuplot.h"
 #include "plotter.h"
 // library headers
-#include "engine.h"
 #include <eigen3/Eigen/Dense>
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>

@@ -1,21 +1,21 @@
 
 # check where we are compiling the project
 ifeq ($(USERNAME),isavnin) # at work
-	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/usr/local/matlab2009b/extern/include:/home/isavnin/usr/local/epd/include/python2.7
-	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/extern/lib/glnxa64:/usr/local/matlab2009b/bin/glnxa64:/home/isavnin/usr/local/epd/lib
-	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64:/home/isavnin/usr/local/epd/lib
+	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/home/isavnin/usr/local/epd/include/python2.7
+	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64:/home/isavnin/usr/local/epd/lib
+	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/home/isavnin/usr/local/epd/lib
 endif
 
 #ifeq ($(USERNAME),inferno) # on my desktop
-#	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2010b/extern/include
-#	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/extern/lib/glnxa64:/usr/local/MATLAB/R2010b/bin/glnxa64
-#	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
+#	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include
+#	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
+#	LD_LIBRARY_PATH=/home/inferno/usr/local/lib
 #endif
 
 ifeq ($(USERNAME),inferno) # on my laptop
-	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/usr/local/MATLAB/R2011a/extern/include:/home/isavnin/usr/local/epd/include/python2.7
-	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2011a/extern/lib/glnx86:/usr/local/MATLAB/R2011a/bin/glnx86:/home/isavnin/usr/local/epd/lib
-	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2011a/bin/glnx86:/home/isavnin/usr/local/epd/lib
+	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/home/isavnin/usr/local/epd/include/python2.7
+	LIBRARY_PATH=/home/inferno/usr/local/lib:/home/isavnin/usr/local/epd/lib
+	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/home/isavnin/usr/local/epd/lib
 endif
 
 # export the paths
@@ -37,7 +37,6 @@ CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 CXX = g++
 GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams
-MATLAB = -lmx -leng -lmat -lut
 PYTHON = -lpython2.7
 LOG4CPLUS = -llog4cplus
 CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH) -Wno-write-strings
@@ -45,10 +44,10 @@ CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH) -Wno
 all: $(PROGRAM) $(BENCHMARK)
 
 $(PROGRAM): $(CXXOBJECTS) $(PROGRAM).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
 
 $(BENCHMARK): $(CXXOBJECTS) $(BENCHMARK).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(MATLAB) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
 
 $(PROGRAM).o: icme.cpp
 	$(CXX) -c -o icme.o icme.cpp $(CXXFLAGS)

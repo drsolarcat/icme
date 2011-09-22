@@ -2,7 +2,6 @@
 // project headers
 #include "curve.h"
 // library headers
-#include "engine.h"
 #include <eigen3/Eigen/Dense>
 #include <Python.h>
 // standard headers
@@ -10,7 +9,6 @@
 
 // a class for drawing different kinds of plots
 class Plotter {
-  Engine* _matlab; // matlab engine object
   PyObject* _python_module; // python module
   PyObject* _python_dictionary; // python dictionary
   bool _toSave; // whether to save the plot or not
@@ -38,8 +36,6 @@ class Plotter {
     // plot Bz(A) plot for GSR
     void plotGsrABz(const Curve&, const Curve&);
   protected:
-    // initialize Matlab engine
-    void _initMatlab();
     // initialize Python
     int _initPython();
     // initialize results directory

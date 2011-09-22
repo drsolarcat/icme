@@ -15,8 +15,6 @@ using namespace Eigen;
 
 // plotter constructor
 Plotter::Plotter() {
-  // initialize Matlab egine
-//  _initMatlab();
   // initialize Python
   _initPython();
 }
@@ -27,8 +25,6 @@ Plotter::Plotter(bool toSave, string resultsDir) :
 {
   // initialize results directory if asked to save the plots
   if (_toSave) _initResultsDir();
-  // initialize Matlab egine
-//  _initMatlab();
   // initialize Python
   _initPython();
 }
@@ -38,14 +34,6 @@ Plotter::~Plotter() {
   PyObject_CallObject(
     PyDict_GetItemString(_python_dictionary, "showPlots"), NULL);
 //  engClose(_matlab);
-}
-
-// initialize Matlab engine
-void Plotter::_initMatlab() {
-  // open matlab engine
-  _matlab = engOpen(NULL);
-  // init output buffer
-  engOutputBuffer(_matlab, NULL, 0);
 }
 
 int Plotter::_initPython() {
@@ -91,71 +79,6 @@ void Plotter::_initResultsDir() {
 void Plotter::plotResidueMap(const MatrixXd& residue,
                              const VectorXd& theta, const VectorXd& phi,
                              double optTheta, double optPhi) {
-
-//  // initialize mx pointers to use inside Matlab
-//  mxArray *mResidue, *mTheta, *mPhi, *mOptTheta, *mOptPhi;
-
-//  // theta and phi m-arrays  for residual maps
-//  mTheta = mxCreateDoubleMatrix(1, theta.size(), mxREAL);
-//  mPhi = mxCreateDoubleMatrix(1, phi.size(), mxREAL);
-
-//  // optimal angle for the residual maps (by GSR)
-//  mOptTheta = mxCreateDoubleScalar(optTheta);
-//  mOptPhi = mxCreateDoubleScalar(optPhi);
-
-//  // copy data into the pointer destination for the theta and phi m-arrays
-//  memcpy((double*)mxGetPr(mTheta), (double*)theta.data(),
-//         theta.size()*sizeof(double));
-//  memcpy((double*)mxGetPr(mPhi), (double*)phi.data(),
-//         phi.size()*sizeof(double));
-
-//  // put variables inside Matlab
-//  engPutVariable(_matlab, "theta", mTheta);
-//  engPutVariable(_matlab, "phi", mPhi);
-//  engPutVariable(_matlab, "optTheta", mOptTheta);
-//  engPutVariable(_matlab, "optPhi", mOptPhi);
-
-//  // m-array for the residuals
-//  mResidue = mxCreateDoubleMatrix(residue.rows(), residue.cols(), mxREAL);
-
-//  // copy resiuals to Matlab
-//  memcpy((double*)mxGetPr(mResidue), (double*)residue.data(),
-//         residue.rows()*residue.cols()*sizeof(double));
-
-//  // ... and put it inside Matlab
-//  engPutVariable(_matlab, "R", mResidue);
-
-//  // Matlab command to plot the residual map
-//  char matlabCommand[] =
-//  "R = R.^-1;\n"
-//  "figure\n"
-//  "h = polar([0 2*pi], [0 90]);\n"
-//  "ph = findall(gca, 'type', 'patch');\n"
-//  "set(ph, 'facecolor', [0 0 .5], 'edgecolor', [0 0 .5]);\n"
-//  "set(gcf, 'Color', 'white');\n"
-//  "set(gcf, 'Renderer', 'Painters');\n"
-//  "pl = findobj(allchild(gca));\n"
-//  "hold on\n"
-//  "contour(theta'*cos(phi*pi/180), theta'*sin(phi*pi/180), R, ...\n"
-//  "        linspace(min(R(:)), max(R(:)), 500), 'Fill', 'on');\n"
-//  "plot(optTheta*cos(optPhi*pi/180), optTheta*sin(optPhi*pi/180), ...\n"
-//  "  '.w', 'MarkerSize', 20);\n"
-//  "colorbar\n"
-//  "for i = 1:length(pl)-1\n"
-//  "  if strcmpi(get(pl(i), 'Type'), 'line')\n"
-//  "    set(pl(i), 'Color', 'white');\n"
-//  "  elseif strcmpi(get(pl(i), 'Type'), 'text') && i > 25\n"
-//  "    set(pl(i), 'Color', 'white');\n"
-//  "  end\n"
-//  "  uistack(pl(i), 'top');\n"
-//  "end\n"
-//  "delete(h)\n"
-//  "cbar_handle = findobj(gcf, 'Tag', 'Colorbar');\n"
-//  "set(get(cbar_handle,'xlabel'),'string','1/R');\n"
-//  "hold off\n";
-
-//  // run the command
-//  engEvalString(_matlab, matlabCommand);
 
   PyObject *pArgs, *func;
 
