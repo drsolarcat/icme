@@ -5,7 +5,6 @@
 #include "event.h"
 #include "mva_analyzer.h"
 #include "gsr_analyzer.h"
-#include "gnuplot.h"
 #include "plotter.h"
 // library headers
 #include <eigen3/Eigen/Dense>
@@ -195,10 +194,10 @@ int main(int argc, char* argv[]) {
 //                             (*event).gsr().optPhi);
 
       // plot the combined residual map
-      plotter.plotResidueMap((*event).gsr().combinedResidue,
-                             theta, phi,
-                             (*event).gsr().optTheta,
-                             (*event).gsr().optPhi);
+      plotter.plotGsrResidueMap((*event).gsr().combinedResidue,
+                                theta, phi,
+                                (*event).gsr().optTheta,
+                                (*event).gsr().optPhi);
 
       // plot Pt(A) through matplotlib
       LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
@@ -206,22 +205,22 @@ int main(int argc, char* argv[]) {
                          (*event).gsr().APtOutCurve,
                          (*event).gsr().APtFitCurve);
 
-      // plot dPt/dA through Gnuplot
+      // plot dPt/dA
       LOG4CPLUS_DEBUG(logger, "plotting dPt/dA(A)");
       plotter.plotGsrAdPt((*event).gsr().AdPtFitCurve);
 
-      // plot Bz(A) through Gnuplot
+      // plot Bz(A)
       LOG4CPLUS_DEBUG(logger, "plotting Bz(A)");
       plotter.plotGsrABz((*event).gsr().ABzCurve,
                          (*event).gsr().ABzFitCurve);
 
       LOG4CPLUS_DEBUG(logger, "plotting magnetic field map");
-      // plot magnetic field map through Matlab
-      plotter.plotMagneticMap((*event).gsr().Axy,
-                              (*event).gsr().Bz,
-                              (*event).gsr().X,
-                              (*event).gsr().Y,
-                              (*event).gsr().Ab);
+      // plot magnetic field map
+      plotter.plotGsrMagneticMap((*event).gsr().Axy,
+                                 (*event).gsr().Bz,
+                                 (*event).gsr().X,
+                                 (*event).gsr().Y,
+                                 (*event).gsr().Ab);
     }
 
     // perform MVA analysis if required

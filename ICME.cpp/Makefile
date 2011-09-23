@@ -29,8 +29,7 @@ BENCHMARK = bench
 CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
-	fit_abstract.cpp fit_poly.cpp fit_exp.cpp fit_poly_exp.cpp gnuplot.cpp \
-	plotter.cpp
+	fit_abstract.cpp fit_poly.cpp fit_exp.cpp fit_poly_exp.cpp plotter.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 #flags
@@ -102,9 +101,6 @@ fit_exp.o: fit_exp.h fit_exp.cpp
 
 fit_poly_exp.o: fit_poly_exp.h fit_poly_exp.cpp
 	$(CXX) -c -o fit_poly_exp.o fit_poly_exp.cpp $(CXXFLAGS)
-
-gnuplot.o: gnuplot.h gnuplot.cpp
-	$(CXX) -c -o gnuplot.o gnuplot.cpp $(CXXFLAGS)
 
 event.o: event.h event.cpp
 	$(CXX) -c -o event.o event.cpp $(CXXFLAGS)

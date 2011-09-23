@@ -22,13 +22,13 @@ class Plotter {
     const bool toSave() const {return _toSave;}
     const std::string resultsDir() const {return _resultsDir;}
     // plot residue map
-    void plotResidueMap(const Eigen::MatrixXd&,
-                        const Eigen::VectorXd&, const Eigen::VectorXd&,
-                        double, double);
+    void plotGsrResidueMap(const Eigen::MatrixXd&,
+                           const Eigen::VectorXd&, const Eigen::VectorXd&,
+                           double, double);
     // plot magnetic field map
-    void plotMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
-                         const Eigen::VectorXd&, const Eigen::VectorXd&,
-                         const double);
+    void plotGsrMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
+                            const Eigen::VectorXd&, const Eigen::VectorXd&,
+                            const double);
     // plot Pt(A) plot for GSR
     void plotGsrAPt(const Curve&, const Curve&, const Curve&);
     // plot dPt/dA(A) plot for GSR
