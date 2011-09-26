@@ -159,6 +159,25 @@ int main(int argc, char* argv[]) {
     eventResultsDirStream.clear();
     eventResultsDirStream.str("");
 
+    // plot residue maps through Matlab
+    Plotter plotter(config.row(iEvent).toSave, eventResultsDir);
+
+    // perform MVA analysis if required
+    if (config.row(iEvent).toMva) {
+      LOG4CPLUS_INFO(logger, "doing MVA analysis");
+      mva.analyze(*event);
+
+      LOG4CPLUS_INFO(logger, "plotting B rotation for MVAB");
+      Data dataMvab(event->dataNarrow());
+      dataMvab.project((*event).mvab().axes);
+      plotter.plotMvaBrot(dataMvab.cols().Bx, dataMvab.cols().By);
+
+      LOG4CPLUS_INFO(logger, "plotting B rotation for MVUB");
+      Data dataMvub(event->dataNarrow());
+      dataMvub.project((*event).mvub().axes);
+      plotter.plotMvaBrot(dataMvub.cols().Bx, dataMvub.cols().By);
+    }
+
     // perform GSR analysis if required
     if (config.row(iEvent).toGsr) {
 
@@ -166,8 +185,6 @@ int main(int argc, char* argv[]) {
       gsr.analyze(*event); // do GSR analysis
 
       LOG4CPLUS_INFO(logger, "plotting results of GSR analysis");
-      // plot residue maps through Matlab
-      Plotter plotter(config.row(iEvent).toSave, eventResultsDir);
 
       LOG4CPLUS_DEBUG(logger, "plotting the residual maps");
       // angle arrays
@@ -188,11 +205,13 @@ int main(int argc, char* argv[]) {
         (*event).gsr().maxPhi);
 
       // plot the original residual map
-//      plotter.plotResidueMap((*event).gsr().originalResidue,
-//                             theta, phi,
-//                             (*event).gsr().optTheta,
-//                             (*event).gsr().optPhi);
-
+      plotter.plotGsrResidueMap((*event).gsr().originalResidue,
+                                theta, phi,
+                                (*event).gsr().optTheta,
+                                (*event).gsr().optPhi,
+                                (config.row(iEvent).toMva ? acos(event->mvab().axes.y.dot(event->pmvab().axes.z))*180/M_PI : NULL),
+                                (config.row(iEvent).toMva ? acos(event->mvab().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x))*180/M_PI+90 : NULL)
+                                );
       // plot the combined residual map
       plotter.plotGsrResidueMap((*event).gsr().combinedResidue,
                                 theta, phi,
@@ -221,12 +240,6 @@ int main(int argc, char* argv[]) {
                                  (*event).gsr().X,
                                  (*event).gsr().Y,
                                  (*event).gsr().Ab);
-    }
-
-    // perform MVA analysis if required
-    if (config.row(iEvent).toMva) {
-      LOG4CPLUS_INFO(logger, "doing MVA analysis");
-      mva.analyze(*event);
     }
 
     LOG4CPLUS_INFO(logger, "everything is done");

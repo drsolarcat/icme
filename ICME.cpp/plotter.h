@@ -24,7 +24,8 @@ class Plotter {
     // plot residue map
     void plotGsrResidueMap(const Eigen::MatrixXd&,
                            const Eigen::VectorXd&, const Eigen::VectorXd&,
-                           double, double);
+                           double, double,
+                           double mvabTheta=NULL, double mvabPhi=NULL);
     // plot magnetic field map
     void plotGsrMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
                             const Eigen::VectorXd&, const Eigen::VectorXd&,
@@ -35,6 +36,8 @@ class Plotter {
     void plotGsrAdPt(const Curve&);
     // plot Bz(A) plot for GSR
     void plotGsrABz(const Curve&, const Curve&);
+    // plot B rotation for MVA
+    void plotMvaBrot(const Eigen::VectorXd&, const Eigen::VectorXd&);
   protected:
     // initialize Python
     int _initPython();

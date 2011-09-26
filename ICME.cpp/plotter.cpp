@@ -92,11 +92,12 @@ void Plotter::_initResultsDir()
 // plot the residual map for GSR
 void Plotter::plotGsrResidueMap(const MatrixXd& residue,
                                 const VectorXd& theta, const VectorXd& phi,
-                                double optTheta, double optPhi)
+                                double optTheta, double optPhi,
+                                double mvabTheta, double mvabPhi)
 {
   PyObject *pArgs, *func; // pointers to arguments and function objects
 
-  pArgs = PyTuple_New(3); // initialize the arguments tuple
+  pArgs = PyTuple_New(mvabTheta && mvabPhi ? 7 : 5); // initialize the arguments tuple
 
   // set theta array argument
   npy_intp pThetaDim[] = {theta.size()}; // shape array
@@ -117,13 +118,22 @@ void Plotter::plotGsrResidueMap(const MatrixXd& residue,
     PyArray_SimpleNewFromData(1, pResidueDim, PyArray_DOUBLE,
       const_cast<double*>(residue.data())));
 
+  // set optimal theta argument
+  PyTuple_SetItem(pArgs, 3, PyFloat_FromDouble(optTheta));
+
+  // set optimal phi argument
+  PyTuple_SetItem(pArgs, 4, PyFloat_FromDouble(optPhi));
+
+  if (mvabTheta && mvabPhi) {
+    // set MVAB theta argument
+    PyTuple_SetItem(pArgs, 5, PyFloat_FromDouble(mvabTheta));
+    // set MVAB phi argument
+    PyTuple_SetItem(pArgs, 6, PyFloat_FromDouble(mvabPhi));
+  }
+
   // initialize and call the python function
   func = PyDict_GetItemString(_python_dictionary, "plotGsrResidue");
   PyObject_CallObject(func, pArgs);
-
-  // delete references
-  Py_XDECREF(pArgs);
-  Py_XDECREF(func);
 }
 
 // plot the magnetic field map for GSR
@@ -303,5 +313,31 @@ void Plotter::plotGsrABz(const Curve& ABzCurve, const Curve& ABzFitCurve)
   Py_XDECREF(pABzFit);
   Py_XDECREF(pArgs);
   Py_XDECREF(func);
+}
+
+// plot B rotation for MVA
+void Plotter::plotMvaBrot(const Eigen::VectorXd& Bx, const Eigen::VectorXd& By)
+{
+  PyObject *pArgs, *func; // pointers to the python object
+
+  // initialize the shape arrays
+  npy_intp pBxDim[] = {Bx.size()};
+  npy_intp pByDim[] = {By.size()};
+
+  pArgs = PyTuple_New(2); // initialize the arguments tuple
+
+  // set Bx
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pBxDim, PyArray_DOUBLE,
+      const_cast<double*>(Bx.data())));
+
+  // set By
+  PyTuple_SetItem(pArgs, 1,
+    PyArray_SimpleNewFromData(1, pByDim, PyArray_DOUBLE,
+      const_cast<double*>(By.data())));
+
+  // initialize and call the python function
+  func = PyDict_GetItemString(_python_dictionary, "plotMvaBrot");
+  PyObject_CallObject(func, pArgs);
 }
 
