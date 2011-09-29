@@ -93,7 +93,8 @@ void Plotter::_initResultsDir()
 void Plotter::plotGsrResidueMap(const MatrixXd& residue,
                                 const VectorXd& theta, const VectorXd& phi,
                                 double optTheta, double optPhi,
-                                double mvabTheta, double mvabPhi)
+                                double mvabTheta, double mvabPhi,
+                                double mvubTheta, double mvubPhi)
 {
   PyObject *pArgs, *func; // pointers to arguments and function objects
 
