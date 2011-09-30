@@ -4,7 +4,6 @@
 #include "dht_analyzer.h"
 #include "mva_analyzer.h"
 #include "gsr_curve.h"
-#include "gnuplot.h"
 #include "fit_poly.h"
 #include "fit_exp.h"
 #include "fit_poly_exp.h"
