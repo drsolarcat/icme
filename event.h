@@ -67,7 +67,6 @@ class Event {
     PmvaResults _pmvab, _pmvub;
     GsrResults _gsr; // results of GSR analysis
     DhtResults _dht; // results of dHT analysis
-//    bool e_isMva, e_isDht, e_isGsr;
   public:
     Event(ConfigRow, Data, Data); // construct the initial object with data
                                   // and configuration

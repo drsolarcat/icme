@@ -16,6 +16,21 @@ using namespace Eigen;
 using namespace My;
 
 // constructors
+Data::Data(DataVectors dataVectors) {
+  vectors = dataVectors;
+  data.clear();
+//  DataRow dataRow;
+  for (int i = 0; i < dataVectors.year.size(); i++) {
+    DataRow dataRow = {
+      dataVectors.year(i), dataVectors.month(i), dataVectors.day(i),
+      dataVectors.hour(i), dataVectors.minute(i), dataVectors.year(i),
+      dataVectors.B(i), dataVectors.Bx(i), dataVectors.By(i), dataVectors.Bz(i),
+      dataVectors.Vp(i), dataVectors.Vx(i), dataVectors.Vy(i), dataVectors.Vz(i),
+      dataVectors.Pth(i), dataVectors.Np(i), dataVectors.Tp(i),
+      dataVectors.Vth(i), dataVectors.beta(i)};
+    data.push_back(dataRow);
+  }
+}
 
 // to read data from file and store it in Data object
 Data& Data::readFile(string dataFilePath) {

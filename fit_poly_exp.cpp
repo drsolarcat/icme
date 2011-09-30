@@ -81,8 +81,6 @@ void PolyExpFit::fit()
                           _expFitCtr->c()[0] << ", " <<
                           _expFitCtr->c()[1] << ", " <<
                           _expFitCtr->c()[2] << "]");
-
-  cout << f(200) << ' ' << _expFitBdr->f(200) << endl;
 }
 
 // evaluate function at point X

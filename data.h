@@ -32,10 +32,13 @@ class Data {
     std::vector<DataRow> data; // vector of data rows, one row is one timestamp
     DataVectors vectors; // Eigen3 vectors of data, yes, a copy, but worth it
   public:
+    Data() {}; // default constructor
+    Data(DataVectors); // constructor from DataVectors object
     Data& readFile(std::string); // read data from file
-    Data& readFile(std::string, My::Time, My::Time); // read data file and filter it
-    Data& filter(My::Time, My::Time); // filter data vector by time (from, until)
-                              // using Time objects
+    // read data file and filter it
+    Data& readFile(std::string, My::Time, My::Time);
+    // filter data vector by time (from, until) using Time objects
+    Data& filter(My::Time, My::Time);
     // getters for data, both in rows and columns
     const DataRow& row(int i) const {return data[i];}
     const std::vector<DataRow>& rows() const {return data;}
