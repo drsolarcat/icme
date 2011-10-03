@@ -169,6 +169,81 @@ def plotMvaBrot(Bx, By):
         savefig(resultsDir+'/eps/mva_Brot.eps', format='eps')
         savefig(resultsDir+'/png/mva_Brot.png', format='png')
 
+# plot in-situ data
+def plotData(B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta):
+    figure()
+    subplots_adjust(hspace=0.001)
+
+    # magnetic field # nT
+    ax1 = subplot(711)
+    ax1.plot(B*1e9)
+    ax1.plot(Bx*1e9)
+    ax1.plot(By*1e9)
+    ax1.plot(Bz*1e9)
+    axis('tight')
+    Bmin = min(min(B*1e9),min(Bx*1e9),min(By*1e9),min(Bz*1e9))
+    Bmax = max(max(B*1e9),max(Bx*1e9),max(By*1e9),max(Bz*1e9))
+    ylim(Bmin-(Bmax-Bmin)*0.1,Bmax+(Bmax-Bmin)*0.1)
+
+    # proton bilk speed # km/s
+    ax2 = subplot(712)
+    ax2.plot(Vp*1e-3)
+    axis('tight')
+    VpMin = min(Vp*1e-3)
+    VpMax = max(Vp*1e-3)
+    ylim(VpMin-(VpMax-VpMin)*0.1,VpMax+(VpMax-VpMin)*0.1)
+
+    # plasma pressure # nPa
+    ax3 = subplot(713)
+    ax3.plot(Pth*1e9)
+    axis('tight')
+    PthMin = min(Pth*1e9)
+    PthMax = max(Pth*1e9)
+    ylim(PthMin-(PthMax-PthMin)*0.1,PthMax+(PthMax-PthMin)*0.1)
+
+    # proton density # cm^-3
+    ax4 = subplot(714)
+    ax4.plot(Np*1e-6)
+    axis('tight')
+    NpMin = min(Np*1e-6)
+    NpMax = max(Np*1e-6)
+    ylim(NpMin-(NpMax-NpMin)*0.1,NpMax+(NpMax-NpMin)*0.1)
+
+    # proton temperature # K
+    ax5 = subplot(715)
+    ax5.plot(Tp)
+    axis('tight')
+    TpMin = min(Tp)
+    TpMax = max(Tp)
+    ylim(TpMin-(TpMax-TpMin)*0.1,TpMax+(TpMax-TpMin)*0.1)
+
+    # thermal speed # km/s
+    ax6 = subplot(716)
+    ax6.plot(Vth*1e-3)
+    axis('tight')
+    VthMin = min(Vth*1e-3)
+    VthMax = max(Vth*1e-3)
+    ylim(VthMin-(VthMax-VthMin)*0.1,VthMax+(VthMax-VthMin)*0.1)
+
+    # plasma beta
+    ax7 = subplot(717)
+    ax7.plot(beta)
+    axis('tight')
+    betaMin = min(beta)
+    betaMax = max(beta)
+    ylim(betaMin-(betaMax-betaMin)*0.1,betaMax+(betaMax-betaMin)*0.1)
+
+    # switch off the labels on upper plots
+    xticklabels = ax1.get_xticklabels()+ax2.get_xticklabels()+ \
+                  ax3.get_xticklabels()+ax4.get_xticklabels()+ \
+                  ax5.get_xticklabels()+ax6.get_xticklabels()
+    setp(xticklabels, visible=False)
+
+    # save
+    if toSave:
+        savefig(resultsDir+'/eps/data.eps', format='eps')
+        savefig(resultsDir+'/png/data.png', format='png')
+
 # show all pending plots
 def showPlots():
     show()

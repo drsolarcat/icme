@@ -162,6 +162,9 @@ int main(int argc, char* argv[]) {
     // plot residue maps through Matlab
     Plotter plotter(config.row(iEvent).toSave, eventResultsDir);
 
+    // plot the in-situ data
+    plotter.plotData(*event);
+
     // perform MVA analysis if required
     if (config.row(iEvent).toMva) {
       LOG4CPLUS_INFO(logger, "doing MVA analysis");

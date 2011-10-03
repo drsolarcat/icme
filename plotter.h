@@ -1,6 +1,7 @@
 
 // project headers
 #include "curve.h"
+#include "event.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <Python.h>
@@ -39,6 +40,8 @@ class Plotter {
     void plotGsrABz(const Curve&, const Curve&);
     // plot B rotation for MVA
     void plotMvaBrot(const Eigen::VectorXd&, const Eigen::VectorXd&);
+    // plot all the in-situ data
+    void plotData(const Event&);
   protected:
     // initialize Python
     int _initPython();

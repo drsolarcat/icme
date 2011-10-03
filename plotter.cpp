@@ -342,3 +342,83 @@ void Plotter::plotMvaBrot(const Eigen::VectorXd& Bx, const Eigen::VectorXd& By)
   PyObject_CallObject(func, pArgs);
 }
 
+// plot data
+void Plotter::plotData(const Event& event)
+{
+  PyObject *pArgs, *func; // pointers to the python objects
+
+  // initialize the shape arrays
+  npy_intp pDataDim[] = {event.dataWide().cols().B.size()};
+
+  pArgs = PyTuple_New(13); // initialize the arguments tuple
+
+  // set B
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().B.data())));
+
+  // set Bx
+  PyTuple_SetItem(pArgs, 1,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Bx.data())));
+
+  // set By
+  PyTuple_SetItem(pArgs, 2,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().By.data())));
+
+  // set Bz
+  PyTuple_SetItem(pArgs, 3,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Bz.data())));
+
+  // set Vp
+  PyTuple_SetItem(pArgs, 4,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Vp.data())));
+
+  // set Vx
+  PyTuple_SetItem(pArgs, 5,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Vx.data())));
+
+  // set Vy
+  PyTuple_SetItem(pArgs, 6,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Vy.data())));
+
+  // set Vz
+  PyTuple_SetItem(pArgs, 7,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Vz.data())));
+
+  // set Pth
+  PyTuple_SetItem(pArgs, 8,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Pth.data())));
+
+  // set Np
+  PyTuple_SetItem(pArgs, 9,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Np.data())));
+
+  // set Tp
+  PyTuple_SetItem(pArgs, 10,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Tp.data())));
+
+  // set Vth
+  PyTuple_SetItem(pArgs, 11,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().Vth.data())));
+
+  // set beta
+  PyTuple_SetItem(pArgs, 12,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().beta.data())));
+
+  // initialize and call the python function
+  func =PyDict_GetItemString(_python_dictionary, "plotData");
+  PyObject_CallObject(func, pArgs);
+}
+
