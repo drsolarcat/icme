@@ -8,6 +8,7 @@
 #include <sstream>
 #include <ctime>
 #include <iostream>
+#include <cctype>
 
 using namespace std;
 using namespace My;
@@ -55,6 +56,8 @@ Config& Config::readFile(string configFilePath) {
           configRow.fittingFuntion >> configRow.fittingParameterBdr >>
           configRow.fittingParameterCtr >> configRow.Nx >> configRow.ratio >>
           configRow.minY >> configRow.maxY >> configRow.order;
+        // convert quality to lowercase
+        configRow.quality = (char)tolower(configRow.quality);
         // calculate begin and end Time objects instead of strings
         configRow.beginTime = Time(beginDate+' '+beginTime);
         configRow.endTime = Time(endDate+' '+endTime);
