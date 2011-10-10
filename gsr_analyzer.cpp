@@ -274,6 +274,11 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   AarrAll  = const_cast<double*>(APtAllCurve.cols().x.data());
   PtArrAll = const_cast<double*>(APtAllCurve.cols().y.data());
 
+  // polyexp fitting
+  PolyExpFit APtFit(nAll, AarrAll, PtArrAll, event.config().order,
+    event.config().fittingParameterCtr, event.config().fittingParameterBdr);
+  APtFit.fit();
+
   // find the slope of the curve
   PolyFit APtLineFit(nAll, AarrAll, PtArrAll, 1);
   APtLineFit.fit();
@@ -290,13 +295,9 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   if (slope > 0) { // Ab < Ac
     Ab = APtAllCurve.cols().x.minCoeff(&AbIndex);
     Ac = APtAllCurve.cols().x.maxCoeff();
-    Atmp = VectorXd::LinSpaced(1000, APtAllCurve.cols().x(0)-150,
-                                     APtAllCurve.cols().x(nAll-1)+50);
   } else { // Ac < Ab
     Ab = APtAllCurve.cols().x.maxCoeff(&AbIndex);
     Ac = APtAllCurve.cols().x.minCoeff();
-    Atmp = VectorXd::LinSpaced(1000, APtAllCurve.cols().x(0)-50,
-                                     APtAllCurve.cols().x(nAll-1)+250);
   }
 
   // do not allow the Ab to pass the zero derivative point of the polynomial
@@ -310,14 +311,49 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     }
   }
 
+  // determine limits for Pt(A) plots
+  double AcLim,
+         AcLim1,
+         AcLim2,
+         PtMax = 1.5*APtFit.f(Ac),
+         deltaPt = 0.01*(APtFit.f(Ac)-APtFit.f(Ab));
+  if (slope > 0) {
+    AcLim1 = Ac;
+    AcLim2 = Ac+(Ac-Ab);
+    AcLim  = AcLim2;
+  } else {
+    AcLim1 = Ac-(Ab-Ac);
+    AcLim2 = Ac;
+    AcLim  = AcLim1;
+  }
+  if (APtFit.f(AcLim) > PtMax) {
+    while (abs(APtFit.f(AcLim)-PtMax) > deltaPt) {
+      AcLim = (AcLim1+AcLim2)/2;
+      if (APtFit.f(AcLim) > PtMax) {
+        if (slope > 0) {
+          AcLim2 = AcLim;
+        } else {
+          AcLim1 = AcLim;
+        }
+      } else {
+        if (slope > 0) {
+          AcLim1 = AcLim;
+        } else {
+          AcLim2 = AcLim;
+        }
+      }
+    }
+  }
+  double AbLim = (slope > 0 ? Ab-3*(Ac-Ab) : Ab+3*(Ab-Ac));
+  if (slope > 0) {
+    Atmp = VectorXd::LinSpaced(1000, AbLim, AcLim);
+  } else {
+    Atmp = VectorXd::LinSpaced(1000, AcLim, AbLim);
+  }
+  
   // save central and boundary values of the vector potential
   gsr.Ac = Ac;
   gsr.Ab = Ab;
-
-  // polyexp fitting
-  PolyExpFit APtFit(nAll, AarrAll, PtArrAll, event.config().order,
-    event.config().fittingParameterCtr, event.config().fittingParameterBdr);
-  APtFit.fit();
 
   // initialize temporary Pt vector, for plotting only
   VectorXd PtTmp = VectorXd::Zero(1000);
