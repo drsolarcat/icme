@@ -167,10 +167,20 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
   // searching for the minimum residue direction
   int iTheta, iPhi; // index of optimal angles
   // get indices
-  gsr.combinedResidue.minCoeff(&iTheta, &iPhi);
+  LOG4CPLUS_DEBUG(logger,
+    "searching optimal axis in the range theta = [" <<
+    event.config().minTheta << ", " << event.config().maxTheta << "], " << 
+    "phi = [" << event.config().minPhi << ", " << event.config().maxPhi << "]");
+  int iMinTheta = floor(event.config().minTheta/dTheta),
+      iMaxTheta = ceil(event.config().maxTheta/dTheta)-1,
+      iMinPhi   = floor(event.config().minPhi/dPhi),
+      iMaxPhi   = ceil(event.config().maxPhi/dPhi)-1;
+  gsr.combinedResidue.block(iMinTheta, iMinPhi, 
+                            iMaxTheta-iMinTheta+1, iMaxPhi-iMinPhi+1).
+                      minCoeff(&iTheta, &iPhi);
   // translate indices into optimal angles
-  gsr.optTheta = minTheta + iTheta*dTheta;
-  gsr.optPhi = minPhi + iPhi*dPhi;
+  gsr.optTheta = minTheta + (iMinTheta+iTheta)*dTheta;
+  gsr.optPhi = minPhi + (iMinPhi+iPhi)*dPhi;
 
   LOG4CPLUS_DEBUG(logger,
     "optimal angles for the invariant axes [theta, phi] = [" <<

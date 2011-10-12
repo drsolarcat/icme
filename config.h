@@ -14,7 +14,8 @@ struct ConfigRow {
   char quality;
   bool toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
   std::string spacecraft, fittingFuntion;
-  double ratio, minY, maxY, fittingParameterCtr, fittingParameterBdr;
+  double ratio, minY, maxY, fittingParameterCtr, fittingParameterBdr,
+         minTheta, maxTheta, minPhi, maxPhi;
   My::Time beginTime, endTime;
 };
 

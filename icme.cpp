@@ -10,6 +10,7 @@
 #include <eigen3/Eigen/Dense>
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
+#include <gsl/gsl_const_mksa.h>
 // standard headers
 #include <string>
 #include <iostream>
@@ -145,6 +146,18 @@ int main(int argc, char* argv[]) {
     LOG4CPLUS_DEBUG(logger, "narrow data size = " << dataNarrow->rows().size());
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
+
+    // estimate the initiation time
+    Time cmeTime = (*event).config().beginTime;
+    cmeTime.add(-GSL_CONST_MKSA_ASTRONOMICAL_UNIT/
+                 abs((*event).dataNarrow().cols().Vx.mean()), "second");
+    LOG4CPLUS_INFO(logger, "Estimated CME time: " << setfill('0') <<
+      cmeTime.year() << '-' <<
+      setw(2) << cmeTime.month() << '-' <<
+      setw(2) << cmeTime.day() << ' ' <<
+      setw(2) << cmeTime.hour() << ':' <<
+      setw(2) << cmeTime.minute() << ':' <<
+      setw(2) << cmeTime.second());
 
     // initialize the directory for results
     eventResultsDirStream << resultsDir << "/" << setfill('0') <<

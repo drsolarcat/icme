@@ -52,10 +52,12 @@ Config& Config::readFile(string configFilePath) {
           configRow.toGsr >> configRow.toMva >> configRow.toCm >>
           configRow.toTm >> configRow.toHm >> configRow.toOm >>
           configRow.toSave >> configRow.spacecraft >> beginDate >> beginTime >>
-          endDate >> endTime >> configRow.samplingInterval >>
-          configRow.fittingFuntion >> configRow.fittingParameterBdr >>
-          configRow.fittingParameterCtr >> configRow.Nx >> configRow.ratio >>
-          configRow.minY >> configRow.maxY >> configRow.order;
+          endDate >> endTime >> configRow.samplingInterval >> 
+          configRow.minTheta >> configRow.maxTheta >> configRow.minPhi >>
+          configRow.maxPhi >> configRow.fittingFuntion >> 
+          configRow.fittingParameterBdr >> configRow.fittingParameterCtr >> 
+          configRow.Nx >> configRow.ratio >> configRow.minY >> configRow.maxY >>
+          configRow.order;
         // convert quality to lowercase
         configRow.quality = (char)tolower(configRow.quality);
         // calculate begin and end Time objects instead of strings
