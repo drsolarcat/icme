@@ -4,6 +4,7 @@
 
 // project headers
 #include "event.h"
+#include "my_time.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 
@@ -19,6 +20,8 @@ class GsrAnalyzer {
                                 double, double, double);
     // compute magnetic field map for a given GSR run
     GsrResults& computeMap(Event&, GsrResults&);
+    // get transformation matrix
+    Eigen::Matrix3d getTransformationMatrix(My::Time);
 };
 
 #endif

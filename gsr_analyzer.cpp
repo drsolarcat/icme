@@ -8,6 +8,7 @@
 #include "fit_exp.h"
 #include "fit_poly_exp.h"
 #include "differentiator.h"
+#include "my_time.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_const_mksa.h>
@@ -24,6 +25,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace log4cplus;
+using namespace My;
 
 // main trigger to perform GSR analysis of the event
 void GsrAnalyzer::analyze(Event& event) {
@@ -85,6 +87,20 @@ void GsrAnalyzer::analyze(Event& event) {
   gsr.curve = GsrCurve(event, gsr.axes);
   LOG4CPLUS_DEBUG(logger, "initializing the branches of the Pt(A) curve");
   gsr.curve.initBranches("extremums").computeResidue();
+
+  // middle time of the flux rope
+  Time middleTime(event.config().beginTime);
+  middleTime.add(event.config().endTime-event.config().beginTime, "second");
+  // transform axes into Stonyhurst coordinate system
+  if (event.config().spacecraft == "STA" || 
+      event.config().spacecraft == "STB") {
+    // convert from RTN to Stonyhurst
+    
+  } else if (event.config().spacecraft == "WIND" || 
+             event.config().spacecraft == "ACE") {
+    // convert from GSE to Stonyhurst
+    
+  }
 
   // calculate the magnetic field map and save it into gsr structure
   LOG4CPLUS_DEBUG(logger, "computing the magnetic field map");
@@ -511,5 +527,53 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // free dynamic arrays
 //  delete [] AarrAll;
 //  delete [] PtArrAll;
+}
+
+Matrix3d GsrAnalyzer::getTransformationMatrix(Time middleTime) {
+  ifstream dataFileStream; // stream from the file with data
+  string dataFileLine; // a single line from a file as a string
+  istringstream dataFileLineStream; // a stream from a line from a file
+  Time currentTime; // Time object for storing current time for comparison
+
+  int year, doy, second, flag;
+  
+
+  Matrix3d transform;
+
+  // open data file as a stream
+  dataFileStream.open("./res/stereo_a_heeq.dat");
+  // check if the file was opened correctly
+  if (dataFileStream.is_open()) {
+    // start iterating through data file line, one timestamp at a time
+    while (dataFileStream.good()) {
+      // get line from the file as a string
+      getline(dataFileStream, dataFileLine);
+      // check if the line contains actually data
+      if (!dataFileLine.empty() && // check that it's not empty
+          dataFileLine[0] != '#') // and not commented out
+      {
+        // clear string stream from the previus line of data
+        dataFileLineStream.clear();
+        // use the next line of data as a source for the string stream
+        dataFileLineStream.str(dataFileLine);
+        // parse the data from the stream of line of the data file
+        dataFileLineStream >> year >> doy >> second >> flag;
+        dataFileLineStream >>
+          transform(0,0) >> transform(0,1) >> transform(0,2) >> 
+          transform(1,0) >> transform(1,1) >> transform(1,2) >> 
+          transform(2,0) >> transform(2,1) >> transform(2,2);
+        
+        // initialize current Time object with time data
+        currentTime = Time(year, doy, 0, 0, 0);
+        currentTime.add(second, "second");
+        if (currentTime < middleTime) { // before the minimum time limit
+          continue; // miss it
+        } else {
+          break;
+        }
+        
+      }
+    } // end of iteration through the lines of the data file
+  }
 }
 

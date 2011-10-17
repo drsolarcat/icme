@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
     ConfigRow configRow = {
       1, sampling, 15, 2, 'g', true, false, false, false, false, false, false,
-      "BENCH", "polyexp", 0.05, -0.1, 0.1, 5, 5,
+      "BENCH", "polyexp", 0.05, -0.1, 0.1, 5, 5, 0, 90, 0, 360,
       My::Time(), My::Time()};
     DataVectors dataVectors = {
       VectorXi::Zero(nx), VectorXi::Zero(nx), VectorXi::Zero(nx),

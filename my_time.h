@@ -36,12 +36,13 @@ namespace My {
       int minute() const {return _minute;} // return current minute
       int second() const {return _second;} // return current second
       int doy() const {return _doy;} // return current day of year
-      int operator-(Time); // returns difference between two times in seconds
+      // returns difference between two times in seconds
+      int operator-(Time that) const {return _unixtime-that.unixtime();}
       // comparison operators
-      bool operator<(Time);
-      bool operator>(Time);
-      bool operator<=(Time);
-      bool operator>=(Time);
+      bool operator<(Time that) const {return _unixtime < that.unixtime();}
+      bool operator>(Time that) const {return _unixtime > that.unixtime();}
+      bool operator<=(Time that) const {return _unixtime <= that.unixtime();}
+      bool operator>=(Time that) const {return _unixtime >= that.unixtime();}
       Time& add(int, std::string); // add some time to the Time object
     private:
       void initLocalUtcShift(); // initialize shift between local and UTC time

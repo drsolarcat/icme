@@ -113,15 +113,6 @@ Time::Time(double timestamp, string type) {
 
 // other methods
 
-// subtraction operator
-int Time::operator-(Time that) {return _unixtime-that.unixtime();}
-
-// comparisons operators
-bool Time::operator<(Time that) {return _unixtime < that.unixtime();}
-bool Time::operator>(Time that) {return _unixtime > that.unixtime();}
-bool Time::operator<=(Time that) {return _unixtime <= that.unixtime();}
-bool Time::operator>=(Time that) {return _unixtime >= that.unixtime();}
-
 // add "amount" of "type" (year, month, day, hour, minute, second) time to the
 // Time object
 Time& Time::add(int amount, string type) {
