@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
       VectorXd::Zero(nx), VectorXd::Zero(nx), VectorXd::Zero(nx),
       VectorXd::Zero(nx), VectorXd::Zero(nx)};
     Data data(dataVectors);
-    Event *event = new Event(configRow, data, data);
+    Event *event = new Event(configRow, data, data, "./res");
     GsrAnalyzer gsr; // GSR analysis class
     gsr.analyze(*event);
 

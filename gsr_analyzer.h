@@ -7,6 +7,8 @@
 #include "my_time.h"
 // library headers
 #include <eigen3/Eigen/Dense>
+// standard headers
+#include <string>
 
 // this class is used to carry GSR analysis
 class GsrAnalyzer {
@@ -21,7 +23,7 @@ class GsrAnalyzer {
     // compute magnetic field map for a given GSR run
     GsrResults& computeMap(Event&, GsrResults&);
     // get transformation matrix
-    Eigen::Matrix3d getTransformationMatrix(My::Time);
+    Eigen::Matrix3d getTransformationMatrix(Event&, std::string, My::Time);
 };
 
 #endif

@@ -17,6 +17,7 @@
 #include <gsl/gsl_fit.h>
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
+#include <boost/algorithm/string.hpp>
 // standard headers
 #include <iostream>
 #include <fstream>
@@ -92,14 +93,26 @@ void GsrAnalyzer::analyze(Event& event) {
   Time middleTime(event.config().beginTime);
   middleTime.add(event.config().endTime-event.config().beginTime, "second");
   // transform axes into Stonyhurst coordinate system
-  if (event.config().spacecraft == "STA" || 
+  if (event.config().spacecraft == "STA" ||
       event.config().spacecraft == "STB") {
     // convert from RTN to Stonyhurst
-    
-  } else if (event.config().spacecraft == "WIND" || 
+    Matrix3d rtn = getTransformationMatrix(event, "rtn", middleTime);
+    Matrix3d heeq = getTransformationMatrix(event, "heeq", middleTime);
+    gsr.heeqAxes.x = heeq*(rtn.inverse()*gsr.axes.x);
+    gsr.heeqAxes.y = heeq*(rtn.inverse()*gsr.axes.y);
+    gsr.heeqAxes.z = heeq*(rtn.inverse()*gsr.axes.z);
+    gsr.stonyhurstTheta = atan(gsr.heeqAxes.z(2)/
+                          sqrt(pow(gsr.heeqAxes.z(0), 2)+
+                               pow(gsr.heeqAxes.z(1), 2)))*180/M_PI;
+    gsr.stonyhurstPhi = atan(gsr.heeqAxes.z(1)/gsr.heeqAxes.z(0))*180/M_PI;
+    LOG4CPLUS_DEBUG(logger,
+      "Invariant axis in Stonyhurst coordinates [theta, phi] = [" <<
+      setiosflags(ios::fixed) << setprecision(1) <<
+      gsr.stonyhurstTheta << ", " << gsr.stonyhurstPhi << "]");
+  } else if (event.config().spacecraft == "WIND" ||
              event.config().spacecraft == "ACE") {
     // convert from GSE to Stonyhurst
-    
+
   }
 
   // calculate the magnetic field map and save it into gsr structure
@@ -185,13 +198,13 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
   // get indices
   LOG4CPLUS_DEBUG(logger,
     "searching optimal axis in the range theta = [" <<
-    event.config().minTheta << ", " << event.config().maxTheta << "], " << 
+    event.config().minTheta << ", " << event.config().maxTheta << "], " <<
     "phi = [" << event.config().minPhi << ", " << event.config().maxPhi << "]");
   int iMinTheta = floor(event.config().minTheta/dTheta),
       iMaxTheta = ceil(event.config().maxTheta/dTheta)-1,
       iMinPhi   = floor(event.config().minPhi/dPhi),
       iMaxPhi   = ceil(event.config().maxPhi/dPhi)-1;
-  gsr.combinedResidue.block(iMinTheta, iMinPhi, 
+  gsr.combinedResidue.block(iMinTheta, iMinPhi,
                             iMaxTheta-iMinTheta+1, iMaxPhi-iMinPhi+1).
                       minCoeff(&iTheta, &iPhi);
   // translate indices into optimal angles
@@ -376,7 +389,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   } else {
     Atmp = VectorXd::LinSpaced(1000, AcLim, AbLim);
   }
-  
+
   // save central and boundary values of the vector potential
   gsr.Ac = Ac;
   gsr.Ab = Ab;
@@ -529,19 +542,37 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 //  delete [] PtArrAll;
 }
 
-Matrix3d GsrAnalyzer::getTransformationMatrix(Time middleTime) {
+// read transformation matrix
+Matrix3d GsrAnalyzer::getTransformationMatrix(Event& event, string cs,
+                                              Time middleTime)
+{
   ifstream dataFileStream; // stream from the file with data
   string dataFileLine; // a single line from a file as a string
   istringstream dataFileLineStream; // a stream from a line from a file
+  ostringstream dataPathStream; // a stream for a data file path
   Time currentTime; // Time object for storing current time for comparison
-
+  int delta = 5*24*3600;
   int year, doy, second, flag;
-  
 
-  Matrix3d transform;
+  Matrix3d tm;
+
+  // determine the path to the data file dependant on spacecraft
+  // push the path to data files
+  dataPathStream << event.dataDir() << '/';
+  if (event.config().spacecraft == "STA") {
+    dataPathStream << "stereo_a_";
+  } else if (event.config().spacecraft == "STB") {
+    dataPathStream << "stereo_b_";
+  } else { // throw an error - unknown spacecraft
+
+  }
+  boost::algorithm::to_lower(cs);
+  dataPathStream << cs << ".dat";
+  // stringstream to string
+  string dataPath = dataPathStream.str();
 
   // open data file as a stream
-  dataFileStream.open("./res/stereo_a_heeq.dat");
+  dataFileStream.open(dataPath.c_str());
   // check if the file was opened correctly
   if (dataFileStream.is_open()) {
     // start iterating through data file line, one timestamp at a time
@@ -558,22 +589,21 @@ Matrix3d GsrAnalyzer::getTransformationMatrix(Time middleTime) {
         dataFileLineStream.str(dataFileLine);
         // parse the data from the stream of line of the data file
         dataFileLineStream >> year >> doy >> second >> flag;
-        dataFileLineStream >>
-          transform(0,0) >> transform(0,1) >> transform(0,2) >> 
-          transform(1,0) >> transform(1,1) >> transform(1,2) >> 
-          transform(2,0) >> transform(2,1) >> transform(2,2);
-        
         // initialize current Time object with time data
         currentTime = Time(year, doy, 0, 0, 0);
         currentTime.add(second, "second");
-        if (currentTime < middleTime) { // before the minimum time limit
-          continue; // miss it
+        if (abs(currentTime-middleTime) < delta) {
+          delta = abs(currentTime-middleTime);
+          dataFileLineStream >>
+            tm(0,0) >> tm(0,1) >> tm(0,2) >>
+            tm(1,0) >> tm(1,1) >> tm(1,2) >>
+            tm(2,0) >> tm(2,1) >> tm(2,2);
         } else {
-          break;
+          continue;
         }
-        
       }
     } // end of iteration through the lines of the data file
   }
+  return tm;
 }
 

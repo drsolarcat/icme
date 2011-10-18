@@ -145,7 +145,8 @@ int main(int argc, char* argv[]) {
                        config.row(iEvent).endTime);
     LOG4CPLUS_DEBUG(logger, "narrow data size = " << dataNarrow->rows().size());
     // create dynamic object to store all event data and results of analysis
-    Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow);
+    Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow,
+                             dataDir);
 
     // estimate the initiation time
     Time cmeTime = (*event).config().beginTime;

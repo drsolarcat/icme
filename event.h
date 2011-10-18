@@ -12,6 +12,7 @@
 #include <eigen3/Eigen/Dense>
 // standard headers
 #include <vector>
+#include <string>
 
 // this structure holds the results of MVA analysis
 struct MvaResults {
@@ -45,6 +46,8 @@ struct GsrResults {
                   combinedResidue, // renormalized residue
                   branchLength; // branch length
   Axes axes; // MC axes
+  Axes heeqAxes; // MC axes in HEEQ
+  double stonyhurstTheta, stonyhurstPhi; // invariant axis in Stonyhurst
   BranchedCurve curve; // Pt(A) curve
   double dx, dy; // steps used for reconstruction
   double Ab, Ac; // boundary and central values of the vector potential
@@ -67,12 +70,14 @@ class Event {
     PmvaResults _pmvab, _pmvub;
     GsrResults _gsr; // results of GSR analysis
     DhtResults _dht; // results of dHT analysis
+    std::string _dataDir; // data path
   public:
-    Event(ConfigRow, Data, Data); // construct the initial object with data
-                                  // and configuration
+    // construct the initial object with data and configuration
+    Event(ConfigRow, Data, Data, std::string);
     const ConfigRow& config() const {return _config;} // config getter
     const Data& dataWide() const {return _dataWide;} // dataWide getter
     const Data& dataNarrow() const {return _dataNarrow;} // dataNarrow getter
+    const std::string dataDir() const {return _dataDir;} // data directory
     // MVA results setters and getters
     Event& mvab(MvaResults mvab) {_mvab = mvab; return *this;}
     const MvaResults& mvab() const {return _mvab;}
