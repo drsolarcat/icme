@@ -18,6 +18,7 @@
 #include <log4cplus/logger.h>
 #include <log4cplus/configurator.h>
 #include <boost/algorithm/string.hpp>
+#include <cxform/cxform.h>
 // standard headers
 #include <iostream>
 #include <fstream>
@@ -101,19 +102,36 @@ void GsrAnalyzer::analyze(Event& event) {
     gsr.heeqAxes.x = heeq*(rtn.inverse()*gsr.axes.x);
     gsr.heeqAxes.y = heeq*(rtn.inverse()*gsr.axes.y);
     gsr.heeqAxes.z = heeq*(rtn.inverse()*gsr.axes.z);
-    gsr.stonyhurstTheta = atan(gsr.heeqAxes.z(2)/
-                          sqrt(pow(gsr.heeqAxes.z(0), 2)+
-                               pow(gsr.heeqAxes.z(1), 2)))*180/M_PI;
-    gsr.stonyhurstPhi = atan(gsr.heeqAxes.z(1)/gsr.heeqAxes.z(0))*180/M_PI;
-    LOG4CPLUS_DEBUG(logger,
-      "Invariant axis in Stonyhurst coordinates [theta, phi] = [" <<
-      setiosflags(ios::fixed) << setprecision(1) <<
-      gsr.stonyhurstTheta << ", " << gsr.stonyhurstPhi << "]");
+
   } else if (event.config().spacecraft == "WIND" ||
              event.config().spacecraft == "ACE") {
     // convert from GSE to Stonyhurst
-
+    int retVal, es, es0;
+    Vec zeros = {0,0,0};
+    Vector3d heeq0 = Vector3d::Zero(3);
+    es = date2es(middleTime.year(), middleTime.month(), middleTime.day(),
+                 middleTime.hour(), middleTime.minute(), middleTime.second());
+    es0 = date2es(middleTime.year(), middleTime.month(), middleTime.day(),
+                  middleTime.hour(), middleTime.minute(), middleTime.second());
+    retVal = cxform("GSE", "HEEQ", es0, zeros, heeq0.data());
+    retVal = cxform("GSE", "HEEQ", es,
+                    gsr.axes.x.data(), gsr.heeqAxes.x.data());
+    gsr.heeqAxes.x -= heeq0;
+    retVal = cxform("GSE", "HEEQ", es,
+                    gsr.axes.y.data(), gsr.heeqAxes.y.data());
+    gsr.heeqAxes.y -= heeq0;
+    retVal = cxform("GSE", "HEEQ", es,
+                    gsr.axes.z.data(), gsr.heeqAxes.z.data());
+    gsr.heeqAxes.z -= heeq0;
   }
+  gsr.stonyhurstTheta = atan(gsr.heeqAxes.z(2)/
+                        sqrt(pow(gsr.heeqAxes.z(0), 2)+
+                             pow(gsr.heeqAxes.z(1), 2)))*180/M_PI;
+  gsr.stonyhurstPhi = atan(gsr.heeqAxes.z(1)/gsr.heeqAxes.z(0))*180/M_PI;
+  LOG4CPLUS_DEBUG(logger,
+    "Invariant axis in Stonyhurst coordinates [theta, phi] = [" <<
+    setiosflags(ios::fixed) << setprecision(1) <<
+    gsr.stonyhurstTheta << ", " << gsr.stonyhurstPhi << "]");
 
   // calculate the magnetic field map and save it into gsr structure
   LOG4CPLUS_DEBUG(logger, "computing the magnetic field map");

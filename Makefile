@@ -2,7 +2,7 @@
 # check where we are compiling the project
 ifeq ($(USERNAME),isavnin) # at work
 	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/home/isavnin/usr/local/epd/include/python2.7
-	LIBRARY_PATH=/home/isavnin/usr/local/lib:/usr/local/matlab2009b/bin/glnxa64:/home/isavnin/usr/local/epd/lib
+	LIBRARY_PATH=/home/isavnin/usr/local/lib:/home/isavnin/usr/local/epd/lib
 	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/home/isavnin/usr/local/epd/lib
 endif
 
@@ -38,15 +38,16 @@ GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams
 PYTHON = -lpython2.7
 LOG4CPLUS = -llog4cplus
+CXFORM = -lcxform-c
 CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH) -Wno-write-strings
 
 all: $(PROGRAM) $(BENCHMARK)
 
 $(PROGRAM): $(CXXOBJECTS) $(PROGRAM).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(LOG4CPLUS) $(CXFORM) $(PYTHON) $(CXXFLAGS)
 
 $(BENCHMARK): $(CXXOBJECTS) $(BENCHMARK).o
-	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(LOG4CPLUS) $(PYTHON) $(CXXFLAGS)
+	$(CXX) -o $@ $@.o $(CXXOBJECTS) $(GSL) $(BOOST) $(LOG4CPLUS) $(CXFORM) $(PYTHON) $(CXXFLAGS)
 
 $(PROGRAM).o: icme.cpp
 	$(CXX) -c -o icme.o icme.cpp $(CXXFLAGS)
