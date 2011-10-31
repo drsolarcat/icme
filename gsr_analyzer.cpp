@@ -523,6 +523,14 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 
   gsr.Axy = Axy; // save vector potential
 
+  int iRow, iCol;
+  if (slope > 0) {
+    gsr.Axy.maxCoeff(&iRow, &iCol);
+  } else {
+    gsr.Axy.minCoeff(&iRow, &iCol);
+  }
+  gsr.Y(iRow);
+
   LOG4CPLUS_DEBUG(logger, "estimating Bz all over the map");
 
   // initialize the Bz(A) curve
