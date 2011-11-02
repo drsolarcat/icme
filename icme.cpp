@@ -263,7 +263,8 @@ int main(int argc, char* argv[]) {
                                  (*event).gsr().Bz,
                                  (*event).gsr().X,
                                  (*event).gsr().Y,
-                                 (*event).gsr().Ab);
+                                 (*event).gsr().Ab,
+                                 (*event).gsr().Aa);
     }
 
     LOG4CPLUS_INFO(logger, "everything is done");

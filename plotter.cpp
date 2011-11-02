@@ -140,7 +140,7 @@ void Plotter::plotGsrResidueMap(const MatrixXd& residue,
 // plot the magnetic field map for GSR
 void Plotter::plotGsrMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
                                  const VectorXd& X, const VectorXd& Y,
-                                 const double Ab)
+                                 const double Ab, const double Aa)
 {
   PyObject *pArgs, *func; // pointers to the arguments and function objects
 
@@ -152,7 +152,7 @@ void Plotter::plotGsrMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
   // will pass matrix as vector and reshape it later
   npy_intp pBzDim[] = {Bz.rows()*Bz.cols()};
 
-  pArgs = PyTuple_New(5); // initialize the arguments tuple
+  pArgs = PyTuple_New(6); // initialize the arguments tuple
 
   // set X
   PyTuple_SetItem(pArgs, 0,
@@ -176,6 +176,9 @@ void Plotter::plotGsrMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
 
   // set boundary vector potential Ab
   PyTuple_SetItem(pArgs, 4, PyFloat_FromDouble(Ab));
+
+  // set axial vector potential Aa
+  PyTuple_SetItem(pArgs, 5, PyFloat_FromDouble(Aa));
 
   // initialize and call the python function
   func = PyDict_GetItemString(_python_dictionary, "plotGsrBzMap");

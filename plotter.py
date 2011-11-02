@@ -59,7 +59,7 @@ def plotGsrAdPt(AdPt):
         savefig(resultsDir+'/png/gsr_AdPt.png', format='png')
 
 # plot Bz map for GSR
-def plotGsrBzMap(X, Y, Axy, Bz, Ab):
+def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa):
     # draw negative contour lines in solid (dashed by default)
     rcParams['contour.negative_linestyle'] = 'solid'
     figure()
@@ -74,7 +74,7 @@ def plotGsrBzMap(X, Y, Axy, Bz, Ab):
     contour(X/AU, Y/AU, transpose(reshape(Axy, (X.size,-1))), levels=[Ab], colors='w', linewidths=5)
 
     # determine the central part of the flux rope
-    cp = contour(X/AU, Y/AU, transpose(reshape(Axy, (X.size,-1))), levels=[min(Axy)], colors='w', linewidths=5)
+    cp = contour(X/AU, Y/AU, transpose(reshape(Axy, (X.size,-1))), levels=[0.99*Aa], colors='w', linewidths=0)
     p = cp.collections[0].get_paths()[0]
     v = p.vertices
     # plot the central point of the flux rope (Ac)

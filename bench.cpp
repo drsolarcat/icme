@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     cout << Bz.minCoeff() << ' ' << Bz.maxCoeff() << endl;
     plotter.plotGsrMagneticMap(A.transpose(), Bzz.transpose()/1e9,
                                x/10/R0*GSL_CONST_MKSA_ASTRONOMICAL_UNIT,
-                               y/10/R0*GSL_CONST_MKSA_ASTRONOMICAL_UNIT, Amax);
+                               y/10/R0*GSL_CONST_MKSA_ASTRONOMICAL_UNIT, Amax, Amin);
 
     double Vmc = 400*1e3; // MC speed in meters per second
     // sampling interval
@@ -178,7 +178,8 @@ int main(int argc, char **argv) {
                                (*event).gsr().Bz,
                                (*event).gsr().X,
                                (*event).gsr().Y,
-                               (*event).gsr().Ab);
+                               (*event).gsr().Ab,
+                               (*event).gsr().Aa);
   }
 
   return 0;

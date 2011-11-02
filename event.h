@@ -47,10 +47,11 @@ struct GsrResults {
                   branchLength; // branch length
   Axes axes; // MC axes
   Axes heeqAxes; // MC axes in HEEQ
+  double ip; // impact parameter (in meters)
   double stonyhurstTheta, stonyhurstPhi; // invariant axis in Stonyhurst
   BranchedCurve curve; // Pt(A) curve
   double dx, dy; // steps used for reconstruction
-  double Ab, Ac; // boundary and central values of the vector potential
+  double Ab, Ac, Aa; // boundary, central and axial values of the vector potential
   int Nx, Ny; // number of steps
   Eigen::VectorXd X, Y; // reconstruction coordinates
   Eigen::MatrixXd Axy, Bz; // potential and magnetic field maps

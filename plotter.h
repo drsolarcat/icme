@@ -31,7 +31,7 @@ class Plotter {
     // plot magnetic field map
     void plotGsrMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
                             const Eigen::VectorXd&, const Eigen::VectorXd&,
-                            const double);
+                            const double, const double);
     // plot Pt(A) plot for GSR
     void plotGsrAPt(const Curve&, const Curve&, const Curve&);
     // plot dPt/dA(A) plot for GSR

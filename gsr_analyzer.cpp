@@ -525,11 +525,13 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 
   int iRow, iCol;
   if (slope > 0) {
-    gsr.Axy.maxCoeff(&iRow, &iCol);
+    gsr.Aa = gsr.Axy.maxCoeff(&iRow, &iCol);
   } else {
-    gsr.Axy.minCoeff(&iRow, &iCol);
+    gsr.Aa = gsr.Axy.minCoeff(&iRow, &iCol);
   }
-  gsr.Y(iRow);
+  gsr.ip = gsr.Y(iRow);
+  LOG4CPLUS_DEBUG(logger, "Impact parameter = " <<
+    gsr.ip/GSL_CONST_MKSA_ASTRONOMICAL_UNIT << "AU");
 
   LOG4CPLUS_DEBUG(logger, "estimating Bz all over the map");
 
