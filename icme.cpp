@@ -129,8 +129,8 @@ int main(int argc, char* argv[]) {
     Time* preBeginTime = new Time(config.row(iEvent).beginTime);
     Time* postEndTime = new Time(config.row(iEvent).endTime);
     // widen time limits
-    preBeginTime->add(-3, "hour");
-    postEndTime->add(3, "hour");
+    preBeginTime->add(-1, "day");
+    postEndTime->add(1, "day");
     // create Data object for wider time limits
     Data* dataWide = new Data(); // create dynamic object for data
     LOG4CPLUS_INFO(logger, "processing the data");
@@ -147,6 +147,14 @@ int main(int argc, char* argv[]) {
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow,
                              dataDir);
+
+    LOG4CPLUS_DEBUG(logger, "average MC speed = " << setiosflags(ios::fixed) <<
+      setprecision(2) << event->dataNarrow().cols().Vp.mean()/1e3 << "km/s");
+    LOG4CPLUS_DEBUG(logger, "average SW speed = " << setiosflags(ios::fixed) <<
+      setprecision(2) << (event->dataWide().cols().Vp.sum()-
+        event->dataNarrow().cols().Vp.sum())/
+        (event->dataWide().cols().Vp.size()-
+        event->dataNarrow().cols().Vp.size())/1e3 << "km/s");
 
     // estimate the initiation time
     Time cmeTime = (*event).config().beginTime;

@@ -176,10 +176,10 @@ def plotData(B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta):
 
     # magnetic field # nT
     ax1 = subplot(711)
-    ax1.plot(B*1e9)
-    ax1.plot(Bx*1e9)
-    ax1.plot(By*1e9)
-    ax1.plot(Bz*1e9)
+    ax1.plot(B*1e9, 'k')
+    ax1.plot(Bx*1e9, 'r')
+    ax1.plot(By*1e9, 'g')
+    ax1.plot(Bz*1e9, 'b')
     axis('tight')
     Bmin = min(min(B*1e9),min(Bx*1e9),min(By*1e9),min(Bz*1e9))
     Bmax = max(max(B*1e9),max(Bx*1e9),max(By*1e9),max(Bz*1e9))

@@ -124,10 +124,23 @@ void GsrAnalyzer::analyze(Event& event) {
                     gsr.axes.z.data(), gsr.heeqAxes.z.data());
     gsr.heeqAxes.z -= heeq0;
   }
+
+  LOG4CPLUS_DEBUG(logger, "HEEQ magnetic cloud axes: " <<
+    setiosflags(ios::fixed) << setprecision(3) << "x[" <<
+    gsr.heeqAxes.x(0) << ", " <<
+    gsr.heeqAxes.x(1) << ", " <<
+    gsr.heeqAxes.x(2) << "], y[" <<
+    gsr.heeqAxes.y(0) << ", " <<
+    gsr.heeqAxes.y(1) << ", " <<
+    gsr.heeqAxes.y(2) << "], z[" <<
+    gsr.heeqAxes.z(0) << ", " <<
+    gsr.heeqAxes.z(1) << ", " <<
+    gsr.heeqAxes.z(2) << "]");
+
   gsr.stonyhurstTheta = atan(gsr.heeqAxes.z(2)/
                         sqrt(pow(gsr.heeqAxes.z(0), 2)+
                              pow(gsr.heeqAxes.z(1), 2)))*180/M_PI;
-  gsr.stonyhurstPhi = atan(gsr.heeqAxes.z(1)/gsr.heeqAxes.z(0))*180/M_PI;
+  gsr.stonyhurstPhi = atan2(gsr.heeqAxes.z(1), gsr.heeqAxes.z(0))*180/M_PI;
   LOG4CPLUS_DEBUG(logger,
     "Invariant axis in Stonyhurst coordinates [theta, phi] = [" <<
     setiosflags(ios::fixed) << setprecision(1) <<
@@ -475,7 +488,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   LOG4CPLUS_DEBUG(logger, NyUp << " steps up and " << NyDown <<
                           " steps down with step size " << dy);
   // reconstruct the upper part of the map using recursive solver
-  LOG4CPLUS_DEBUG(logger, "reconstructint the upper part of the map");
+  LOG4CPLUS_DEBUG(logger, "reconstructing the upper part of the map");
   for (int i = 1; i <= NyUp; i++) {
     // 2nd derivative of A by x using Holoborodko2 filter, smoothed with
     // weighted average prior to differenting
@@ -503,7 +516,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 
   // reconstruct the lower part of teh map using recursive solver,
   // everything is the same as for the upper part
-  LOG4CPLUS_DEBUG(logger, "reconstructint the lower part of the map");
+  LOG4CPLUS_DEBUG(logger, "reconstructing the lower part of the map");
   for (int i = -1; i >= -NyDown; i--) {
     d2A_dx2 = differentiator.Holoborodko2(7,
       Curve::weightedAverage(Axy.row(NyDown+i+1), 1-double(abs(i)-1)/Ny/3), dx);
@@ -529,7 +542,8 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   } else {
     gsr.Aa = gsr.Axy.minCoeff(&iRow, &iCol);
   }
-  gsr.ip = gsr.Y(iRow);
+  gsr.ip = gsr.Y(iRow)*copysign(1.0, gsr.axes.y(2));
+
   LOG4CPLUS_DEBUG(logger, "Impact parameter = " <<
     gsr.ip/GSL_CONST_MKSA_ASTRONOMICAL_UNIT << "AU");
 
@@ -539,7 +553,9 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   Curve ABzCurve(A, Bz);
 
   // fit it with exponent
-  ExpFit ABzFit(Nx, A.data(), Bz.data());
+//  ExpFit ABzFit(Nx, A.data(), Bz.data());
+  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
+  //PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 4, 2, 2);
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function
