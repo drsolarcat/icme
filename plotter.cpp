@@ -140,19 +140,24 @@ void Plotter::plotGsrResidueMap(const MatrixXd& residue,
 // plot the magnetic field map for GSR
 void Plotter::plotGsrMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
                                  const VectorXd& X, const VectorXd& Y,
-                                 const double Ab, const double Aa)
+                                 const double Ab, const double Aa,
+                                 const VectorXd& Bx, const VectorXd& By,
+                                 const Axes& axes)
 {
   PyObject *pArgs, *func; // pointers to the arguments and function objects
 
   // initialize the shape arrays
   npy_intp pXDim[] = {X.size()};
   npy_intp pYDim[] = {Y.size()};
+  npy_intp pBxDim[] = {Bx.size()};
+  npy_intp pByDim[] = {By.size()};
+  npy_intp axesDim[] = {3};
   // will pass matrix as vector and reshape it later
   npy_intp pAxyDim[] = {Axy.rows()*Axy.cols()};
   // will pass matrix as vector and reshape it later
   npy_intp pBzDim[] = {Bz.rows()*Bz.cols()};
 
-  pArgs = PyTuple_New(6); // initialize the arguments tuple
+  pArgs = PyTuple_New(11); // initialize the arguments tuple
 
   // set X
   PyTuple_SetItem(pArgs, 0,
@@ -179,6 +184,31 @@ void Plotter::plotGsrMagneticMap(const MatrixXd& Axy, const MatrixXd& Bz,
 
   // set axial vector potential Aa
   PyTuple_SetItem(pArgs, 5, PyFloat_FromDouble(Aa));
+
+  // set Bx quiver
+  PyTuple_SetItem(pArgs, 6,
+    PyArray_SimpleNewFromData(1, pBxDim, PyArray_DOUBLE,
+      const_cast<double*>(Bx.data())));
+
+  // set By quiver
+  PyTuple_SetItem(pArgs, 7,
+    PyArray_SimpleNewFromData(1, pByDim, PyArray_DOUBLE,
+      const_cast<double*>(By.data())));
+
+  // set X axis
+  PyTuple_SetItem(pArgs, 8,
+    PyArray_SimpleNewFromData(1, axesDim, PyArray_DOUBLE,
+      const_cast<double*>(axes.x.data())));
+
+  // set Y axis
+  PyTuple_SetItem(pArgs, 9,
+    PyArray_SimpleNewFromData(1, axesDim, PyArray_DOUBLE,
+      const_cast<double*>(axes.y.data())));
+
+  // set Z axis
+  PyTuple_SetItem(pArgs, 10,
+    PyArray_SimpleNewFromData(1, axesDim, PyArray_DOUBLE,
+      const_cast<double*>(axes.z.data())));
 
   // initialize and call the python function
   func = PyDict_GetItemString(_python_dictionary, "plotGsrBzMap");

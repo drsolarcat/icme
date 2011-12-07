@@ -58,6 +58,7 @@ struct GsrResults {
   Curve APtInCurve, APtOutCurve, // inward and outward branches of Pt(A)
         APtFitCurve, AdPtFitCurve, // Pt(A) and dPt/dA(A) fits
         ABzCurve, ABzFitCurve; // Bz(A) curve and its fit
+  Eigen::VectorXd Bx, By; // Bx and By components for quiver
 };
 
 // a class representing one event, it stores all the data and results of

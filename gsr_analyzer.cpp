@@ -311,6 +311,10 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   APtInCurve.resample(Nx);
   APtOutCurve.resample(Nx);
 
+  // define Bx and By for quiver plot
+  gsr.Bx = Curve::resampled(data.cols().Bx, Nx);
+  gsr.By = Curve::resampled(data.cols().By, Nx);
+
   // initialize arrays for the branches
   double *AarrAll  = new double[2*Nx],
          *PtArrAll = new double[2*Nx];

@@ -272,7 +272,10 @@ int main(int argc, char* argv[]) {
                                  (*event).gsr().X,
                                  (*event).gsr().Y,
                                  (*event).gsr().Ab,
-                                 (*event).gsr().Aa);
+                                 (*event).gsr().Aa,
+                                 (*event).gsr().Bx,
+                                 (*event).gsr().By,
+                                 (*event).gsr().axes);
     }
 
     LOG4CPLUS_INFO(logger, "everything is done");

@@ -2,6 +2,7 @@
 // project headers
 #include "curve.h"
 #include "event.h"
+#include "axes.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <Python.h>
@@ -31,7 +32,9 @@ class Plotter {
     // plot magnetic field map
     void plotGsrMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
                             const Eigen::VectorXd&, const Eigen::VectorXd&,
-                            const double, const double);
+                            const double, const double,
+                            const Eigen::VectorXd&, const Eigen::VectorXd&,
+                            const Axes&);
     // plot Pt(A) plot for GSR
     void plotGsrAPt(const Curve&, const Curve&, const Curve&);
     // plot dPt/dA(A) plot for GSR

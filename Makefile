@@ -23,7 +23,7 @@ export CPLUS_INCLUDE_PATH LIBRARY_PATH
 
 # names of executables
 PROGRAM = icme
-BENCHMARK = bench
+#BENCHMARK = bench
 
 # sources
 CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
