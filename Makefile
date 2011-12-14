@@ -38,7 +38,7 @@ GSL = -lgsl -lgslcblas -lm
 BOOST = -lutil -lboost_iostreams
 PYTHON = -lpython2.7
 LOG4CPLUS = -llog4cplus
-CXFORM = -lcxform-c
+CXFORM = -lcxform
 CXXFLAGS = -O3 -Wl,-rpath,$(LD_LIBRARY_PATH),-rpath-link,$(LD_LIBRARY_PATH) -Wno-write-strings
 
 all: $(PROGRAM) $(BENCHMARK)
