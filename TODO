@@ -33,3 +33,30 @@ Combination of models:
 3. Logging
 4. Saving (save only plots)
 
+
+\m/ GUI \m/
+tabbed interface, one tab for one method
+first tab for preferences and results
+textual config (or xml)
+select list of events
+dialog for management of events
+date limits for each type of analysis
+
+tab#1 General
+button "load data"
+labels with info about event: dates, spacecraft, duration, estimated CME date
+tab#2 MVA
+button "analyze"
+select timelimits on data plot
+labels for results
+tab#3 GSR
+button "analyze"
+select timelimits on data plot
+inputs for method parameters
+labels for results
+tab#4 HM
+button "analyze"
+select timelimits on data plot
+inputs for method parameters
+labels for results
+
