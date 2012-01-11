@@ -6,6 +6,7 @@ from matplotlib.transforms import Affine2D
 from mpl_toolkits.axisartist import SubplotHost
 from mpl_toolkits.axisartist import GridHelperCurveLinear
 from mpl_toolkits.axisartist import ParasiteAxesAuxTrans
+from datetime import datetime
 
 # astronomical unit
 AU = 149597870700 # m
@@ -190,68 +191,139 @@ def plotMvaBrot(Bx, By):
         savefig(resultsDir+'/png/mva_Brot.png', format='png')
 
 # plot in-situ data
-def plotData(B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta):
+def plotData(year, month, day, hour, minute, second,
+             B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta,
+             year1mc, month1mc, day1mc, hour1mc, minute1mc, second1mc,
+             year2mc, month2mc, day2mc, hour2mc, minute2mc, second2mc,
+             year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr,
+             year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr):
+
+    dates = []
+
+    for i in xrange(len(year)):
+        dates.append(datetime(year[i], month[i], day[i],
+                              hour[i], minute[i], second[i]))
+
+    date1mc = datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, second1mc)
+    date2mc = datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, second2mc)
+    date1fr = datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr)
+    date2fr = datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr)
+
+    major = HourLocator([0, 12])
+    minor = HourLocator()
+    majorFormat = DateFormatter('%Y-%m-%d\n%H:%M')
+
     figure()
     subplots_adjust(hspace=0.001)
 
     # magnetic field # nT
     ax1 = subplot(711)
-    ax1.plot(B*1e9, 'k')
-    ax1.plot(Bx*1e9, 'r')
-    ax1.plot(By*1e9, 'g')
-    ax1.plot(Bz*1e9, 'b')
+    ax1.plot(dates, B*1e9, 'k')
+    ax1.plot(dates, Bx*1e9, 'r')
+    ax1.plot(dates, By*1e9, 'g')
+    ax1.plot(dates, Bz*1e9, 'b')
     axis('tight')
     Bmin = min(min(B*1e9),min(Bx*1e9),min(By*1e9),min(Bz*1e9))
     Bmax = max(max(B*1e9),max(Bx*1e9),max(By*1e9),max(Bz*1e9))
     ylim(Bmin-(Bmax-Bmin)*0.1,Bmax+(Bmax-Bmin)*0.1)
+    ax1.axvline(date1mc, color='r')
+    ax1.axvline(date2mc, color='r')
+    ax1.axvline(date1fr, color='g')
+    ax1.axvline(date2fr, color='g')
+    ax1.xaxis.set_major_locator(major)
+    ax1.xaxis.set_major_formatter(majorFormat)
+    ax1.xaxis.set_minor_locator(minor)
 
     # proton bilk speed # km/s
     ax2 = subplot(712)
-    ax2.plot(Vp*1e-3)
+    ax2.plot(dates, Vp*1e-3)
     axis('tight')
     VpMin = min(Vp*1e-3)
     VpMax = max(Vp*1e-3)
     ylim(VpMin-(VpMax-VpMin)*0.1,VpMax+(VpMax-VpMin)*0.1)
+    ax2.axvline(date1mc, color='r')
+    ax2.axvline(date2mc, color='r')
+    ax2.axvline(date1fr, color='g')
+    ax2.axvline(date2fr, color='g')
+    ax2.xaxis.set_major_locator(major)
+    ax2.xaxis.set_major_formatter(majorFormat)
+    ax2.xaxis.set_minor_locator(minor)
+
 
     # plasma pressure # nPa
     ax3 = subplot(713)
-    ax3.plot(Pth*1e9)
+    ax3.plot(dates, Pth*1e9)
     axis('tight')
     PthMin = min(Pth*1e9)
     PthMax = max(Pth*1e9)
     ylim(PthMin-(PthMax-PthMin)*0.1,PthMax+(PthMax-PthMin)*0.1)
+    ax3.axvline(date1mc, color='r')
+    ax3.axvline(date2mc, color='r')
+    ax3.axvline(date1fr, color='g')
+    ax3.axvline(date2fr, color='g')
+    ax3.xaxis.set_major_locator(major)
+    ax3.xaxis.set_major_formatter(majorFormat)
+    ax3.xaxis.set_minor_locator(minor)
 
     # proton density # cm^-3
     ax4 = subplot(714)
-    ax4.plot(Np*1e-6)
+    ax4.plot(dates, Np*1e-6)
     axis('tight')
     NpMin = min(Np*1e-6)
     NpMax = max(Np*1e-6)
     ylim(NpMin-(NpMax-NpMin)*0.1,NpMax+(NpMax-NpMin)*0.1)
+    ax4.axvline(date1mc, color='r')
+    ax4.axvline(date2mc, color='r')
+    ax4.axvline(date1fr, color='g')
+    ax4.axvline(date2fr, color='g')
+    ax4.xaxis.set_major_locator(major)
+    ax4.xaxis.set_major_formatter(majorFormat)
+    ax4.xaxis.set_minor_locator(minor)
 
     # proton temperature # K
     ax5 = subplot(715)
-    ax5.plot(Tp)
+    ax5.plot(dates, Tp)
     axis('tight')
     TpMin = min(Tp)
     TpMax = max(Tp)
     ylim(TpMin-(TpMax-TpMin)*0.1,TpMax+(TpMax-TpMin)*0.1)
+    ax5.axvline(date1mc, color='r')
+    ax5.axvline(date2mc, color='r')
+    ax5.axvline(date1fr, color='g')
+    ax5.axvline(date2fr, color='g')
+    ax5.xaxis.set_major_locator(major)
+    ax5.xaxis.set_major_formatter(majorFormat)
+    ax5.xaxis.set_minor_locator(minor)
 
     # thermal speed # km/s
     ax6 = subplot(716)
-    ax6.plot(Vth*1e-3)
+    ax6.plot(dates, Vth*1e-3)
     axis('tight')
     VthMin = min(Vth*1e-3)
     VthMax = max(Vth*1e-3)
     ylim(VthMin-(VthMax-VthMin)*0.1,VthMax+(VthMax-VthMin)*0.1)
+    ax6.axvline(date1mc, color='r')
+    ax6.axvline(date2mc, color='r')
+    ax6.axvline(date1fr, color='g')
+    ax6.axvline(date2fr, color='g')
+    ax6.xaxis.set_major_locator(major)
+    ax6.xaxis.set_major_formatter(majorFormat)
+    ax6.xaxis.set_minor_locator(minor)
 
     # plasma beta
     ax7 = subplot(717)
-    ax7.plot(beta)
+    ax7.plot(dates, beta)
     axis('tight')
     betaMin = min(beta)
     betaMax = max(beta)
     ylim(betaMin-(betaMax-betaMin)*0.1,betaMax+(betaMax-betaMin)*0.1)
+    ax7.axvline(date1mc, color='r')
+    ax7.axvline(date2mc, color='r')
+    ax7.axvline(date1fr, color='g')
+    ax7.axvline(date2fr, color='g')
+    ax7.xaxis.set_major_locator(major)
+    ax7.xaxis.set_major_formatter(majorFormat)
+    ax7.xaxis.set_minor_locator(minor)
 
     # switch off the labels on upper plots
     xticklabels = ax1.get_xticklabels()+ax2.get_xticklabels()+ \

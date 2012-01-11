@@ -49,7 +49,7 @@ class Data {
     Data& resample(const int,
                    const gsl_interp_type* interpType = gsl_interp_linear);
   private:
-     // readFile function with optional time limit patameters (NULL pointers)
+    // readFile function with optional time limit patameters (NULL pointers)
     void readFile(std::string, My::Time*, My::Time*);
     void initVectors(); // initialize Eigen3 vectors of data
 };

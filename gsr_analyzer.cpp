@@ -428,6 +428,33 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // save central and boundary values of the vector potential
   gsr.Ac = Ac;
   gsr.Ab = Ab;
+  gsr.beginTime = event.config().beginTime;
+  gsr.endTime = event.config().endTime;
+
+  for (int i = 0; i < gsr.curve.cols().x.size(); i++) {
+    if (gsr.Ac > gsr.Ab && gsr.curve.cols().x(i) > gsr.Ab ||
+        gsr.Ac < gsr.Ab && gsr.curve.cols().x(i) < gsr.Ab) {
+      gsr.beginTime = Time(event.dataNarrow().row(i).year,
+                           event.dataNarrow().row(i).month,
+                           event.dataNarrow().row(i).day,
+                           event.dataNarrow().row(i).hour,
+                           event.dataNarrow().row(i).minute,
+                           event.dataNarrow().row(i).second);
+      break;
+    }
+  }
+  for (int i = gsr.curve.cols().x.size()-1; i >= 0; i--) {
+    if (gsr.Ac > gsr.Ab && gsr.curve.cols().x(i) > gsr.Ab ||
+        gsr.Ac < gsr.Ab && gsr.curve.cols().x(i) < gsr.Ab) {
+      gsr.endTime = Time(event.dataNarrow().row(i).year,
+                         event.dataNarrow().row(i).month,
+                         event.dataNarrow().row(i).day,
+                         event.dataNarrow().row(i).hour,
+                         event.dataNarrow().row(i).minute,
+                         event.dataNarrow().row(i).second);
+      break;
+    }
+  }
 
   // initialize temporary Pt vector, for plotting only
   VectorXd PtTmp = VectorXd::Zero(1000);

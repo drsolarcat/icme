@@ -184,9 +184,6 @@ int main(int argc, char* argv[]) {
     // plot residue maps through Matlab
     Plotter plotter(config.row(iEvent).toSave, eventResultsDir);
 
-    // plot the in-situ data
-    plotter.plotData(*event);
-
     // perform MVA analysis if required
     if (config.row(iEvent).toMva) {
       LOG4CPLUS_INFO(logger, "doing MVA analysis");
@@ -277,6 +274,9 @@ int main(int argc, char* argv[]) {
                                  (*event).gsr().By,
                                  (*event).gsr().axes);
     }
+
+    // plot the in-situ data
+    plotter.plotData(*event);
 
     LOG4CPLUS_INFO(logger, "everything is done");
 

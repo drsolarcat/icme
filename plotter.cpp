@@ -383,75 +383,177 @@ void Plotter::plotData(const Event& event)
   // initialize the shape arrays
   npy_intp pDataDim[] = {event.dataWide().cols().B.size()};
 
-  pArgs = PyTuple_New(13); // initialize the arguments tuple
+  pArgs = PyTuple_New(43); // initialize the arguments tuple
+
+  // set year
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().year.data())));
+
+  // set month
+  PyTuple_SetItem(pArgs, 1,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().month.data())));
+
+  // set day
+  PyTuple_SetItem(pArgs, 2,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().day.data())));
+
+  // set hour
+  PyTuple_SetItem(pArgs, 3,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().hour.data())));
+
+  // set minute
+  PyTuple_SetItem(pArgs, 4,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().minute.data())));
+
+  // set second
+  PyTuple_SetItem(pArgs, 5,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().second.data())));
 
   // set B
-  PyTuple_SetItem(pArgs, 0,
+  PyTuple_SetItem(pArgs, 6,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().B.data())));
 
   // set Bx
-  PyTuple_SetItem(pArgs, 1,
+  PyTuple_SetItem(pArgs, 7,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Bx.data())));
 
   // set By
-  PyTuple_SetItem(pArgs, 2,
+  PyTuple_SetItem(pArgs, 8,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().By.data())));
 
   // set Bz
-  PyTuple_SetItem(pArgs, 3,
+  PyTuple_SetItem(pArgs, 9,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Bz.data())));
 
   // set Vp
-  PyTuple_SetItem(pArgs, 4,
+  PyTuple_SetItem(pArgs, 10,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Vp.data())));
 
   // set Vx
-  PyTuple_SetItem(pArgs, 5,
+  PyTuple_SetItem(pArgs, 11,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Vx.data())));
 
   // set Vy
-  PyTuple_SetItem(pArgs, 6,
+  PyTuple_SetItem(pArgs, 12,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Vy.data())));
 
   // set Vz
-  PyTuple_SetItem(pArgs, 7,
+  PyTuple_SetItem(pArgs, 13,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Vz.data())));
 
   // set Pth
-  PyTuple_SetItem(pArgs, 8,
+  PyTuple_SetItem(pArgs, 14,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Pth.data())));
 
   // set Np
-  PyTuple_SetItem(pArgs, 9,
+  PyTuple_SetItem(pArgs, 15,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Np.data())));
 
   // set Tp
-  PyTuple_SetItem(pArgs, 10,
+  PyTuple_SetItem(pArgs, 16,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Tp.data())));
 
   // set Vth
-  PyTuple_SetItem(pArgs, 11,
+  PyTuple_SetItem(pArgs, 17,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().Vth.data())));
 
   // set beta
-  PyTuple_SetItem(pArgs, 12,
+  PyTuple_SetItem(pArgs, 18,
     PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
       const_cast<double*>(event.dataWide().cols().beta.data())));
 
+  // set begin year
+  PyTuple_SetItem(pArgs, 19, PyInt_FromLong(event.config().beginTime.year()));
+
+  // set begin month
+  PyTuple_SetItem(pArgs, 20, PyInt_FromLong(event.config().beginTime.month()));
+
+  // set begin day
+  PyTuple_SetItem(pArgs, 21, PyInt_FromLong(event.config().beginTime.day()));
+
+  // set begin hour
+  PyTuple_SetItem(pArgs, 22, PyInt_FromLong(event.config().beginTime.hour()));
+
+  // set begin minute
+  PyTuple_SetItem(pArgs, 23, PyInt_FromLong(event.config().beginTime.minute()));
+
+  // set begin second
+  PyTuple_SetItem(pArgs, 24, PyInt_FromLong(event.config().beginTime.second()));
+
+  // set end year
+  PyTuple_SetItem(pArgs, 25, PyInt_FromLong(event.config().endTime.year()));
+
+  // set end month
+  PyTuple_SetItem(pArgs, 26, PyInt_FromLong(event.config().endTime.month()));
+
+  // set end day
+  PyTuple_SetItem(pArgs, 27, PyInt_FromLong(event.config().endTime.day()));
+
+  // set end hour
+  PyTuple_SetItem(pArgs, 28, PyInt_FromLong(event.config().endTime.hour()));
+
+  // set end minute
+  PyTuple_SetItem(pArgs, 29, PyInt_FromLong(event.config().endTime.minute()));
+
+  // set end second
+  PyTuple_SetItem(pArgs, 30, PyInt_FromLong(event.config().endTime.second()));
+
+  // set begin year
+  PyTuple_SetItem(pArgs, 31, PyInt_FromLong(event.gsr().beginTime.year()));
+
+  // set begin month
+  PyTuple_SetItem(pArgs, 32, PyInt_FromLong(event.gsr().beginTime.month()));
+
+  // set begin day
+  PyTuple_SetItem(pArgs, 33, PyInt_FromLong(event.gsr().beginTime.day()));
+
+  // set begin hour
+  PyTuple_SetItem(pArgs, 34, PyInt_FromLong(event.gsr().beginTime.hour()));
+
+  // set begin minute
+  PyTuple_SetItem(pArgs, 35, PyInt_FromLong(event.gsr().beginTime.minute()));
+
+  // set begin second
+  PyTuple_SetItem(pArgs, 36, PyInt_FromLong(event.gsr().beginTime.second()));
+
+  // set end year
+  PyTuple_SetItem(pArgs, 37, PyInt_FromLong(event.gsr().endTime.year()));
+
+  // set end month
+  PyTuple_SetItem(pArgs, 38, PyInt_FromLong(event.gsr().endTime.month()));
+
+  // set end day
+  PyTuple_SetItem(pArgs, 39, PyInt_FromLong(event.gsr().endTime.day()));
+
+  // set end hour
+  PyTuple_SetItem(pArgs, 40, PyInt_FromLong(event.gsr().endTime.hour()));
+
+  // set end minute
+  PyTuple_SetItem(pArgs, 41, PyInt_FromLong(event.gsr().endTime.minute()));
+
+  // set end second
+  PyTuple_SetItem(pArgs, 42, PyInt_FromLong(event.gsr().endTime.second()));
+
   // initialize and call the python function
-  func =PyDict_GetItemString(_python_dictionary, "plotData");
+  func = PyDict_GetItemString(_python_dictionary, "plotData");
   PyObject_CallObject(func, pArgs);
 }
 
