@@ -236,7 +236,7 @@ def plotData(year, month, day, hour, minute, second,
     ax1.xaxis.set_major_locator(major)
     ax1.xaxis.set_major_formatter(majorFormat)
     ax1.xaxis.set_minor_locator(minor)
-    ax1.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='both'))
+    ax1.yaxis.set_major_locator(MaxNLocator(nbins=4))
     ax1.set_ylabel('B [nT]')
     ax1.yaxis.set_label_coords(labelx, 0.5)
 
@@ -254,7 +254,7 @@ def plotData(year, month, day, hour, minute, second,
     ax2.xaxis.set_major_locator(major)
     ax2.xaxis.set_major_formatter(majorFormat)
     ax2.xaxis.set_minor_locator(minor)
-    ax2.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='both'))
+    ax2.yaxis.set_major_locator(MaxNLocator(nbins=4))
     ax2.set_ylabel('Vp [km/s]')
     ax2.yaxis.set_label_coords(labelx, 0.5)
 
@@ -273,7 +273,7 @@ def plotData(year, month, day, hour, minute, second,
     ax3.xaxis.set_major_locator(major)
     ax3.xaxis.set_major_formatter(majorFormat)
     ax3.xaxis.set_minor_locator(minor)
-    ax3.yaxis.set_major_locator(MaxNLocator(nbins=6, steps=[1,2,4], prune='both'))
+    ax3.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1,2,4]))
     ax3.set_ylabel('Pth [nPa]')
     ax3.yaxis.set_label_coords(labelx, 0.5)
 
@@ -291,7 +291,7 @@ def plotData(year, month, day, hour, minute, second,
     ax4.xaxis.set_major_locator(major)
     ax4.xaxis.set_major_formatter(majorFormat)
     ax4.xaxis.set_minor_locator(minor)
-    ax4.yaxis.set_major_locator(MaxNLocator(nbins=6, prune='both'))
+    ax4.yaxis.set_major_locator(MaxNLocator(nbins=4))
     ax4.set_ylabel('Np [cm^-3]')
     ax4.yaxis.set_label_coords(labelx, 0.5)
 
@@ -326,7 +326,7 @@ def plotData(year, month, day, hour, minute, second,
     ax6.xaxis.set_major_locator(major)
     ax6.xaxis.set_major_formatter(majorFormat)
     ax6.xaxis.set_minor_locator(minor)
-    ax6.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='upper'))
+    ax6.yaxis.set_major_locator(MaxNLocator(nbins=4))
     ax6.set_ylabel('Vth [km/s]')
     ax6.yaxis.set_label_coords(labelx, 0.5)
 

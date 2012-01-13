@@ -455,6 +455,19 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
       break;
     }
   }
+  LOG4CPLUS_DEBUG(logger, "GSR boundaries: " << setfill('0') <<
+    gsr.beginTime.year() << '-' <<
+    setw(2) << gsr.beginTime.month() << '-' <<
+    setw(2) << gsr.beginTime.day() << ' ' <<
+    setw(2) << gsr.beginTime.hour() << ':' <<
+    setw(2) << gsr.beginTime.minute() << ':' <<
+    setw(2) << gsr.beginTime.second() << " - " <<
+    gsr.endTime.year() << '-' <<
+    setw(2) << gsr.endTime.month() << '-' <<
+    setw(2) << gsr.endTime.day() << ' ' <<
+    setw(2) << gsr.endTime.hour() << ':' <<
+    setw(2) << gsr.endTime.minute() << ':' <<
+    setw(2) << gsr.endTime.second());
 
   // initialize temporary Pt vector, for plotting only
   VectorXd PtTmp = VectorXd::Zero(1000);
@@ -584,9 +597,9 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   Curve ABzCurve(A, Bz);
 
   // fit it with exponent
-//  ExpFit ABzFit(Nx, A.data(), Bz.data());
-  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
-  //PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 4, 2, 2);
+  ExpFit ABzFit(Nx, A.data(), Bz.data());
+//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
+//  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 4, 2, 2);
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function
