@@ -8,7 +8,7 @@ using namespace std;
 using namespace Eigen;
 
 // Holoborodko 2nd derivative
-VectorXd Differentitor::Holoborodko2(const int span,
+VectorXd Differentiator::Holoborodko2(const int span,
                                      const VectorXd& x, const double dx)
 {
   const int n = x.size(); // length of the vector

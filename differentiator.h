@@ -6,7 +6,7 @@
 #include <eigen3/Eigen/Dense>
 
 // a class for numerical differetitation
-class Differentitor {
+class Differentiator {
   public:
     // Holoborodko 2nd derivative filter
     Eigen::VectorXd Holoborodko2(const int,

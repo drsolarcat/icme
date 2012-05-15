@@ -527,7 +527,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
            d2A_dy2 = VectorXd::Zero(Nx);
 
   // initialize differentiator
-  Differentitor differentiator;
+  Differentiator differentiator;
 
   LOG4CPLUS_DEBUG(logger, NyUp << " steps up and " << NyDown <<
                           " steps down with step size " << dy);
