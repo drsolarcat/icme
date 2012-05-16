@@ -277,6 +277,38 @@ void Plotter::plotGsrAPt(const Curve& APtInCurve,
   Py_XDECREF(func);
 }
 
+// plot Pt(A) plot for GSR for all the analyzed time period
+void Plotter::plotGsrAPtFull(const Curve& APtCurve)
+{
+  // pointers to the python objects
+  PyObject *pAPt, *pArgs, *func;
+
+  // set inward Pt(A)
+  pAPt = PyDict_New(); // tuple for [x,y] coordinates
+  npy_intp pAPtDim[] = {APtCurve.size()}; // shape array
+  // set x
+  PyDict_SetItemString(pAPt, "x",
+    PyArray_SimpleNewFromData(1, pAPtDim, PyArray_DOUBLE,
+      const_cast<double*>(APtCurve.cols().x.data())));
+  // set y
+  PyDict_SetItemString(pAPt, "y",
+    PyArray_SimpleNewFromData(1, pAPtDim, PyArray_DOUBLE,
+      const_cast<double*>(APtCurve.cols().y.data())));
+
+  pArgs = PyTuple_New(1); // tuple for arguments
+  // fill in the tuple
+  PyTuple_SetItem(pArgs, 0, pAPt);
+
+  // initialize and call the python function
+  func = PyDict_GetItemString(_python_dictionary, "plotGsrAPtFull");
+  PyObject_CallObject(func, pArgs);
+
+  // delete the references
+  Py_XDECREF(pAPt);
+  Py_XDECREF(pArgs);
+  Py_XDECREF(func);
+}
+
 // plot dPt/dA(A) for GSR
 void Plotter::plotGsrAdPt(const Curve& AdPtFitCurve)
 {

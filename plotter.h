@@ -37,6 +37,8 @@ class Plotter {
                             const Axes&);
     // plot Pt(A) plot for GSR
     void plotGsrAPt(const Curve&, const Curve&, const Curve&);
+    // plot Pt(A) plot for GSR for all the analyzed time period
+    void plotGsrAPtFull(const Curve&);
     // plot dPt/dA(A) plot for GSR
     void plotGsrAdPt(const Curve&);
     // plot Bz(A) plot for GSR

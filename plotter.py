@@ -30,6 +30,20 @@ def plotGsrAPt(APtIn, APtOut, APtFit):
         savefig(resultsDir+'/eps/gsr_APt.eps', format='eps')
         savefig(resultsDir+'/png/gsr_APt.png', format='png')
 
+# plot Pt(A) for GSR
+def plotGsrAPtFull(APt):
+    figure()
+    plot(APt['x'], APt['y']*1e9, 'k') # full Pt(A)
+    # set the labels
+    xlabel('A [Tm]')
+    ylabel('Pt [nPa]')
+    # switch on the grid
+    grid(True)
+    # save the plots in png and eps
+    if toSave:
+        savefig(resultsDir+'/eps/gsr_APt_full.eps', format='eps')
+        savefig(resultsDir+'/png/gsr_APt_full.png', format='png')
+
 # plot Bz(A) for GSR
 def plotGsrABz(ABz, ABzFit):
     figure()

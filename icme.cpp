@@ -247,6 +247,10 @@ int main(int argc, char* argv[]) {
                                 (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : NULL)
                                 );
 
+      // plot full Pt(A) through matplotlib
+      LOG4CPLUS_DEBUG(logger, "plotting full Pt(A)");
+      plotter.plotGsrAPtFull((*event).gsr().curve);
+
       // plot Pt(A) through matplotlib
       LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");
       plotter.plotGsrAPt((*event).gsr().APtInCurve,

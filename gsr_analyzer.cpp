@@ -378,6 +378,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   while (slope > 0 && APtPolyFit.df(Ab) < 0 ||
          slope < 0 && APtPolyFit.df(Ab) > 0)
   {
+    cout << slope << " " << APtFit.df(Ab) << " " << Ab << endl;
     if (slope > 0) {
       Ab = APtAllCurve.cols().x(++AbIndex);
     } else {
