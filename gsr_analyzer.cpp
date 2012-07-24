@@ -43,6 +43,15 @@ void GsrAnalyzer::analyze(Event& event) {
   LOG4CPLUS_DEBUG(logger, "starting PMVAB analysis to find initial axes");
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
 
+  // replace initial axes with GSE(RTN) axes
+  PmvaResults pmva;
+  Axes pmvaAxes;
+  pmvaAxes.x = Vector3d(1, 0, 0);
+  pmvaAxes.y = Vector3d(0, 0 ,1);
+  pmvaAxes.z = Vector3d(0, -1, 0);
+  pmva.axes = pmvaAxes;
+  event.pmvab(pmva);
+
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
   LOG4CPLUS_DEBUG(logger, "searching for optimal axes with 1 degree step");
@@ -235,6 +244,25 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
       iMaxTheta = ceil(event.config().maxTheta/dTheta)-1,
       iMinPhi   = floor(event.config().minPhi/dPhi),
       iMaxPhi   = ceil(event.config().maxPhi/dPhi)-1;
+
+  // searching for y axis in symmetric case
+  double sum, psum = 0;
+  for (double theta = -90; theta <= 90; theta+=dTheta) {
+    sum = 0;
+    for (double phi = 1; phi <= 179; phi+=dPhi) {
+      if (theta < 0) phi+=180;
+      sum += 1/gsr.combinedResidue(
+        floor(acos(cos(theta*M_PI/180)/
+          sqrt(1+pow(sin(theta*M_PI/180)/tan(phi*M_PI/180), 2)))*
+          180/M_PI/dTheta+0.5),
+        floor(phi/dPhi+0.5));
+    }
+    if (sum > psum) {
+      psum = sum;
+    }
+    LOG4CPLUS_DEBUG(logger, theta << " " << sum);
+  }
+
   gsr.combinedResidue.block(iMinTheta, iMinPhi,
                             iMaxTheta-iMinTheta+1, iMaxPhi-iMinPhi+1).
                       minCoeff(&iTheta, &iPhi);

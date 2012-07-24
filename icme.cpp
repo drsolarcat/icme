@@ -111,6 +111,12 @@ int main(int argc, char* argv[]) {
     } else if (config.row(iEvent).spacecraft == "STB") {
       dataPathStream << "stereo_b_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in RTN");
+    } else if (config.row(iEvent).spacecraft == "CYL") {
+      dataPathStream << "cylinder_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
+    } else if (config.row(iEvent).spacecraft == "TOR") {
+      dataPathStream << "torus_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
     } else { // throw an error - unknown spacecraft
       LOG4CPLUS_FATAL(logger, "unknown spacecraft: " <<
                               config.row(iEvent).spacecraft);
