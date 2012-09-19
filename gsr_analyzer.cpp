@@ -9,6 +9,8 @@
 #include "fit_poly_exp.h"
 #include "differentiator.h"
 #include "my_time.h"
+#include "plotter.h"
+#include "filter.h"
 // library headers
 #include <eigen3/Eigen/Dense>
 #include <gsl/gsl_const_mksa.h>
@@ -43,6 +45,7 @@ void GsrAnalyzer::analyze(Event& event) {
   LOG4CPLUS_DEBUG(logger, "starting PMVAB analysis to find initial axes");
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
 
+  /*
   // replace initial axes with GSE(RTN) axes
   PmvaResults pmva;
   Axes pmvaAxes;
@@ -51,24 +54,17 @@ void GsrAnalyzer::analyze(Event& event) {
   pmvaAxes.z = Vector3d(0, -1, 0);
   pmva.axes = pmvaAxes;
   event.pmvab(pmva);
+  */
 
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
   LOG4CPLUS_DEBUG(logger, "searching for optimal axes with 1 degree step");
   GsrResults gsr = loopAxes(event, 0, 1, 90, 0, 1, 360);
 
-  // quaternions, needed to turn to optimized axes
-  Quaterniond qTheta;
-  Quaterniond qPhi;
+  detectAxes(event, gsr);
+//  detectAxesByResidue(event, gsr);
+//  detectAxesByVariance(event, gsr);
 
-  // initialize quaternions to turn the axes into MC axes
-  qTheta = AngleAxisd(gsr.optTheta*M_PI/180, event.pmvab().axes.y);
-  qPhi = AngleAxisd(gsr.optPhi*M_PI/180, event.pmvab().axes.z);
-  // turn the axes
-  gsr.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
-  gsr.axes.x = (event.dht().Vht.dot(gsr.axes.z)*gsr.axes.z-
-                event.dht().Vht).normalized();
-  gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
   // flip axes if necessary
   Data dataTmp(event.dataNarrow());
   dataTmp.project(gsr.axes);
@@ -233,6 +229,203 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
     i++; // move to the next row
   } // end iteration through theta angles
 
+  return gsr; // return
+}
+
+// detect flux rope axes
+GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
+
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
+  Data data(event.dataNarrow());
+  if (data.symmetrize()) {
+    // searching for y axis in symmetric case
+    double sum, psum = 0, optYTheta = 0;
+    for (double theta = -90; theta <= 90; theta+=0.1) {
+      sum = 0;
+      if (theta == 0) {
+        sum = gsr.combinedResidue.col(0).array().inverse().sum()+
+              gsr.combinedResidue.col(180).array().inverse().sum();
+      } else {
+        for (double phi = 0; phi <= 180; phi+=gsr.dPhi) {
+          sum += 1/gsr.combinedResidue(
+            floor(acos(cos(theta*M_PI/180)/
+              sqrt(1+pow(sin(theta*M_PI/180)/tan((theta < 0 ? phi+180 : phi)*M_PI/180), 2)))*
+              180/M_PI/gsr.dTheta+0.5),
+            floor((theta < 0 ? phi+180 : phi)/gsr.dPhi+0.5));
+        }
+      }
+      if (sum > psum) {
+        psum = sum;
+        optYTheta = theta;
+      }
+    }
+    // quaternion, needed to turn to optimized Y axis
+    Quaterniond qTheta;
+    // initialize quaternion to get the Y axes of MC
+    qTheta = AngleAxisd(-optYTheta*M_PI/180, event.pmvab().axes.x);
+    // turn the axis
+    gsr.axes.y = (qTheta*event.pmvab().axes.y).normalized();
+    gsr.axes.x = -event.dht().Vht.normalized();
+    gsr.axes.z = gsr.axes.x.cross(gsr.axes.y).normalized();
+
+    cout << gsr.axes.y.dot(event.dht().Vht.normalized()) << endl;
+    cout << gsr.axes.y.dot(Vector3d::UnitZ()) << endl;
+
+    if (gsr.axes.y.dot(event.dht().Vht.normalized()) < 0.1) {
+      cout << "HS" << endl;
+      // quaternion, needed to cycle through all possible X axis orientations
+      Quaterniond qPhi;
+      // length of the SC intersection
+      double L = (double)data.rows().size()/2;
+      // SC intersection line length
+      VectorXd x = VectorXd::LinSpaced(data.rows().size(), 0,
+                                       data.rows().size()-1);
+      x = (x.array()-L).matrix(); // center it, so it's symmetrical
+      // project data on the trial axes
+      data.project(gsr.axes);
+      // temporary axes
+      Axes axes = gsr.axes;
+
+      // normalize Bx and Bz
+      VectorXd Bx = (data.cols().Bx.array()/data.cols().By.array()*x.array()/L).matrix();
+      VectorXd Bz = (data.cols().Bz.array()/data.cols().By.array()*x.array()/L).matrix();
+      // remove spikes by applying median filtering
+      Bx = Filter::median1D(Bx, 25);
+      Bz = Filter::median1D(Bz, 25);
+      Matrix2d M = Matrix2d::Zero(); // initialize 2x2 matrix with zeros
+      M(0,0) = (Bz.array()*Bz.array()).matrix().mean()-Bz.mean()*Bz.mean();
+      M(0,1) = (Bz.array()*Bx.array()).matrix().mean()-Bz.mean()*Bx.mean();
+      M(1,0) = (Bx.array()*Bz.array()).matrix().mean()-Bx.mean()*Bz.mean();
+      M(1,1) = (Bx.array()*Bx.array()).matrix().mean()-Bx.mean()*Bx.mean();
+      // initialize eigen solver for adjoint matrix
+      SelfAdjointEigenSolver<Matrix2d> eigensolver(M);
+      // initialize and get eigen values in ascending order
+      Vector2d eigenValues = eigensolver.eigenvalues();
+      // initialize and get eigen vectors
+      Matrix2d eigenVectors = eigensolver.eigenvectors();
+      // maximum variance direction is the Z axis, minimum variance is X axis
+      axes.x = (gsr.axes.z*eigenVectors.col(0)(0)+
+                gsr.axes.x*eigenVectors.col(0)(1)).normalized();
+      axes.z = (gsr.axes.z*eigenVectors.col(1)(0)+
+                gsr.axes.x*eigenVectors.col(1)(1)).normalized();
+      double criterionHS = eigenValues(1)/eigenValues(0);
+      cout << eigenValues(0) << ", " << criterionHS << ", "
+           << acos(axes.z.dot(event.pmvab().axes.z))*180/M_PI << ", "
+           << atan2(axes.z.dot(event.pmvab().axes.y), axes.z.dot(event.pmvab().axes.x))*180/M_PI
+           << endl;
+      if (eigenValues(0) < 1e-2 and criterionHS > 3) {
+        gsr.axes = axes;
+      } else {
+        cout << "MHS" << endl;
+        // current minimum variance
+        double lambda = 1e100;
+        // current criterion
+        double criterionMHS = 0;
+        // iterate thtough kappa parameter [0,1]
+        for (double k = 1; k >= 0; k-=0.001) {
+          // normalize Bx and Bz
+          VectorXd Bx = (data.cols().Bx.array()/data.cols().By.array()*(x.array()*k).sin()/k/L).matrix();
+          VectorXd Bz = (data.cols().Bz.array()/data.cols().By.array()*(x.array()*k).sin()/k/L).matrix();
+          // remove spikes by applying median filtering
+          Bx = Filter::median1D(Bx, 25);
+          Bz = Filter::median1D(Bz, 25);
+          Matrix2d M = Matrix2d::Zero(); // initialize 2x2 matrix with zeros
+          M(0,0) = (Bz.array()*Bz.array()).matrix().mean()-Bz.mean()*Bz.mean();
+          M(0,1) = (Bz.array()*Bx.array()).matrix().mean()-Bz.mean()*Bx.mean();
+          M(1,0) = (Bx.array()*Bz.array()).matrix().mean()-Bx.mean()*Bz.mean();
+          M(1,1) = (Bx.array()*Bx.array()).matrix().mean()-Bx.mean()*Bx.mean();
+          // initialize eigen solver for adjoint matrix
+          SelfAdjointEigenSolver<Matrix2d> eigensolver(M);
+          // initialize and get eigen values in ascending order
+          Vector2d eigenValues = eigensolver.eigenvalues();
+          if (eigenValues(0) <= lambda and eigenValues(1)/eigenValues(0) > criterionMHS) {
+            lambda = eigenValues(0);
+            criterionMHS = eigenValues(1)/eigenValues(0);
+            // initialize and get eigen vectors
+            Matrix2d eigenVectors = eigensolver.eigenvectors();
+            // maximum variance direction is the Z axis, minimum variance is X axis
+            axes.x = (gsr.axes.z*eigenVectors.col(0)(0)+
+                      gsr.axes.x*eigenVectors.col(0)(1)).normalized();
+            axes.z = (gsr.axes.z*eigenVectors.col(1)(0)+
+                      gsr.axes.x*eigenVectors.col(1)(1)).normalized();
+            cout << k << ", " << lambda << ", " << criterionMHS << ", "
+                 << acos(axes.z.dot(event.pmvab().axes.z))*180/M_PI << ", "
+                 << atan2(axes.z.dot(event.pmvab().axes.y), axes.z.dot(event.pmvab().axes.x))*180/M_PI
+                 << endl;
+          }
+        }
+        if (lambda < 1e-7 && criterionMHS > criterionHS) {
+          gsr.axes = axes;
+        } else {
+          goto residuals;
+        }
+      }
+    }
+  } else {
+    residuals:
+    cout << "GSR" << endl;
+    // searching for the minimum residue direction
+    int iTheta, iPhi; // index of optimal angles
+    // get indices
+    LOG4CPLUS_DEBUG(logger,
+      "searching optimal axis in the range theta = [" <<
+      event.config().minTheta << ", " << event.config().maxTheta << "], " <<
+      "phi = [" << event.config().minPhi << ", " << event.config().maxPhi << "]");
+    int iMinTheta = floor(event.config().minTheta/gsr.dTheta),
+        iMaxTheta = ceil(event.config().maxTheta/gsr.dTheta)-1,
+        iMinPhi   = floor(event.config().minPhi/gsr.dPhi),
+        iMaxPhi   = ceil(event.config().maxPhi/gsr.dPhi)-1;
+
+    gsr.combinedResidue.block(iMinTheta, iMinPhi,
+                              iMaxTheta-iMinTheta+1, iMaxPhi-iMinPhi+1).
+                        minCoeff(&iTheta, &iPhi);
+    // translate indices into optimal angles
+    gsr.optTheta = gsr.minTheta + (iMinTheta+iTheta)*gsr.dTheta;
+    gsr.optPhi = gsr.minPhi + (iMinPhi+iPhi)*gsr.dPhi;
+
+    // quaternions, needed to turn to optimized axes
+    Quaterniond qTheta;
+    Quaterniond qPhi;
+
+    // initialize quaternions to turn the axes into MC axes
+    qTheta = AngleAxisd(gsr.optTheta*M_PI/180, event.pmvab().axes.y);
+    qPhi = AngleAxisd(gsr.optPhi*M_PI/180, event.pmvab().axes.z);
+    // turn the axes
+    gsr.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
+    gsr.axes.x = (event.dht().Vht.dot(gsr.axes.z)*gsr.axes.z-
+                  event.dht().Vht).normalized();
+    gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
+  }
+
+  if (event.dht().Vht.dot(gsr.axes.x) > 0) {
+    gsr.axes.z = -gsr.axes.z;
+    gsr.axes.x = -gsr.axes.x;
+  }
+
+  if (acos(gsr.axes.z.dot(event.pmvab().axes.z)) > M_PI/2) {
+    gsr.axes.y = -gsr.axes.y;
+    gsr.axes.z = -gsr.axes.z;
+  }
+
+  gsr.optTheta = acos(gsr.axes.z.dot(event.pmvab().axes.z))*180/M_PI;
+  gsr.optPhi = atan2(gsr.axes.z.dot(event.pmvab().axes.y), gsr.axes.z.dot(event.pmvab().axes.x))*180/M_PI;
+
+  LOG4CPLUS_DEBUG(logger,
+      "optimal angles for the invariant axes [theta, phi] = [" <<
+      gsr.optTheta << ", " << gsr.optPhi << "]");
+
+  return gsr;
+
+}
+
+// detect flux rope axes in the non-symmetrical case
+GsrResults& GsrAnalyzer::detectAxesByResidue(Event& event, GsrResults& gsr) {
+
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
   // searching for the minimum residue direction
   int iTheta, iPhi; // index of optimal angles
   // get indices
@@ -240,41 +433,215 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
     "searching optimal axis in the range theta = [" <<
     event.config().minTheta << ", " << event.config().maxTheta << "], " <<
     "phi = [" << event.config().minPhi << ", " << event.config().maxPhi << "]");
-  int iMinTheta = floor(event.config().minTheta/dTheta),
-      iMaxTheta = ceil(event.config().maxTheta/dTheta)-1,
-      iMinPhi   = floor(event.config().minPhi/dPhi),
-      iMaxPhi   = ceil(event.config().maxPhi/dPhi)-1;
-
-  // searching for y axis in symmetric case
-  double sum, psum = 0;
-  for (double theta = -90; theta <= 90; theta+=dTheta) {
-    sum = 0;
-    for (double phi = 1; phi <= 179; phi+=dPhi) {
-      if (theta < 0) phi+=180;
-      sum += 1/gsr.combinedResidue(
-        floor(acos(cos(theta*M_PI/180)/
-          sqrt(1+pow(sin(theta*M_PI/180)/tan(phi*M_PI/180), 2)))*
-          180/M_PI/dTheta+0.5),
-        floor(phi/dPhi+0.5));
-    }
-    if (sum > psum) {
-      psum = sum;
-    }
-    LOG4CPLUS_DEBUG(logger, theta << " " << sum);
-  }
+  int iMinTheta = floor(event.config().minTheta/gsr.dTheta),
+      iMaxTheta = ceil(event.config().maxTheta/gsr.dTheta)-1,
+      iMinPhi   = floor(event.config().minPhi/gsr.dPhi),
+      iMaxPhi   = ceil(event.config().maxPhi/gsr.dPhi)-1;
 
   gsr.combinedResidue.block(iMinTheta, iMinPhi,
                             iMaxTheta-iMinTheta+1, iMaxPhi-iMinPhi+1).
                       minCoeff(&iTheta, &iPhi);
   // translate indices into optimal angles
-  gsr.optTheta = minTheta + (iMinTheta+iTheta)*dTheta;
-  gsr.optPhi = minPhi + (iMinPhi+iPhi)*dPhi;
+  gsr.optTheta = gsr.minTheta + (iMinTheta+iTheta)*gsr.dTheta;
+  gsr.optPhi = gsr.minPhi + (iMinPhi+iPhi)*gsr.dPhi;
 
   LOG4CPLUS_DEBUG(logger,
     "optimal angles for the invariant axes [theta, phi] = [" <<
     gsr.optTheta << ", " << gsr.optPhi << "]");
 
+  // quaternions, needed to turn to optimized axes
+  Quaterniond qTheta;
+  Quaterniond qPhi;
+
+  // initialize quaternions to turn the axes into MC axes
+  qTheta = AngleAxisd(gsr.optTheta*M_PI/180, event.pmvab().axes.y);
+  qPhi = AngleAxisd(gsr.optPhi*M_PI/180, event.pmvab().axes.z);
+  // turn the axes
+  gsr.axes.z = (qPhi*(qTheta*event.pmvab().axes.z)).normalized();
+  gsr.axes.x = (event.dht().Vht.dot(gsr.axes.z)*gsr.axes.z-
+                event.dht().Vht).normalized();
+  gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
+
   return gsr; // return
+}
+
+// detect flux rope axes in case of symmetry
+GsrResults& GsrAnalyzer::detectAxesByVariance(Event& event, GsrResults& gsr) {
+
+  // get the logger instance
+  Logger logger = Logger::getInstance("main");
+
+  // searching for y axis in symmetric case
+  double sum, psum = 0, optYTheta = 0;
+  for (double theta = -90; theta <= 90; theta+=0.1) {
+    sum = 0;
+    if (theta == 0) {
+      sum = gsr.combinedResidue.col(0).array().inverse().sum()+
+            gsr.combinedResidue.col(180).array().inverse().sum();
+    } else {
+      for (double phi = 0; phi <= 180; phi+=gsr.dPhi) {
+        sum += 1/gsr.combinedResidue(
+          floor(acos(cos(theta*M_PI/180)/
+            sqrt(1+pow(sin(theta*M_PI/180)/tan((theta < 0 ? phi+180 : phi)*M_PI/180), 2)))*
+            180/M_PI/gsr.dTheta+0.5),
+          floor((theta < 0 ? phi+180 : phi)/gsr.dPhi+0.5));
+      }
+    }
+    if (sum > psum) {
+      psum = sum;
+      optYTheta = theta;
+    }
+  }
+
+  // quaternion, needed to turn to optimized Y axis
+  Quaterniond qTheta;
+  // initialize quaternion to get the Y axes of MC
+  qTheta = AngleAxisd(-optYTheta*M_PI/180, event.pmvab().axes.x);
+  // turn the axis
+  gsr.axes.y = (qTheta*event.pmvab().axes.y).normalized();
+  gsr.axes.x = -event.dht().Vht.normalized();
+  gsr.axes.z = gsr.axes.x.cross(gsr.axes.y).normalized();
+
+  // we iterate through all possible orientations of X axis and estimate
+  // variances
+  // quaternion, needed to cycle through all possible X axis orientations
+  Quaterniond qPhi;
+  // initialize the Pt(A) curve and it's branches to get the indices of the
+  // symmetric interval
+  GsrCurve curve = GsrCurve(event, gsr.axes); // create Pt(A) curve
+  curve.initBranches("extremums"); // find it's branches
+  // length of the SC intersection
+  double L = (double)(curve.rightIndex()-curve.leftIndex())/2;
+  // SC intersection line length
+  VectorXd x = VectorXd::LinSpaced(curve.rightIndex()-curve.leftIndex()+1, 0,
+                                   curve.rightIndex()-curve.leftIndex());
+  x = (x.array()-L).matrix(); // center it, so it's symmetrical
+
+  Data data(event.dataNarrow());
+  // project data on the trial axes
+  data.project(gsr.axes);
+  // current minimum variance
+  double lambda = 1e100;
+  // filter data to get symmetric interval
+  data.filter(curve.leftIndex(), curve.rightIndex());
+  // temporary axes
+  Axes axes = gsr.axes;
+
+//  Bx.segment(curve.centerIndex()-10-1,
+//             curve.rightIndex()-curve.centerIndex()) =
+//  Bx.segment(curve.centerIndex()+10+1,
+//             curve.rightIndex()-curve.centerIndex());
+
+//  Bz.segment(curve.centerIndex()-10-1,
+//             curve.rightIndex()-curve.centerIndex()) =
+//  Bz.segment(curve.centerIndex()+10+1,
+//             curve.rightIndex()-curve.centerIndex());
+
+  // remove spikes by applying median filtering
+//  Bx = Filter::median1D(Bx, 25);
+//  Bz = Filter::median1D(Bz, 25);
+
+  // iterate thtough kappa parameter [0,1]
+  for (double k = 1; k >= 0; k-=0.001) {
+    // normalize Bx and Bz
+    VectorXd Bx = (data.cols().Bx.array()/data.cols().By.array()*(x.array()*k).sin()/k/L).matrix();
+    VectorXd Bz = (data.cols().Bz.array()/data.cols().By.array()*(x.array()*k).sin()/k/L).matrix();
+
+//    int n = 1;
+
+//    Bx.segment(curve.centerIndex()-n,
+//               curve.rightIndex()-curve.centerIndex()-n) =
+//    Bx.tail(curve.rightIndex()-curve.centerIndex()-n);
+//    Bx.conservativeResize(Bx.size()-1-n*2);
+
+//    Bz.segment(curve.centerIndex()-n,
+//               curve.rightIndex()-curve.centerIndex()-n) =
+//    Bz.tail(curve.rightIndex()-curve.centerIndex()-n);
+//    Bz.conservativeResize(Bz.size()-1-n*2);
+
+    // remove spikes by applying median filtering
+    Bx = Filter::median1D(Bx, 25);
+    Bz = Filter::median1D(Bz, 25);
+
+    Matrix2d M = Matrix2d::Zero(); // initialize 2x2 matrix with zeros
+    M(0,0) = (Bz.array()*Bz.array()).matrix().mean()-Bz.mean()*Bz.mean();
+    M(0,1) = (Bz.array()*Bx.array()).matrix().mean()-Bz.mean()*Bx.mean();
+    M(1,0) = (Bx.array()*Bz.array()).matrix().mean()-Bx.mean()*Bz.mean();
+    M(1,1) = (Bx.array()*Bx.array()).matrix().mean()-Bx.mean()*Bx.mean();
+//    cout << M << endl;
+    // initialize eigen solver for adjoint matrix
+    SelfAdjointEigenSolver<Matrix2d> eigensolver(M);
+    // initialize and get eigen values in ascending order
+    Vector2d eigenValues = eigensolver.eigenvalues();
+//    cout << eigenValues(0) << " -> " << eigenValues(1) << endl;
+    if (eigenValues(0) <= lambda) {
+      lambda = eigenValues(0);
+      // initialize and get eigen vectors
+      Matrix2d eigenVectors = eigensolver.eigenvectors();
+      // maximum variance direction is the Z axis, minimum variance is X axis
+      axes.x = (gsr.axes.z*eigenVectors.col(0)(0)+
+                gsr.axes.x*eigenVectors.col(0)(1)).normalized();
+      axes.z = (gsr.axes.z*eigenVectors.col(1)(0)+
+                gsr.axes.x*eigenVectors.col(1)(1)).normalized();
+      cout << k << ", " << lambda << ", "
+           << acos(axes.z.dot(event.pmvab().axes.z))*180/M_PI << ", "
+           << endl;
+//      Plotter plotter;
+//      plotter.plotData1D(Bx);
+//      plotter.plotData1D(Bz);
+    }
+  }
+  gsr.axes = axes;
+  /*
+  double var = 0, pvar = 1e9; // current and previous variance
+  // iterate through rotation angles
+  for (double phi = -90; phi <= 90; phi+=0.1) {
+    // initalize the quaternion
+    qPhi = AngleAxisd(phi*M_PI/180, gsr.axes.y);
+    // rotate X axis to get a new trial one
+    axes.x = (qPhi*gsr.axes.x).normalized();
+    // calculate new trial Z axis
+    axes.z = axes.x.cross(axes.y).normalized();
+    // geta copy of data
+    Data data(event.dataNarrow());
+    // project data on the trial axes
+    data.project(axes);
+    // filter data to get symmetric interval
+    data.filter(curve.leftIndex(), curve.rightIndex());
+    // normalize Bx
+    VectorXd Bx = (data.cols().Bx.array()/data.cols().By.array()*
+                   x.array()/L).matrix();
+    // remove spikes by applying median filtering
+    Bx = Filter::median1D(Bx, 25);
+    // estimate variance of Bx
+    double var = (Bx.array()-Bx.mean()).pow(2).mean();
+
+    if (var < pvar) {
+      pvar = var;
+      faxes = axes;
+    }
+  }
+  gsr.axes = faxes;
+  */
+
+  if (event.dht().Vht.dot(gsr.axes.x) > 0) {
+    gsr.axes.z = -gsr.axes.z;
+    gsr.axes.x = -gsr.axes.x;
+  }
+
+  if (acos(gsr.axes.z.dot(event.pmvab().axes.z)) > M_PI/2) {
+    gsr.axes.y = -gsr.axes.y;
+    gsr.axes.z = -gsr.axes.z;
+  }
+
+  gsr.optTheta = acos(gsr.axes.z.dot(event.pmvab().axes.z))*180/M_PI;
+  gsr.optPhi = atan2(gsr.axes.z.dot(event.pmvab().axes.y), gsr.axes.z.dot(event.pmvab().axes.x))*180/M_PI;
+
+  LOG4CPLUS_DEBUG(logger,
+    "optimal angles for the invariant axes [theta, phi] = [" <<
+    gsr.optTheta << ", " << gsr.optPhi << "]");
+
+  return gsr;
 }
 
 // compute magnetic field map for a given GSR run
@@ -406,13 +773,14 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   while (slope > 0 && APtPolyFit.df(Ab) < 0 ||
          slope < 0 && APtPolyFit.df(Ab) > 0)
   {
-    cout << slope << " " << APtFit.df(Ab) << " " << Ab << endl;
     if (slope > 0) {
       Ab = APtAllCurve.cols().x(++AbIndex);
     } else {
       Ab = APtAllCurve.cols().x(--AbIndex);
     }
   }
+
+//  Ab = 53;
 
   // determine limits for Pt(A) plots
   double AcLim,
@@ -622,13 +990,16 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 
   LOG4CPLUS_DEBUG(logger, "estimating Bz all over the map");
 
+//  (gsr.Axy.row(0).head(iCol+1)-gsr.Ab).abs().minCoeff(&iCol)
+//  (gsr.Axy.row(0).head(iCol+1)-gsr.Ab).abs().minCoeff(&iCol)
+
   // initialize the Bz(A) curve
   Curve ABzCurve(A, Bz);
 
   // fit it with exponent
   ExpFit ABzFit(Nx, A.data(), Bz.data());
-//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
-//  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 4, 2, 2);
+//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 2);
+//  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 2, 2, 2);
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function

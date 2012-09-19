@@ -78,6 +78,17 @@ Data& Data::filter(Time beginTime, Time endTime) {
   return *this; // chained method
 }
 
+// slice data using index limits
+Data& Data::filter(int beginIndex, int endIndex) {
+  // erase data outside desired time interval
+  data.erase(data.begin()+endIndex+1, data.end()); // upper part
+  data.erase(data.begin(), data.begin()+beginIndex); // lower part
+
+  initVectors(); // initialize Eigen3 vectors of data
+
+  return *this; // chained method
+}
+
 void Data::readFile(string dataFilePath, Time* beginTime, Time* endTime) {
   ifstream dataFileStream; // stream from the file with data
   string dataFileLine; // a single line from a file as a string
@@ -166,6 +177,70 @@ Data& Data::project(Axes axes) {
   initVectors(); // recalculate Eigen3 vectors of data
 
   return *this; // chained method
+}
+
+// symmetrize the data
+bool Data::symmetrize() {
+
+  double delta = 1e9;
+  double symmetric = false;
+  int beginIndex, endIndex;
+  for (int i = 0; i < data.size(); i++) {
+    if (i < data.size()/3 || i > data.size()*2/3) {
+      for (int k = data.size()-1; k > i; k--) {
+        if ((k < data.size()/3 && i > data.size()*2/3) || (k > data.size()*2/3 && i < data.size()/3)) {
+          VectorXd Bx = cols().Bx.segment(i, k-i+1);
+          VectorXd By = cols().By.segment(i, k-i+1);
+          VectorXd Bz = cols().Bz.segment(i, k-i+1);
+          Matrix3d M = Matrix3d::Zero();
+          M(0, 0) = (Bx.array()*Bx.array()).matrix().mean()-Bx.mean()*Bx.mean();
+          M(0, 1) = (Bx.array()*By.array()).matrix().mean()-Bx.mean()*By.mean();
+          M(0, 2) = (Bx.array()*Bz.array()).matrix().mean()-Bx.mean()*Bz.mean();
+          M(1, 0) = (By.array()*Bx.array()).matrix().mean()-By.mean()*Bx.mean();
+          M(1, 1) = (By.array()*By.array()).matrix().mean()-By.mean()*By.mean();
+          M(1, 2) = (By.array()*Bz.array()).matrix().mean()-By.mean()*Bz.mean();
+          M(2, 0) = (Bz.array()*Bx.array()).matrix().mean()-Bz.mean()*Bx.mean();
+          M(2, 1) = (Bz.array()*By.array()).matrix().mean()-Bz.mean()*By.mean();
+          M(2, 2) = (Bz.array()*Bz.array()).matrix().mean()-Bz.mean()*Bz.mean();
+          // initialize eigen solver for adjoint matrix
+          SelfAdjointEigenSolver<Matrix3d> eigensolver(M);
+          // initialize and get eigen values in ascending order
+          Vector3d eigenValues = eigensolver.eigenvalues();
+          // initialize and get eigen vectors
+          Matrix3d eigenVectors = eigensolver.eigenvectors();
+
+
+          MatrixXd B(k-i+1, 3);
+          B.col(0) = Bx;
+          B.col(1) = By;
+          B.col(2) = Bz;
+          VectorXd Byy = B*eigenVectors.col(2);
+
+          if (abs(eigenValues(2)-Byy.array().pow(2).mean()) < delta) {
+            delta = abs(eigenValues(2)-abs(Byy.array().pow(2).mean()));
+            cout << eigenValues(2) << ", "
+                 << Byy.array().pow(2).mean() << ", "
+                 << abs(eigenValues(2)-Byy.array().pow(2).mean()) << ", "
+                 << i << ":" << k << endl;
+            if (delta < 1e-20) {
+              symmetric = true;
+              beginIndex = i;
+              endIndex = k;
+              goto stop;
+            }
+          }
+        }
+      }
+    }
+  }
+  stop:
+
+  if (symmetric) {
+    filter(beginIndex, endIndex);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 // resample data by new number of points

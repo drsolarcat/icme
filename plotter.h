@@ -47,6 +47,8 @@ class Plotter {
     void plotMvaBrot(const Eigen::VectorXd&, const Eigen::VectorXd&);
     // plot all the in-situ data
     void plotData(const Event&);
+    // plot simple 1D data
+    void plotData1D(const Eigen::VectorXd&);
   protected:
     // initialize Python
     int _initPython();

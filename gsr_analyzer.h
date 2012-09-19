@@ -20,6 +20,12 @@ class GsrAnalyzer {
     // loop through angles and find the optimal angles for new axes
     GsrResults loopAxes(Event&, double, double, double,
                                 double, double, double);
+    // detect axes if the flux rope
+    GsrResults& detectAxes(Event&, GsrResults&);
+    // detect flux rope axes in the non-symmetrical case
+    GsrResults& detectAxesByResidue(Event&, GsrResults&);
+    // detect flux rope axes in case of symmetry
+    GsrResults& detectAxesByVariance(Event&, GsrResults&);
     // compute magnetic field map for a given GSR run
     GsrResults& computeMap(Event&, GsrResults&);
     // get transformation matrix

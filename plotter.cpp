@@ -589,3 +589,23 @@ void Plotter::plotData(const Event& event)
   PyObject_CallObject(func, pArgs);
 }
 
+// plot simple 1D data
+void Plotter::plotData1D(const VectorXd& dataY)
+{
+  PyObject *pArgs, *func; // pointers to the python object
+
+  // initialize the shape arrays
+  npy_intp pDataYDim[] = {dataY.size()};
+
+  pArgs = PyTuple_New(1); // initialize the arguments tuple
+
+  // set Y data
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pDataYDim, PyArray_DOUBLE,
+      const_cast<double*>(dataY.data())));
+
+  // initialize and call the python function
+  func = PyDict_GetItemString(_python_dictionary, "plotData1D");
+  PyObject_CallObject(func, pArgs);
+}
+

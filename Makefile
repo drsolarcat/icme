@@ -29,7 +29,8 @@ PROGRAM = icme
 CXXSOURCES = config.cpp data.cpp my_time.cpp event.cpp \
 	mva_analyzer.cpp dht_analyzer.cpp gsr_analyzer.cpp gsr_curve.cpp \
 	curve.cpp branched_curve.cpp integrator.cpp differentiator.cpp \
-	fit_abstract.cpp fit_poly.cpp fit_exp.cpp fit_poly_exp.cpp plotter.cpp
+	fit_abstract.cpp fit_poly.cpp fit_exp.cpp fit_poly_exp.cpp plotter.cpp \
+	filter.cpp
 CXXOBJECTS = $(CXXSOURCES:.cpp=.o)
 
 #flags
@@ -87,6 +88,9 @@ integrator.o: integrator.h integrator.cpp
 
 differentiator.o: differentiator.h differentiator.cpp
 	$(CXX) -c -o differentiator.o differentiator.cpp $(CXXFLAGS)
+
+filter.o: filter.h filter.cpp
+	$(CXX) -c -o filter.o filter.cpp $(CXXFLAGS)
 
 plotter.o: plotter.h plotter.cpp
 	$(CXX) -c -o plotter.o plotter.cpp $(CXXFLAGS)

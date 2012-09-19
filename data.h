@@ -39,12 +39,16 @@ class Data {
     Data& readFile(std::string, My::Time, My::Time);
     // filter data vector by time (from, until) using Time objects
     Data& filter(My::Time, My::Time);
+    // filter data vector by indices (from, until)
+    Data& filter(int, int);
     // getters for data, both in rows and columns
     const DataRow& row(int i) const {return data[i];}
     const std::vector<DataRow>& rows() const {return data;}
     const DataVectors& cols() const {return vectors;}
     // project data to new coordinates
     Data& project(Axes);
+    // symmetrize the data
+    bool symmetrize();
     // resample data
     Data& resample(const int,
                    const gsl_interp_type* interpType = gsl_interp_linear);

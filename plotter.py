@@ -346,6 +346,13 @@ def plotData(year, month, day, hour, minute, second,
         savefig(resultsDir+'/eps/data.eps', format='eps')
         savefig(resultsDir+'/png/data.png', format='png')
 
+# plot simple 1D data
+def plotData1D(dataY):
+    figure()
+    plot(dataY, '.k')
+    # grid
+    grid(True)
+
 # show all pending plots
 def showPlots():
     show()

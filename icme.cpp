@@ -14,6 +14,7 @@
 // standard headers
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <iomanip>
 
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
   ostringstream dataPathStream; // srting stream for data path string
   string dataPath; // path to data file
   ostringstream eventResultsDirStream; // srting stream for results directory
-  string eventResultsDir; // path to results directory
+  string eventResultsDir, filenameResults; // path to results directory
 
   // initialize analyzers
   MvaAnalyzer mva; // MVA analysis class
@@ -183,6 +184,9 @@ int main(int argc, char* argv[]) {
     // save the results directory
     eventResultsDir = eventResultsDirStream.str();
     LOG4CPLUS_DEBUG(logger, "results directory = " << eventResultsDir);
+    // the filename for numerical results
+    eventResultsDirStream << "/info.txt";
+    filenameResults = eventResultsDirStream.str();
     // clear the stream
     eventResultsDirStream.clear();
     eventResultsDirStream.str("");
@@ -287,6 +291,86 @@ int main(int argc, char* argv[]) {
 
     // plot the in-situ data
     plotter.plotData(*event);
+
+    if (config.row(iEvent).toSave) {
+      ofstream infoFile(filenameResults.c_str());
+
+      infoFile << "Event " << setfill('0') <<
+        config.row(iEvent).beginTime.year() << '-' <<
+        setw(2) << config.row(iEvent).beginTime.month() << '-' <<
+        setw(2) << config.row(iEvent).beginTime.day() << ' ' <<
+        config.row(iEvent).spacecraft << endl;
+
+      infoFile << "The event length (red boundaries) is " <<
+        setiosflags(ios::fixed) << setprecision(2) <<
+        double(config.row(iEvent).endTime-config.row(iEvent).beginTime)/3600 <<
+        " hours" << endl;
+
+      infoFile << "Estimated CME time: " << setfill('0') <<
+        cmeTime.year() << '-' <<
+        setw(2) << cmeTime.month() << '-' <<
+        setw(2) << cmeTime.day() << ' ' <<
+        setw(2) << cmeTime.hour() << ':' <<
+        setw(2) << cmeTime.minute() << ':' <<
+        setw(2) << cmeTime.second() << endl;
+
+      if (config.row(iEvent).toGsr) {
+        infoFile << "Estimated de Hoffmann-Teller speed = [" <<
+          setiosflags(ios::fixed) << setprecision(1) <<
+          (*event).dht().Vht(0)/1e3 << ", " <<
+          (*event).dht().Vht(1)/1e3 << ", " <<
+          (*event).dht().Vht(2)/1e3 << "] km/s" << endl;
+
+        infoFile << "Magnetic cloud axes: " <<
+          setiosflags(ios::fixed) << setprecision(3) << "x[" <<
+          (*event).gsr().axes.x(0) << ", " <<
+          (*event).gsr().axes.x(1) << ", " <<
+          (*event).gsr().axes.x(2) << "], y[" <<
+          (*event).gsr().axes.y(0) << ", " <<
+          (*event).gsr().axes.y(1) << ", " <<
+          (*event).gsr().axes.y(2) << "], z[" <<
+          (*event).gsr().axes.z(0) << ", " <<
+          (*event).gsr().axes.z(1) << ", " <<
+          (*event).gsr().axes.z(2) << "]" << endl;
+
+        infoFile << "HEEQ magnetic cloud axes: " <<
+          setiosflags(ios::fixed) << setprecision(3) << "x[" <<
+          (*event).gsr().heeqAxes.x(0) << ", " <<
+          (*event).gsr().heeqAxes.x(1) << ", " <<
+          (*event).gsr().heeqAxes.x(2) << "], y[" <<
+          (*event).gsr().heeqAxes.y(0) << ", " <<
+          (*event).gsr().heeqAxes.y(1) << ", " <<
+          (*event).gsr().heeqAxes.y(2) << "], z[" <<
+          (*event).gsr().heeqAxes.z(0) << ", " <<
+          (*event).gsr().heeqAxes.z(1) << ", " <<
+          (*event).gsr().heeqAxes.z(2) << "]" << endl;
+
+        infoFile << "Invariant axis in Stonyhurst coordinates " <<
+          "[theta, phi] = [" << setiosflags(ios::fixed) << setprecision(1) <<
+          (*event).gsr().stonyhurstTheta << ", " <<
+          (*event).gsr().stonyhurstPhi << "]" << endl;
+
+        infoFile << "GSR boundaries: " << setfill('0') <<
+          (*event).gsr().beginTime.year() << '-' <<
+          setw(2) << (*event).gsr().beginTime.month() << '-' <<
+          setw(2) << (*event).gsr().beginTime.day() << ' ' <<
+          setw(2) << (*event).gsr().beginTime.hour() << ':' <<
+          setw(2) << (*event).gsr().beginTime.minute() << ':' <<
+          setw(2) << (*event).gsr().beginTime.second() << " - " <<
+          (*event).gsr().endTime.year() << '-' <<
+          setw(2) << (*event).gsr().endTime.month() << '-' <<
+          setw(2) << (*event).gsr().endTime.day() << ' ' <<
+          setw(2) << (*event).gsr().endTime.hour() << ':' <<
+          setw(2) << (*event).gsr().endTime.minute() << ':' <<
+          setw(2) << (*event).gsr().endTime.second() << endl;
+
+        infoFile << "Impact parameter = " << setprecision(8) <<
+          (*event).gsr().ip/GSL_CONST_MKSA_ASTRONOMICAL_UNIT << "AU" << endl;
+
+        infoFile << "Boundary value of A = " <<
+          (*event).gsr().Ab << endl;
+      }
+    }
 
     LOG4CPLUS_INFO(logger, "everything is done");
 
