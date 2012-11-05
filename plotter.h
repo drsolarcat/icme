@@ -5,7 +5,7 @@
 #include "axes.h"
 // library headers
 #include <eigen3/Eigen/Dense>
-#include <Python.h>
+#include <python2.7/Python.h>
 // standard headers
 #include <string>
 
@@ -47,6 +47,8 @@ class Plotter {
     void plotMvaBrot(const Eigen::VectorXd&, const Eigen::VectorXd&);
     // plot all the in-situ data
     void plotData(const Event&);
+    // plot B rotation
+    void plotBrot(const Event&);
     // plot simple 1D data
     void plotData1D(const Eigen::VectorXd&);
   protected:

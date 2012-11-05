@@ -204,6 +204,58 @@ def plotMvaBrot(Bx, By):
         savefig(resultsDir+'/eps/mva_Brot.eps', format='eps')
         savefig(resultsDir+'/png/mva_Brot.png', format='png')
 
+def plotBrot(year, month, day, hour, minute, second,
+             theta, phi,
+             year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr,
+             year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr):
+
+    dates = []
+
+    for i in xrange(len(year)):
+        dates.append(datetime(year[i], month[i], day[i],
+                              hour[i], minute[i], second[i]))
+
+    date1fr = datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr)
+    date2fr = datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr)
+
+#    major = HourLocator([0, 12])
+    major = DayLocator()
+    minor = HourLocator()
+    majorFormat = DateFormatter('%Y-%m-%d')
+
+    figure()
+    subplots_adjust(hspace=0.001)
+
+    labelx = -0.08
+
+    ax1 = subplot(211)
+    ax1.plot(dates, theta, 'k')
+#    ax1.axvline(date1fr, color='g', linestyle='dashed')
+#    ax1.axvline(date2fr, color='g', linestyle='dashed')
+    ax1.xaxis.set_major_locator(major)
+    ax1.xaxis.set_major_formatter(majorFormat)
+    ax1.xaxis.set_minor_locator(minor)
+    ax1.yaxis.set_major_locator(MaxNLocator(nbins=4, symmetric=True))
+    ax1.yaxis.set_minor_locator(MultipleLocator(1))
+    ax1.set_ylabel('theta')
+    ax1.yaxis.set_label_coords(labelx, 0.5)
+
+    ax2 = subplot(212)
+    ax2.plot(dates, phi, 'k')
+#    ax2.axvline(date1fr, color='g', linestyle='dashed')
+#    ax2.axvline(date2fr, color='g', linestyle='dashed')
+    ax2.xaxis.set_major_locator(major)
+    ax2.xaxis.set_major_formatter(majorFormat)
+    ax2.xaxis.set_minor_locator(minor)
+    ax2.yaxis.set_major_locator(MaxNLocator(nbins=4, symmetric=True))
+    ax2.yaxis.set_minor_locator(MultipleLocator(1))
+    ax2.set_ylabel('phi')
+    ax2.yaxis.set_label_coords(labelx, 0.5)
+
+    # switch off the labels on upper plots
+    xticklabels = ax1.get_xticklabels()
+    setp(xticklabels, visible=False)
+
 # plot in-situ data
 def plotData(year, month, day, hour, minute, second,
              B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta,
@@ -236,9 +288,9 @@ def plotData(year, month, day, hour, minute, second,
     # magnetic field # nT
     ax1 = subplot(711)
     ax1.plot(dates, B*1e9, 'k')
-    ax1.plot(dates, Bx*1e9, 'r')
-    ax1.plot(dates, By*1e9, 'g')
-    ax1.plot(dates, Bz*1e9, 'b')
+#    ax1.plot(dates, Bx*1e9, 'r')
+#    ax1.plot(dates, By*1e9, 'g')
+#    ax1.plot(dates, Bz*1e9, 'b')
     ax1.axvline(date1mc, color='r')
     ax1.axvline(date2mc, color='r')
     ax1.axvline(date1fr, color='g', linestyle='dashed')
@@ -253,7 +305,14 @@ def plotData(year, month, day, hour, minute, second,
 
     # proton bilk speed # km/s
     ax2 = subplot(712)
-    ax2.plot(dates, Vp*1e-3, 'k')
+#    ax2.plot(dates, Vp*1e-3-mean(Vp)*1e-3, 'k')
+    ax2.plot(dates, Vp*1e-3-450, 'k')
+#    ax2.plot(dates, Vx*1e-3-mean(Vx)*1e-3, 'r')
+    ax2.plot(dates, Vx*1e-3+450, 'r')
+#    ax2.plot(dates, Vy*1e-3-mean(Vy)*1e-3, 'g')
+    ax2.plot(dates, Vy*1e-3, 'g')
+#    ax2.plot(dates, Vz*1e-3-mean(Vz)*1e-3, 'b')
+    ax2.plot(dates, Vz*1e-3, 'b')
     ax2.axvline(date1mc, color='r')
     ax2.axvline(date2mc, color='r')
     ax2.axvline(date1fr, color='g', linestyle='dashed')

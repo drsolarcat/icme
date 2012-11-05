@@ -1,9 +1,9 @@
 
 # check where we are compiling the project
 ifeq ($(USERNAME),isavnin) # at work
-	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/home/isavnin/usr/local/epd/include/python2.7
-	LIBRARY_PATH=/home/isavnin/usr/local/lib:/home/isavnin/usr/local/epd/lib
-	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib:/home/isavnin/usr/local/epd/lib
+	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/home/isavnin/usr/local/lib
+	LIBRARY_PATH=/home/isavnin/usr/local/lib
+	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib
 endif
 
 #ifeq ($(USERNAME),inferno) # on my desktop

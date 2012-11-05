@@ -2,8 +2,8 @@
 // project headers
 #include "plotter.h"
 // library headers
-#include <Python.h>
-#include <numpy/arrayobject.h>
+#include <python2.7/Python.h>
+#include <python2.7/site-packages/numpy/core/include/numpy/arrayobject.h>
 // standard headers
 #include <string>
 #include <sys/stat.h>
@@ -586,6 +586,110 @@ void Plotter::plotData(const Event& event)
 
   // initialize and call the python function
   func = PyDict_GetItemString(_python_dictionary, "plotData");
+  PyObject_CallObject(func, pArgs);
+}
+
+// plot B rotation
+void Plotter::plotBrot(const Event& event)
+{
+  PyObject *pArgs, *func; // pointers to the python objects
+
+  // initialize the shape arrays
+  npy_intp pDataDim[] = {event.dataWide().cols().B.size()};
+
+  pArgs = PyTuple_New(20); // initialize the arguments tuple
+
+  // set year
+  PyTuple_SetItem(pArgs, 0,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().year.data())));
+
+  // set month
+  PyTuple_SetItem(pArgs, 1,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().month.data())));
+
+  // set day
+  PyTuple_SetItem(pArgs, 2,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().day.data())));
+
+  // set hour
+  PyTuple_SetItem(pArgs, 3,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().hour.data())));
+
+  // set minute
+  PyTuple_SetItem(pArgs, 4,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().minute.data())));
+
+  // set second
+  PyTuple_SetItem(pArgs, 5,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
+      const_cast<int*>(event.dataWide().cols().second.data())));
+
+  double theta[event.dataWide().rows().size()];
+  double phi[event.dataWide().rows().size()];
+
+  VectorXd Bxy = (event.dataWide().cols().By.array().pow(2)+event.dataWide().cols().Bx.array().pow(2)).sqrt().matrix();
+
+  for (int i = 0; i < event.dataWide().rows().size(); i++) {
+    phi[i] = atan2(event.dataWide().cols().By(i), event.dataWide().cols().Bx(i));
+    phi[i] = (phi[i] < 0 ? phi[i]+M_PI : phi[i]);
+    phi[i] = phi[i]*180/M_PI;
+    theta[i] = atan(event.dataWide().cols().Bz(i)/Bxy(i));
+    theta[i] = theta[i]*180/M_PI;
+  }
+
+  // set theta
+  PyTuple_SetItem(pArgs, 6,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(theta)));
+
+  // set phi
+  PyTuple_SetItem(pArgs, 7,
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(phi)));
+
+  // set begin year
+  PyTuple_SetItem(pArgs, 8, PyInt_FromLong(event.gsr().beginTime.year()));
+
+  // set begin month
+  PyTuple_SetItem(pArgs, 9, PyInt_FromLong(event.gsr().beginTime.month()));
+
+  // set begin day
+  PyTuple_SetItem(pArgs, 10, PyInt_FromLong(event.gsr().beginTime.day()));
+
+  // set begin hour
+  PyTuple_SetItem(pArgs, 11, PyInt_FromLong(event.gsr().beginTime.hour()));
+
+  // set begin minute
+  PyTuple_SetItem(pArgs, 12, PyInt_FromLong(event.gsr().beginTime.minute()));
+
+  // set begin second
+  PyTuple_SetItem(pArgs, 13, PyInt_FromLong(event.gsr().beginTime.second()));
+
+  // set end year
+  PyTuple_SetItem(pArgs, 14, PyInt_FromLong(event.gsr().endTime.year()));
+
+  // set end month
+  PyTuple_SetItem(pArgs, 15, PyInt_FromLong(event.gsr().endTime.month()));
+
+  // set end day
+  PyTuple_SetItem(pArgs, 16, PyInt_FromLong(event.gsr().endTime.day()));
+
+  // set end hour
+  PyTuple_SetItem(pArgs, 17, PyInt_FromLong(event.gsr().endTime.hour()));
+
+  // set end minute
+  PyTuple_SetItem(pArgs, 18, PyInt_FromLong(event.gsr().endTime.minute()));
+
+  // set end second
+  PyTuple_SetItem(pArgs, 19, PyInt_FromLong(event.gsr().endTime.second()));
+
+  // initialize and call the python function
+  func = PyDict_GetItemString(_python_dictionary, "plotBrot");
   PyObject_CallObject(func, pArgs);
 }
 
