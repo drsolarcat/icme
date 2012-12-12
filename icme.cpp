@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
     plotter.plotData(*event);
 
     // plot the in-situ data
-    plotter.plotBrot(*event);
+//    plotter.plotBrot(*event);
 
     if (config.row(iEvent).toSave) {
       ofstream infoFile(filenameResults.c_str());
