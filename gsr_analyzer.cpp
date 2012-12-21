@@ -45,7 +45,6 @@ void GsrAnalyzer::analyze(Event& event) {
   LOG4CPLUS_DEBUG(logger, "starting PMVAB analysis to find initial axes");
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
 
-  /*
   // replace initial axes with GSE(RTN) axes
   PmvaResults pmva;
   Axes pmvaAxes;
@@ -54,7 +53,6 @@ void GsrAnalyzer::analyze(Event& event) {
   pmvaAxes.z = Vector3d(0, -1, 0);
   pmva.axes = pmvaAxes;
   event.pmvab(pmva);
-  */
 
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
@@ -997,8 +995,8 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   Curve ABzCurve(A, Bz);
 
   // fit it with exponent
-  ExpFit ABzFit(Nx, A.data(), Bz.data());
-//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 2);
+//  ExpFit ABzFit(Nx, A.data(), Bz.data());
+  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
 //  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 2, 2, 2);
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values

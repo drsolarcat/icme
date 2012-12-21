@@ -118,6 +118,9 @@ int main(int argc, char* argv[]) {
     } else if (config.row(iEvent).spacecraft == "TOR") {
       dataPathStream << "torus_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
+    } else if (config.row(iEvent).spacecraft == "THEM") {
+      dataPathStream << "themis_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
     } else { // throw an error - unknown spacecraft
       LOG4CPLUS_FATAL(logger, "unknown spacecraft: " <<
                               config.row(iEvent).spacecraft);
@@ -126,6 +129,7 @@ int main(int argc, char* argv[]) {
     dataPathStream << config.row(iEvent).samplingInterval << ".dat";
     // save the data path
     dataPath = dataPathStream.str();
+    cout << dataPath << endl;
     LOG4CPLUS_DEBUG(logger, "path to the data file = " << dataPath);
     // clear the stream
     dataPathStream.clear();
@@ -138,8 +142,10 @@ int main(int argc, char* argv[]) {
     // widen time limits
 //    preBeginTime->add(-1, "day");
 //    postEndTime->add(1, "day");
-    preBeginTime->add(-10, "hour");
-    postEndTime->add(10, "hour");
+//    preBeginTime->add(-10, "hour");
+//    postEndTime->add(10, "hour");
+    preBeginTime->add(-10, "second");
+    postEndTime->add(10, "second");
     // create Data object for wider time limits
     Data* dataWide = new Data(); // create dynamic object for data
     LOG4CPLUS_INFO(logger, "processing the data");
@@ -292,7 +298,7 @@ int main(int argc, char* argv[]) {
     }
 
     // plot the in-situ data
-    plotter.plotData(*event);
+//    plotter.plotData(*event);
 
     // plot the in-situ data
 //    plotter.plotBrot(*event);

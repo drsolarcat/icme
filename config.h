@@ -10,7 +10,8 @@
 
 // this structure represents a single row from the config file
 struct ConfigRow {
-  int flag, samplingInterval, Nx, order;
+  int flag, Nx, order;
+  double samplingInterval;
   char quality;
   bool toGsr, toMva, toCm, toTm, toHm, toOm, toSave;
   std::string spacecraft, fittingFuntion;

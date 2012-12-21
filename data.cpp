@@ -222,7 +222,7 @@ bool Data::symmetrize() {
                  << Byy.array().pow(2).mean() << ", "
                  << abs(eigenValues(2)-Byy.array().pow(2).mean()) << ", "
                  << i << ":" << k << endl;
-            if (delta < 1e-20) {
+            if (delta < 1e-19) {
               symmetric = true;
               beginIndex = i;
               endIndex = k;
