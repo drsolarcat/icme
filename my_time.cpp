@@ -7,6 +7,8 @@
 #include <iostream>
 #include <sstream>
 #include <cstdio>
+#include <cmath>
+#include <iomanip>
 
 using namespace std;
 using namespace My;
@@ -24,7 +26,7 @@ Time::Time() {
 }
 
 // construct Time object using year, month, day, hour and second
-Time::Time(int year, int month, int day, int hour, int minute, int second) {
+Time::Time(int year, int month, int day, int hour, int minute, double second) {
   // initialize local-UTC time shift
   initLocalUtcShift();
   // initialize and fill it with time data we already know
@@ -34,15 +36,16 @@ Time::Time(int year, int month, int day, int hour, int minute, int second) {
   c_tm.tm_mday = day;
   c_tm.tm_hour = hour+_local_utc_shift; // taking timezone into account
   c_tm.tm_min = minute;
-  c_tm.tm_sec = second;
+  c_tm.tm_sec = int(second);
   // calculate Unix time base on ctime structure
   time_t c_unixtime = mktime(&c_tm);
   // fill Time object
-  initByUnixtime(c_unixtime);
+  double tmp;
+  initByUnixtime(double(c_unixtime)+modf(second,&tmp));
 }
 
 // construct Time object using year, day of year, hour, minute and second
-Time::Time(int year, int doy, int hour, int minute, int second) {
+Time::Time(int year, int doy, int hour, int minute, double second) {
   // initialize local-UTC time shift
   initLocalUtcShift();
   // initialize and fill ctime strucure with available time data
@@ -52,11 +55,12 @@ Time::Time(int year, int doy, int hour, int minute, int second) {
   c_tm.tm_mday = 1;
   c_tm.tm_hour = hour+_local_utc_shift; // take into account the timezone
   c_tm.tm_min = minute;
-  c_tm.tm_sec = second;
+  c_tm.tm_sec = int(second);
   // calculate Unix time
   time_t c_unixtime = mktime(&c_tm)+(doy-1)*86400;
   // fill Time object
-  initByUnixtime(c_unixtime);
+  double tmp;
+  initByUnixtime(double(c_unixtime)+modf(second,&tmp));
 }
 
 // construct Time object using formatted string representation of time
@@ -71,7 +75,8 @@ Time::Time(string dateTimeString) {
   // create stream with date string as a source
   istringstream dateTimeStream(dateTimeString);
   // read time data from date string stream
-  int year, month, day, hour, minute, second;
+  int year, month, day, hour, minute;
+  double second;
   dateTimeStream >> year >> month >> day >> hour >> minute >> second;
   // create ctime structure
   tm c_tm = {0};
@@ -80,38 +85,37 @@ Time::Time(string dateTimeString) {
   c_tm.tm_mday = day;
   c_tm.tm_hour = hour+_local_utc_shift;
   c_tm.tm_min = minute;
-  c_tm.tm_sec = second;
+  c_tm.tm_sec = int(second);
   // calculate Unix time
   time_t c_unixtime = mktime(&c_tm);
   // and finally fill the Time object
-  initByUnixtime(c_unixtime);
+  double tmp;
+  initByUnixtime(double(c_unixtime)+modf(second,&tmp));
 }
 
 // construct Time object using Unix timestamp
-Time::Time(int timestamp, string type) {
+Time::Time(double unixtime) {
   // initialize local-UTC time shift
   initLocalUtcShift();
-  // check the type of the timestamp provided
-  if (type == "unix") { // if Unix timestamp is provided
-    initByUnixtime(time_t(timestamp));
-  } else { // throw an error - unknown type of the timestamp
-    cout << "Unknown timestamp type" << endl;
-  }
-}
-
-// construct Time object using Matlab timestamp
-Time::Time(double timestamp, string type) {
-  // initialize local-UTC time shift
-  initLocalUtcShift();
-  // check the type of the timestamp provided
-  if (type == "matlab") { // if Matlab timestamp is provided
-    initByUnixtime(time_t((timestamp-double(719529))*double(86400)));
-  } else { // throw an error - unknown type of the timestamp
-    cout << "Unknown timestamp type" << endl;
-  }
+  // initialize Time object by unixtime
+  initByUnixtime(unixtime);
 }
 
 // other methods
+
+// return formatted time string
+string Time::strtime() {
+  ostringstream timeStream; // initialize stringstream for time
+  // fill up the time string
+  timeStream << setw(4) << _year << "-"
+             << setw(2) << setfill('0') << _month << "-"
+             << setw(2) << setfill('0') << _day << " "
+             << setw(2) << setfill('0') << _hour << ":"
+             << setw(2) << setfill('0') << _minute << ":"
+             << setw(6) << setprecision(3) << fixed << _second;
+  // get the string out of the stream
+  return timeStream.str();
+}
 
 // add "amount" of "type" (year, month, day, hour, minute, second) time to the
 // Time object
@@ -123,7 +127,7 @@ Time& Time::add(int amount, string type) {
   c_tm.tm_mday = _day;
   c_tm.tm_hour = _hour;
   c_tm.tm_min = _minute;
-  c_tm.tm_sec = _second;
+  c_tm.tm_sec = int(_second);
   // check the type of time data to add and add it
   if (type == "year") {
     c_tm.tm_year += amount;
@@ -145,7 +149,8 @@ Time& Time::add(int amount, string type) {
   // get the Unix time of the new time
   time_t c_unixtime = mktime(&c_tm);
   // recalculate members of the Time object
-  initByUnixtime(c_unixtime);
+  double tmp;
+  initByUnixtime(double(c_unixtime)+modf(_second,&tmp));
 
   return *this; // chained method
 }
@@ -171,9 +176,16 @@ void Time::initLocalUtcShift() {
 }
 
 // initialize Timeobject members with Unix time
-void Time::initByUnixtime(time_t c_unixtime) {
-  // cast unixtime from time_t to integer
-  _unixtime = int(c_unixtime);
+//void Time::initByUnixtime(time_t c_unixtime) {
+void Time::initByUnixtime(double unixtime) {
+
+  _unixtime = unixtime; // save full unixtime
+  // integral part of unixtime and millisecond part
+  double int_unixtime, millisecond;
+  // extract integral unixtime and milliseconds
+  millisecond = modf(unixtime, &int_unixtime);
+  // initialize integer unixtime from integral part
+  time_t c_unixtime = time_t(int_unixtime);
 
   // ctime structure of the current time
   tm c_tm = *gmtime(const_cast<time_t*>(&c_unixtime));
@@ -187,27 +199,7 @@ void Time::initByUnixtime(time_t c_unixtime) {
   _second = c_tm.tm_sec; // in 0..61 range, leap seconds included
   if (_second > 59) _second = 59; // drop off leap seconds, now 0..59 range
   _doy = c_tm.tm_yday+1; // we store days of year in 1..366 range
-
-  // calculating the Matlab timestamp
-  // number of seconds between absolute zero time (0000-01-01 00:00:00) is
-  // too large, so we will calculate this difference for Unix zero time
-  // create ctime structure for Unix epoch zero time
-  tm c_tm0 = {0};
-  c_tm0.tm_year = 1970-1900; // number of years since 1900
-  c_tm0.tm_mon = 0;
-  c_tm0.tm_mday = 1;
-  c_tm0.tm_hour = 0+_local_utc_shift; // taking timezone into account
-  c_tm0.tm_min = 0;
-  c_tm0.tm_sec = 0;
-  // get Unix time for zero time
-  time_t c_unixtime0 = mktime(&c_tm0);
-  // calculate elapsed seconds since zero time
-  double c_sec0 = difftime(c_unixtime, c_unixtime0);
-  // calculate elapsed days since zero time
-  // 719529 is the number of days from 0000-01-01 to 1970-01-01
-  // 86400 is the number of seconds in one day
-  double c_matlabtime = double(719529)+c_sec0/double(86400);
-  // save Matlab time
-  _matlabtime = c_matlabtime;
+  // add milliseconds to seconds
+  _second += millisecond;
 }
 
