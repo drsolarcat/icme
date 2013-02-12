@@ -78,6 +78,7 @@ Vector3d DhtAnalyzer::loop(Event& event,
 {
   // length of the data
   int n = event.dataNarrow().rows().size();
+
   Vector3d Vf, Vht; // trial frame speed and final dHT speed
   Vector3d V, B; // real-dHT speed difference and magnetic field vectors
                  // at a single timestamp

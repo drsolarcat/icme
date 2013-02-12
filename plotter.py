@@ -7,6 +7,7 @@ from mpl_toolkits.axisartist import SubplotHost
 from mpl_toolkits.axisartist import GridHelperCurveLinear
 from mpl_toolkits.axisartist import ParasiteAxesAuxTrans
 from datetime import datetime
+import sys, traceback
 
 # astronomical unit
 AU = 149597870700 # m
@@ -263,147 +264,151 @@ def plotData(year, month, day, hour, minute, second,
              year2mc, month2mc, day2mc, hour2mc, minute2mc, second2mc,
              year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr,
              year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr):
+    try:
+        dates = []
 
-    dates = []
+        for i in xrange(len(year)):
+            dates.append(datetime(year[i], month[i], day[i],
+                                  hour[i], minute[i], int(second[i])))
 
-    for i in xrange(len(year)):
-        dates.append(datetime(year[i], month[i], day[i],
-                              hour[i], minute[i], second[i]))
+        date1mc = datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, second1mc)
+        date2mc = datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, second2mc)
+        date1fr = datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr)
+        date2fr = datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr)
 
-    date1mc = datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, second1mc)
-    date2mc = datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, second2mc)
-    date1fr = datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr)
-    date2fr = datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr)
+    #    major = HourLocator([0, 12])
+        major = DayLocator()
+        minor = HourLocator()
+        majorFormat = DateFormatter('%Y-%m-%d')
 
-#    major = HourLocator([0, 12])
-    major = DayLocator()
-    minor = HourLocator()
-    majorFormat = DateFormatter('%Y-%m-%d')
+        figure(figsize=[8,10])
+        subplots_adjust(hspace=0.001)
 
-    figure(figsize=[8,10])
-    subplots_adjust(hspace=0.001)
+        labelx = -0.08
 
-    labelx = -0.08
+        # magnetic field # nT
+        ax1 = subplot(711)
+        ax1.plot(dates, B*1e9, 'k')
+        ax1.plot(dates, Bx*1e9, 'r')
+        ax1.plot(dates, By*1e9, 'g')
+        ax1.plot(dates, Bz*1e9, 'b')
+        ax1.axvline(date1mc, color='r')
+        ax1.axvline(date2mc, color='r')
+        ax1.axvline(date1fr, color='g', linestyle='dashed')
+        ax1.axvline(date2fr, color='g', linestyle='dashed')
+        ax1.xaxis.set_major_locator(major)
+        ax1.xaxis.set_major_formatter(majorFormat)
+        ax1.xaxis.set_minor_locator(minor)
+        ax1.yaxis.set_major_locator(MaxNLocator(nbins=4, symmetric=True))
+        ax1.yaxis.set_minor_locator(MultipleLocator(1))
+        ax1.set_ylabel('B [nT]')
+        ax1.yaxis.set_label_coords(labelx, 0.5)
 
-    # magnetic field # nT
-    ax1 = subplot(711)
-    ax1.plot(dates, B*1e9, 'k')
-    ax1.plot(dates, Bx*1e9, 'r')
-    ax1.plot(dates, By*1e9, 'g')
-    ax1.plot(dates, Bz*1e9, 'b')
-    ax1.axvline(date1mc, color='r')
-    ax1.axvline(date2mc, color='r')
-    ax1.axvline(date1fr, color='g', linestyle='dashed')
-    ax1.axvline(date2fr, color='g', linestyle='dashed')
-    ax1.xaxis.set_major_locator(major)
-    ax1.xaxis.set_major_formatter(majorFormat)
-    ax1.xaxis.set_minor_locator(minor)
-    ax1.yaxis.set_major_locator(MaxNLocator(nbins=4, symmetric=True))
-    ax1.yaxis.set_minor_locator(MultipleLocator(1))
-    ax1.set_ylabel('B [nT]')
-    ax1.yaxis.set_label_coords(labelx, 0.5)
+        # proton bilk speed # km/s
+        ax2 = subplot(712)
+    #    ax2.plot(dates, Vp*1e-3-mean(Vp)*1e-3, 'k')
+        ax2.plot(dates, Vp*1e-3, 'k')
+    #    ax2.plot(dates, Vx*1e-3-mean(Vx)*1e-3, 'r')
+        ax2.plot(dates, Vx*1e-3, 'r')
+    #    ax2.plot(dates, Vy*1e-3-mean(Vy)*1e-3, 'g')
+        ax2.plot(dates, Vy*1e-3, 'g')
+    #    ax2.plot(dates, Vz*1e-3-mean(Vz)*1e-3, 'b')
+        ax2.plot(dates, Vz*1e-3, 'b')
+        ax2.axvline(date1mc, color='r')
+        ax2.axvline(date2mc, color='r')
+        ax2.axvline(date1fr, color='g', linestyle='dashed')
+        ax2.axvline(date2fr, color='g', linestyle='dashed')
+        ax2.xaxis.set_major_locator(major)
+        ax2.xaxis.set_major_formatter(majorFormat)
+        ax2.xaxis.set_minor_locator(minor)
+        ax2.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='upper'))
+    #    ax2.yaxis.set_minor_locator(MultipleLocator(50))
+        ax2.set_ylabel('Vp [km/s]')
+        ax2.yaxis.set_label_coords(labelx, 0.5)
 
-    # proton bilk speed # km/s
-    ax2 = subplot(712)
-#    ax2.plot(dates, Vp*1e-3-mean(Vp)*1e-3, 'k')
-    ax2.plot(dates, Vp*1e-3, 'k')
-#    ax2.plot(dates, Vx*1e-3-mean(Vx)*1e-3, 'r')
-    ax2.plot(dates, Vx*1e-3, 'r')
-#    ax2.plot(dates, Vy*1e-3-mean(Vy)*1e-3, 'g')
-    ax2.plot(dates, Vy*1e-3, 'g')
-#    ax2.plot(dates, Vz*1e-3-mean(Vz)*1e-3, 'b')
-    ax2.plot(dates, Vz*1e-3, 'b')
-    ax2.axvline(date1mc, color='r')
-    ax2.axvline(date2mc, color='r')
-    ax2.axvline(date1fr, color='g', linestyle='dashed')
-    ax2.axvline(date2fr, color='g', linestyle='dashed')
-    ax2.xaxis.set_major_locator(major)
-    ax2.xaxis.set_major_formatter(majorFormat)
-    ax2.xaxis.set_minor_locator(minor)
-    ax2.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='upper'))
-#    ax2.yaxis.set_minor_locator(MultipleLocator(50))
-    ax2.set_ylabel('Vp [km/s]')
-    ax2.yaxis.set_label_coords(labelx, 0.5)
+        # plasma pressure # nPa
+        ax3 = subplot(713)
+        ax3.plot(dates, Pth*1e9, 'k')
+        ax3.axvline(date1mc, color='r')
+        ax3.axvline(date2mc, color='r')
+        ax3.axvline(date1fr, color='g', linestyle='dashed')
+        ax3.axvline(date2fr, color='g', linestyle='dashed')
+        ax3.xaxis.set_major_locator(major)
+        ax3.xaxis.set_major_formatter(majorFormat)
+        ax3.xaxis.set_minor_locator(minor)
+        ax3.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1,2,4], prune='upper'))
+        ax3.set_ylabel('Pth [nPa]')
+        ax3.yaxis.set_label_coords(labelx, 0.5)
 
-    # plasma pressure # nPa
-    ax3 = subplot(713)
-    ax3.plot(dates, Pth*1e9, 'k')
-    ax3.axvline(date1mc, color='r')
-    ax3.axvline(date2mc, color='r')
-    ax3.axvline(date1fr, color='g', linestyle='dashed')
-    ax3.axvline(date2fr, color='g', linestyle='dashed')
-    ax3.xaxis.set_major_locator(major)
-    ax3.xaxis.set_major_formatter(majorFormat)
-    ax3.xaxis.set_minor_locator(minor)
-    ax3.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1,2,4], prune='upper'))
-    ax3.set_ylabel('Pth [nPa]')
-    ax3.yaxis.set_label_coords(labelx, 0.5)
+        # proton density # cm^-3
+        ax4 = subplot(714)
+        ax4.plot(dates, Np*1e-6, 'k')
+        ax4.axvline(date1mc, color='r')
+        ax4.axvline(date2mc, color='r')
+        ax4.axvline(date1fr, color='g', linestyle='dashed')
+        ax4.axvline(date2fr, color='g', linestyle='dashed')
+        ax4.xaxis.set_major_locator(major)
+        ax4.xaxis.set_major_formatter(majorFormat)
+        ax4.xaxis.set_minor_locator(minor)
+        ax4.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+        ax4.set_ylabel('Np [cm^-3]')
+        ax4.yaxis.set_label_coords(labelx, 0.5)
 
-    # proton density # cm^-3
-    ax4 = subplot(714)
-    ax4.plot(dates, Np*1e-6, 'k')
-    ax4.axvline(date1mc, color='r')
-    ax4.axvline(date2mc, color='r')
-    ax4.axvline(date1fr, color='g', linestyle='dashed')
-    ax4.axvline(date2fr, color='g', linestyle='dashed')
-    ax4.xaxis.set_major_locator(major)
-    ax4.xaxis.set_major_formatter(majorFormat)
-    ax4.xaxis.set_minor_locator(minor)
-    ax4.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
-    ax4.set_ylabel('Np [cm^-3]')
-    ax4.yaxis.set_label_coords(labelx, 0.5)
+        # proton temperature # K
+        ax5 = subplot(715)
+        ax5.semilogy(dates, Tp, 'k')
+        ax5.axvline(date1mc, color='r')
+        ax5.axvline(date2mc, color='r')
+        ax5.axvline(date1fr, color='g', linestyle='dashed')
+        ax5.axvline(date2fr, color='g', linestyle='dashed')
+        ax5.xaxis.set_major_locator(major)
+        ax5.xaxis.set_major_formatter(majorFormat)
+        ax5.xaxis.set_minor_locator(minor)
+        ax5.set_ylabel('Tp [K]')
+        ax5.yaxis.set_label_coords(labelx, 0.5)
 
-    # proton temperature # K
-    ax5 = subplot(715)
-    ax5.semilogy(dates, Tp, 'k')
-    ax5.axvline(date1mc, color='r')
-    ax5.axvline(date2mc, color='r')
-    ax5.axvline(date1fr, color='g', linestyle='dashed')
-    ax5.axvline(date2fr, color='g', linestyle='dashed')
-    ax5.xaxis.set_major_locator(major)
-    ax5.xaxis.set_major_formatter(majorFormat)
-    ax5.xaxis.set_minor_locator(minor)
-    ax5.set_ylabel('Tp [K]')
-    ax5.yaxis.set_label_coords(labelx, 0.5)
+        # thermal speed # km/s
+        ax6 = subplot(716)
+        ax6.plot(dates, Vth*1e-3, 'k')
+        ax6.axvline(date1mc, color='r')
+        ax6.axvline(date2mc, color='r')
+        ax6.axvline(date1fr, color='g', linestyle='dashed')
+        ax6.axvline(date2fr, color='g', linestyle='dashed')
+        ax6.xaxis.set_major_locator(major)
+        ax6.xaxis.set_major_formatter(majorFormat)
+        ax6.xaxis.set_minor_locator(minor)
+        ax6.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
+        ax6.yaxis.set_minor_locator(MultipleLocator(5))
+        ax6.set_ylabel('Vth [km/s]')
+        ax6.yaxis.set_label_coords(labelx, 0.5)
 
-    # thermal speed # km/s
-    ax6 = subplot(716)
-    ax6.plot(dates, Vth*1e-3, 'k')
-    ax6.axvline(date1mc, color='r')
-    ax6.axvline(date2mc, color='r')
-    ax6.axvline(date1fr, color='g', linestyle='dashed')
-    ax6.axvline(date2fr, color='g', linestyle='dashed')
-    ax6.xaxis.set_major_locator(major)
-    ax6.xaxis.set_major_formatter(majorFormat)
-    ax6.xaxis.set_minor_locator(minor)
-    ax6.yaxis.set_major_locator(MaxNLocator(nbins=4, prune='both'))
-    ax6.yaxis.set_minor_locator(MultipleLocator(5))
-    ax6.set_ylabel('Vth [km/s]')
-    ax6.yaxis.set_label_coords(labelx, 0.5)
+        # plasma beta
+        ax7 = subplot(717)
+        ax7.semilogy(dates, beta, 'k')
+        ax7.axvline(date1mc, color='r')
+        ax7.axvline(date2mc, color='r')
+        ax7.axvline(date1fr, color='g', linestyle='dashed')
+        ax7.axvline(date2fr, color='g', linestyle='dashed')
+        ax7.xaxis.set_major_locator(major)
+        ax7.xaxis.set_major_formatter(majorFormat)
+        ax7.xaxis.set_minor_locator(minor)
+        ax7.set_ylabel('beta')
+        ax7.yaxis.set_label_coords(labelx, 0.5)
 
-    # plasma beta
-    ax7 = subplot(717)
-    ax7.semilogy(dates, beta, 'k')
-    ax7.axvline(date1mc, color='r')
-    ax7.axvline(date2mc, color='r')
-    ax7.axvline(date1fr, color='g', linestyle='dashed')
-    ax7.axvline(date2fr, color='g', linestyle='dashed')
-    ax7.xaxis.set_major_locator(major)
-    ax7.xaxis.set_major_formatter(majorFormat)
-    ax7.xaxis.set_minor_locator(minor)
-    ax7.set_ylabel('beta')
-    ax7.yaxis.set_label_coords(labelx, 0.5)
+        # switch off the labels on upper plots
+        xticklabels = ax1.get_xticklabels()+ax2.get_xticklabels()+ \
+                      ax3.get_xticklabels()+ax4.get_xticklabels()+ \
+                      ax5.get_xticklabels()+ax6.get_xticklabels()
+        setp(xticklabels, visible=False)
 
-    # switch off the labels on upper plots
-    xticklabels = ax1.get_xticklabels()+ax2.get_xticklabels()+ \
-                  ax3.get_xticklabels()+ax4.get_xticklabels()+ \
-                  ax5.get_xticklabels()+ax6.get_xticklabels()
-    setp(xticklabels, visible=False)
-
-    # save
-    if toSave:
-        savefig(resultsDir+'/eps/data.eps', format='eps')
-        savefig(resultsDir+'/png/data.png', format='png')
+        # save
+        if toSave:
+            savefig(resultsDir+'/eps/data.eps', format='eps')
+            savefig(resultsDir+'/png/data.png', format='png')
+    except:
+        print "Trigger Exception, traceback info forward to log file."
+        traceback.print_exc(file = open("./errlog.txt","a"))
+        sys.exit(1)
 
 # plot simple 1D data
 def plotData1D(dataY):

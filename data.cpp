@@ -126,6 +126,7 @@ void Data::readFile(string dataFilePath, Time* beginTime, Time* endTime) {
           // initialize current Time object with time data
           currentTime = Time(dataRow.year, dataRow.month, dataRow.day,
             dataRow.hour, dataRow.minute, dataRow.second);
+//          std::cout << currentTime.strtime() << std::endl;
           if (currentTime < *beginTime) { // before the minimum time limit
             continue; // miss it
           } else {

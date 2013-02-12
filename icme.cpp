@@ -142,10 +142,10 @@ int main(int argc, char* argv[]) {
     // widen time limits
 //    preBeginTime->add(-1, "day");
 //    postEndTime->add(1, "day");
-//    preBeginTime->add(-10, "hour");
-//    postEndTime->add(10, "hour");
-    preBeginTime->add(-10, "second");
-    postEndTime->add(10, "second");
+    preBeginTime->add(-10, "hour");
+    postEndTime->add(10, "hour");
+//    preBeginTime->add(-10, "second");
+//    postEndTime->add(10, "second");
     // create Data object for wider time limits
     Data* dataWide = new Data(); // create dynamic object for data
     LOG4CPLUS_INFO(logger, "processing the data");
@@ -298,7 +298,7 @@ int main(int argc, char* argv[]) {
     }
 
     // plot the in-situ data
-//    plotter.plotData(*event);
+    plotter.plotData(*event);
 
     // plot the in-situ data
 //    plotter.plotBrot(*event);

@@ -444,8 +444,8 @@ void Plotter::plotData(const Event& event)
 
   // set second
   PyTuple_SetItem(pArgs, 5,
-    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
-      const_cast<int*>(event.dataWide().cols().second.data())));
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().second.data())));
 
   // set B
   PyTuple_SetItem(pArgs, 6,
@@ -626,8 +626,8 @@ void Plotter::plotBrot(const Event& event)
 
   // set second
   PyTuple_SetItem(pArgs, 5,
-    PyArray_SimpleNewFromData(1, pDataDim, PyArray_INT,
-      const_cast<int*>(event.dataWide().cols().second.data())));
+    PyArray_SimpleNewFromData(1, pDataDim, PyArray_DOUBLE,
+      const_cast<double*>(event.dataWide().cols().second.data())));
 
   double theta[event.dataWide().rows().size()];
   double phi[event.dataWide().rows().size()];

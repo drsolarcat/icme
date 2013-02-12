@@ -15,13 +15,15 @@
 // structure for holding the data for one timestamp, i.e. one row from the
 // data file
 struct DataRow {
-  int year, month, day, hour, minute, second;
+  int year, month, day, hour, minute;
+  double second;
   double B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta;
 };
 
 // structure for holding the data in the form of Eigen3 vectors
 struct DataVectors {
-  Eigen::VectorXi year, month, day, hour, minute, second;
+  Eigen::VectorXi year, month, day, hour, minute;
+  Eigen::VectorXd second;
   Eigen::VectorXd B, Bx, By, Bz, Vp, Vx, Vy, Vz, Pth, Np, Tp, Vth, beta;
 };
 
