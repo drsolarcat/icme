@@ -118,8 +118,17 @@ int main(int argc, char* argv[]) {
     } else if (config.row(iEvent).spacecraft == "TOR") {
       dataPathStream << "torus_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
-    } else if (config.row(iEvent).spacecraft == "THEM") {
-      dataPathStream << "themis_";
+    } else if (config.row(iEvent).spacecraft == "THB") {
+      dataPathStream << "thb_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
+    } else if (config.row(iEvent).spacecraft == "THC") {
+      dataPathStream << "thc_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
+    } else if (config.row(iEvent).spacecraft == "THD") {
+      dataPathStream << "thd_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
+    } else if (config.row(iEvent).spacecraft == "THE") {
+      dataPathStream << "the_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
     } else { // throw an error - unknown spacecraft
       LOG4CPLUS_FATAL(logger, "unknown spacecraft: " <<
@@ -159,6 +168,12 @@ int main(int argc, char* argv[]) {
     dataNarrow->filter(config.row(iEvent).beginTime,
                        config.row(iEvent).endTime);
     LOG4CPLUS_DEBUG(logger, "narrow data size = " << dataNarrow->rows().size());
+
+//    dataNarrow->cols().Bx = dataNarrow->cols().Bx-dataWide->cols().Bx.mean();
+//    dataNarrow->cols().By = dataNarrow->cols().By-dataWide->cols().By.mean();
+//    dataNarrow->cols().Bz = dataNarrow->cols().Bz-dataWide->cols().Bz.mean();
+//    dataNarrow->cols().B = dataNarrow->cols().B-dataWide->cols().B.mean();
+
     // create dynamic object to store all event data and results of analysis
     Event* event = new Event(config.row(iEvent), *dataWide, *dataNarrow,
                              dataDir);
@@ -298,7 +313,7 @@ int main(int argc, char* argv[]) {
     }
 
     // plot the in-situ data
-    plotter.plotData(*event);
+//    plotter.plotData(*event);
 
     // plot the in-situ data
 //    plotter.plotBrot(*event);

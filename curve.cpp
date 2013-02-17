@@ -237,8 +237,10 @@ VectorXd Curve::weightedAverage(const VectorXd& x, double w) {
   VectorXd xx(x);
 
   // do the averaging
-  xx.segment(1, xx.size()-2) = w*xx.segment(1, xx.size()-2)+
-    0.5*(1-w)*(xx.head(xx.size()-2)+xx.tail(xx.size()-2));
+  xx.segment(1, xx.size()-2) = ((3-2*w)*xx.segment(1, xx.size()-2)+
+    w*(xx.head(xx.size()-2)+xx.tail(xx.size()-2)))/3;
+//  xx.segment(1, xx.size()-2) = w*xx.segment(1, xx.size()-2)+
+//    0.5*(1-w)*(xx.head(xx.size()-2)+xx.tail(xx.size()-2));
 
   return xx; // return new averaged vector
 }

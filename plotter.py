@@ -7,7 +7,9 @@ from mpl_toolkits.axisartist import SubplotHost
 from mpl_toolkits.axisartist import GridHelperCurveLinear
 from mpl_toolkits.axisartist import ParasiteAxesAuxTrans
 from datetime import datetime
+from matplotlib.dates import date2num
 import sys, traceback
+import math
 
 # astronomical unit
 AU = 149597870700 # m
@@ -49,7 +51,7 @@ def plotGsrAPtFull(APt):
 def plotGsrABz(ABz, ABzFit):
     figure()
     plot(ABzFit['x'], ABzFit['y']*1e9, 'k') # fitted Bz(A)
-    plot(ABz['x'], ABz['y']*1e9, 'ro') # Bz(A)
+    plot(ABz['x'], ABz['y']*1e9, '-ro') # Bz(A)
     # labels
     xlabel('A [Tm]')
     ylabel('Bz [nT]')
@@ -268,18 +270,26 @@ def plotData(year, month, day, hour, minute, second,
         dates = []
 
         for i in xrange(len(year)):
-            dates.append(datetime(year[i], month[i], day[i],
-                                  hour[i], minute[i], int(second[i])))
+            integral,decimal = math.modf(second[i])
+            dates.append(date2num(datetime(year[i], month[i], day[i],
+                                  hour[i], minute[i], int(second[i])))+decimal/24/3600)
 
-        date1mc = datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, second1mc)
-        date2mc = datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, second2mc)
-        date1fr = datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, second1fr)
-        date2fr = datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, second2fr)
+        integral,decimal = math.modf(second1mc)
+        date1mc = date2num(datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, int(second1mc)))+decimal/24/3600
+        integral,decimal = math.modf(second2mc)
+        date2mc = date2num(datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, int(second2mc)))+decimal/24/3600
+        integral,decimal = math.modf(second1fr)
+        date1fr = date2num(datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, int(second1fr)))+decimal/24/3600
+        integral,decimal = math.modf(second2fr)
+        date2fr = date2num(datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, int(second2fr)))+decimal/24/3600
 
     #    major = HourLocator([0, 12])
-        major = DayLocator()
-        minor = HourLocator()
-        majorFormat = DateFormatter('%Y-%m-%d')
+#        major = DayLocator()
+        major = MinuteLocator()
+#        minor = HourLocator()
+        minor = SecondLocator()
+#        majorFormat = DateFormatter('%Y-%m-%d')
+        majorFormat = DateFormatter('%M:%S')
 
         figure(figsize=[8,10])
         subplots_adjust(hspace=0.001)

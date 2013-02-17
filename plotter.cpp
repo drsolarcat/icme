@@ -528,7 +528,7 @@ void Plotter::plotData(const Event& event)
   PyTuple_SetItem(pArgs, 23, PyInt_FromLong(event.config().beginTime.minute()));
 
   // set begin second
-  PyTuple_SetItem(pArgs, 24, PyInt_FromLong(event.config().beginTime.second()));
+  PyTuple_SetItem(pArgs, 24, PyFloat_FromDouble(event.config().beginTime.second()));
 
   // set end year
   PyTuple_SetItem(pArgs, 25, PyInt_FromLong(event.config().endTime.year()));
@@ -546,7 +546,7 @@ void Plotter::plotData(const Event& event)
   PyTuple_SetItem(pArgs, 29, PyInt_FromLong(event.config().endTime.minute()));
 
   // set end second
-  PyTuple_SetItem(pArgs, 30, PyInt_FromLong(event.config().endTime.second()));
+  PyTuple_SetItem(pArgs, 30, PyFloat_FromDouble(event.config().endTime.second()));
 
   // set begin year
   PyTuple_SetItem(pArgs, 31, PyInt_FromLong(event.gsr().beginTime.year()));
@@ -564,7 +564,7 @@ void Plotter::plotData(const Event& event)
   PyTuple_SetItem(pArgs, 35, PyInt_FromLong(event.gsr().beginTime.minute()));
 
   // set begin second
-  PyTuple_SetItem(pArgs, 36, PyInt_FromLong(event.gsr().beginTime.second()));
+  PyTuple_SetItem(pArgs, 36, PyFloat_FromDouble(event.gsr().beginTime.second()));
 
   // set end year
   PyTuple_SetItem(pArgs, 37, PyInt_FromLong(event.gsr().endTime.year()));
@@ -582,7 +582,7 @@ void Plotter::plotData(const Event& event)
   PyTuple_SetItem(pArgs, 41, PyInt_FromLong(event.gsr().endTime.minute()));
 
   // set end second
-  PyTuple_SetItem(pArgs, 42, PyInt_FromLong(event.gsr().endTime.second()));
+  PyTuple_SetItem(pArgs, 42, PyFloat_FromDouble(event.gsr().endTime.second()));
 
   // initialize and call the python function
   func = PyDict_GetItemString(_python_dictionary, "plotData");

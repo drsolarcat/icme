@@ -46,6 +46,7 @@ void GsrAnalyzer::analyze(Event& event) {
   mva.analyzePmvab(event); // carry projected MVA anaysis to get initial axes
 
   // replace initial axes with GSE(RTN) axes
+  /*
   PmvaResults pmva;
   Axes pmvaAxes;
   pmvaAxes.x = Vector3d(1, 0, 0);
@@ -53,11 +54,12 @@ void GsrAnalyzer::analyze(Event& event) {
   pmvaAxes.z = Vector3d(0, -1, 0);
   pmva.axes = pmvaAxes;
   event.pmvab(pmva);
+  */
 
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
   LOG4CPLUS_DEBUG(logger, "searching for optimal axes with 1 degree step");
-  GsrResults gsr = loopAxes(event, 0, 1, 90, 0, 1, 360);
+  GsrResults gsr = loopAxes(event, 0, 0.5, 90, 0, 0.5, 360);
 
   detectAxes(event, gsr);
 //  detectAxesByResidue(event, gsr);
@@ -214,9 +216,19 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
       axes.y = axes.z.cross(axes.x).normalized();
       // create Pt(A) curve in new axes
       curve = GsrCurve(event, axes);
+
+      Data data(event.dataNarrow());
+      data.project(axes);
+      BranchedCurve bzCurve(curve.cols().x, data.cols().Bz);
+      bzCurve.initBranches("extremums").computeResidue();
+
       // initialize branches and compute the residue
       curve.initBranches("extremums").computeResidue();
+
       // save residue into a matrix
+//      gsr.originalResidue(i,k) = bzCurve.originalResidue()+curve.originalResidue();
+//      gsr.combinedResidue(i,k) = bzCurve.combinedResidue()+curve.combinedResidue();
+//      gsr.branchLength(i,k) = bzCurve.branchLength()+curve.branchLength();
       gsr.originalResidue(i,k) = curve.originalResidue();
       gsr.combinedResidue(i,k) = curve.combinedResidue();
       gsr.branchLength(i,k) = curve.branchLength();
@@ -290,8 +302,8 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
       VectorXd Bx = (data.cols().Bx.array()/data.cols().By.array()*x.array()/L).matrix();
       VectorXd Bz = (data.cols().Bz.array()/data.cols().By.array()*x.array()/L).matrix();
       // remove spikes by applying median filtering
-      Bx = Filter::median1D(Bx, 25);
-      Bz = Filter::median1D(Bz, 25);
+//      Bx = Filter::median1D(Bx, 25);
+//      Bz = Filter::median1D(Bz, 25);
       Matrix2d M = Matrix2d::Zero(); // initialize 2x2 matrix with zeros
       M(0,0) = (Bz.array()*Bz.array()).matrix().mean()-Bz.mean()*Bz.mean();
       M(0,1) = (Bz.array()*Bx.array()).matrix().mean()-Bz.mean()*Bx.mean();
@@ -655,6 +667,9 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // project the data into optimized coordinate system
   data.project(gsr.axes);
 
+  cout << data.cols().Vx/1e3 << endl << endl;
+  cout << data.cols().Vy/1e3 << endl << endl;
+
   // compute the dx step
   double dx = -event.dht().Vht.dot(gsr.axes.x)*event.config().samplingInterval*
                gsr.curve.size()/event.config().Nx;
@@ -823,6 +838,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // save central and boundary values of the vector potential
   gsr.Ac = Ac;
   gsr.Ab = Ab;
+///*!!!*/  gsr.Ab = Ac;
   gsr.beginTime = event.config().beginTime;
   gsr.endTime = event.config().endTime;
 
@@ -931,8 +947,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   for (int i = 1; i <= NyUp; i++) {
     // 2nd derivative of A by x using Holoborodko2 filter, smoothed with
     // weighted average prior to differenting
-    d2A_dx2 = differentiator.Holoborodko2(7,
-      Curve::weightedAverage(Axy.row(NyDown+i-1), 1-double(abs(i)-1)/Ny/3), dx);
+    d2A_dx2 = differentiator.Holoborodko2(3,Axy.row(NyDown+i-1),dx);
     // evaluate the 1st derivative of Pt by A using fitting curve
     for (int k = 0; k < Nx; k++) {
       // polyexp fitting
@@ -945,20 +960,19 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
                         d2A_dy2.transpose()*pow(dy, 2)/2;
     // smooth it with weighted average
     Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
-                                               1-double(abs(i))/Ny/3);
+                                               min(double(i)/double(NyUp),0.7));
     // wtite the next row of Bx
     Bxy.row(NyDown+i) = Bxy.row(NyDown+i-1)+d2A_dy2.transpose()*dy;
     // smooth it with weighted average
     Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
-                                               1-double(abs(i))/Ny/3);
+                                               min(double(i)/double(NyUp),0.7));
   }
 
   // reconstruct the lower part of teh map using recursive solver,
   // everything is the same as for the upper part
   LOG4CPLUS_DEBUG(logger, "reconstructing the lower part of the map");
   for (int i = -1; i >= -NyDown; i--) {
-    d2A_dx2 = differentiator.Holoborodko2(7,
-      Curve::weightedAverage(Axy.row(NyDown+i+1), 1-double(abs(i)-1)/Ny/3), dx);
+    d2A_dx2 = differentiator.Holoborodko2(3,Axy.row(NyDown+i+1),dx);
     for (int k = 0; k < Nx; k++) {
       // polyexp fitting
       dPt_dA(k) = APtFit.df(Axy(NyDown+i+1, k));
@@ -967,10 +981,10 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     Axy.row(NyDown+i) = Axy.row(NyDown+i+1)-Bxy.row(NyDown+i+1)*dy+
                         d2A_dy2.transpose()*pow(dy, 2)/2;
     Axy.row(NyDown+i) = Curve::weightedAverage(Axy.row(NyDown+i),
-                                               1-double(abs(i))/Ny/3);
+                                               min(double(i)/double(-NyDown),0.7));
     Bxy.row(NyDown+i) = Bxy.row(NyDown+i+1)-d2A_dy2.transpose()*dy;
     Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
-                                               1-double(abs(i))/Ny/3);
+                                               min(double(i)/double(-NyDown),0.7));
   }
 
   gsr.Axy = Axy; // save vector potential
@@ -996,8 +1010,12 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 
   // fit it with exponent
 //  ExpFit ABzFit(Nx, A.data(), Bz.data());
+//  PosZeroExpFit ABzFit(Nx, A.data(), Bz.data());
   PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
 //  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 2, 2, 2);
+//  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), event.config().order,
+//                    event.config().fittingParameterCtr,
+//                    event.config().fittingParameterBdr);
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function

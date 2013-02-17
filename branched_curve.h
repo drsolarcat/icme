@@ -19,6 +19,11 @@ class BranchedCurve: public Curve {
     int _branchLength; // length of a shorter branch
     std::vector<Curve> _branches; // holds to branch curve, if any
   public:
+    BranchedCurve(Eigen::VectorXd x, Eigen::VectorXd y) {
+      _vectors.x = x;
+      _vectors.y = y;
+    }
+    BranchedCurve() {}
     // accessors for boundary indices
     const int leftIndex() const {return _leftIndex;}
     const int centerIndex() const {return _centerIndex;}
