@@ -118,6 +118,9 @@ int main(int argc, char* argv[]) {
     } else if (config.row(iEvent).spacecraft == "TOR") {
       dataPathStream << "torus_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
+    } else if (config.row(iEvent).spacecraft == "THA") {
+      dataPathStream << "tha_";
+      LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
     } else if (config.row(iEvent).spacecraft == "THB") {
       dataPathStream << "thb_";
       LOG4CPLUS_DEBUG(logger, "all coordinates in GSE");
@@ -227,6 +230,18 @@ int main(int argc, char* argv[]) {
       dataMvab.project((*event).mvab().axes);
       plotter.plotMvaBrot(dataMvab.cols().Bx, dataMvab.cols().By);
 
+      LOG4CPLUS_DEBUG(logger, "MVA magnetic cloud axes: " <<
+        setiosflags(ios::fixed) << setprecision(3) << "x[" <<
+        (*event).mvab().axes.x(0) << ", " <<
+        (*event).mvab().axes.x(1) << ", " <<
+        (*event).mvab().axes.x(2) << "], y[" <<
+        (*event).mvab().axes.y(0) << ", " <<
+        (*event).mvab().axes.y(1) << ", " <<
+        (*event).mvab().axes.y(2) << "], z[" <<
+        (*event).mvab().axes.z(0) << ", " <<
+        (*event).mvab().axes.z(1) << ", " <<
+        (*event).mvab().axes.z(2) << "]");
+
       LOG4CPLUS_INFO(logger, "plotting B rotation for MVUB");
       Data dataMvub(event->dataNarrow());
       dataMvub.project((*event).mvub().axes);
@@ -238,6 +253,9 @@ int main(int argc, char* argv[]) {
 
       LOG4CPLUS_INFO(logger, "doing GSR analysis");
       gsr.analyze(*event); // do GSR analysis
+
+      LOG4CPLUS_DEBUG(logger, "Fitting index of the Pt(A) curve (Hu): " << (*event).gsr().curve.originalResidue());
+      LOG4CPLUS_DEBUG(logger, "Fitting index of the Pt(A) curve (Isavnin): " << (*event).gsr().curve.combinedResidue());
 
       LOG4CPLUS_INFO(logger, "plotting results of GSR analysis");
 
@@ -283,6 +301,7 @@ int main(int argc, char* argv[]) {
       // plot full Pt(A) through matplotlib
       LOG4CPLUS_DEBUG(logger, "plotting full Pt(A)");
       plotter.plotGsrAPtFull((*event).gsr().curve);
+//      plotter.plotGsrAPtFull((*event).gsr().APthCurve);
 
       // plot Pt(A) through matplotlib
       LOG4CPLUS_DEBUG(logger, "plotting Pt(A)");

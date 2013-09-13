@@ -57,7 +57,8 @@ struct GsrResults {
   Eigen::MatrixXd Axy, Bz; // potential and magnetic field maps
   Curve APtInCurve, APtOutCurve, // inward and outward branches of Pt(A)
         APtFitCurve, AdPtFitCurve, // Pt(A) and dPt/dA(A) fits
-        ABzCurve, ABzFitCurve; // Bz(A) curve and its fit
+        ABzCurve, ABzFitCurve, // Bz(A) curve and its fit
+        APthCurve;
   Eigen::VectorXd Bx, By; // Bx and By components for quiver
   My::Time beginTime, endTime; // begin and end time for the flux rope boundaries
 };

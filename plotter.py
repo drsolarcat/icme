@@ -21,8 +21,8 @@ resultsDir = '' # where to save the plots
 def plotGsrAPt(APtIn, APtOut, APtFit):
     figure()
     plot(APtFit['x'], APtFit['y']*1e9, 'k') # fitted Pt(A)
-    plot(APtIn['x'], APtIn['y']*1e9, 'go') # inward Pt(A)
-    plot(APtOut['x'], APtOut['y']*1e9, 'ro') # outward Pt(A)
+    plot(APtIn['x'], APtIn['y']*1e9, '-go') # inward Pt(A)
+    plot(APtOut['x'], APtOut['y']*1e9, '-ro') # outward Pt(A)
     # set the labels
     xlabel('A [Tm]')
     ylabel('Pt [nPa]')
@@ -78,46 +78,59 @@ def plotGsrAdPt(AdPt):
 
 # plot Bz map for GSR
 def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa, Bx, By, xx, yy, zz):
+    km = True
     # draw negative contour lines in solid (dashed by default)
     rcParams['contour.negative_linestyle'] = 'solid'
     figure()
+
+    if not km:
+        X = X/AU
+        Y = Y/AU
+    else:
+        X = X/1e3
+        Y = Y/1e3
+
     # filled contour plot of Bz(x,y)
-    cc = contourf(X/AU, Y/AU, transpose(reshape(Bz*1e9, (X.size,-1))), int((max(Bz)-min(Bz))*1e9/0.1))
+    cc = contourf(X, Y, transpose(reshape(Bz*1e9, (X.size,-1))), int((max(Bz)-min(Bz))*1e9/0.1))
     #cc.set_cmap('autumn')
     # remove gaps between the colored areas
     for c in cc.collections:
         c.set_antialiased(False)
     # line contour plot of A(x,y)
-    contour(X/AU, Y/AU, transpose(reshape(Axy, (X.size,-1))), 40, colors='k')
+    contour(X, Y, transpose(reshape(Axy, (X.size,-1))), 40, colors='k')
     # border line of the flux rope (Ab)
-    contour(X/AU, Y/AU, transpose(reshape(Axy, (X.size,-1))), levels=[Ab], colors='w', linewidths=5)
+    contour(X, Y, transpose(reshape(Axy, (X.size,-1))), levels=[Ab], colors='w', linewidths=5)
 
     # determine the central part of the flux rope
-    cp = contour(X/AU, Y/AU, transpose(reshape(Axy, (X.size,-1))), levels=[0.99*Aa], colors='w', linewidths=0)
+    cp = contour(X, Y, transpose(reshape(Axy, (X.size,-1))), levels=[0.99*Aa], colors='w', linewidths=0)
     p = cp.collections[0].get_paths()[0]
     v = p.vertices
     # plot the central point of the flux rope (Ac)
     plot(mean(v[:,0]), mean(v[:,1]), '.w', markersize=12)
 
     # plot (Bx,By) quiver plot
-    quiver(X/AU, zeros(X.size), -Bx*1e9, By*1e9, units='xy', angles='xy')
+    quiver(X, zeros(X.size), -Bx*1e9, By*1e9, units='xy', angles='xy')
 
     # axes projection
-    dx = (max(X)-min(X))/AU/10;
-    dy = (max(Y)-min(Y))/AU/10;
+    dx = (max(X)-min(X))/10;
+    dy = (max(Y)-min(Y))/10;
     xxx=[dot([1,0,0],xx), dot([1,0,0],yy), dot([1,0,0],zz)];
     yyy=[dot([0,1,0],xx), dot([0,1,0],yy), dot([0,1,0],zz)];
     zzz=[dot([0,0,1],xx), dot([0,0,1],yy), dot([0,0,1],zz)];
-    plot((1+array([0,xxx[0]]))*dx, (max(Y)/AU/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
-    plot((1+array([0,yyy[0]]))*dx, (max(Y)/AU/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
-    plot((1+array([0,zzz[0]]))*dx, (max(Y)/AU/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
+    plot((1+array([0,xxx[0]]))*dx, (max(Y)/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
+    plot((1+array([0,yyy[0]]))*dx, (max(Y)/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
+    plot((1+array([0,zzz[0]]))*dx, (max(Y)/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
 
     # tighten the axes
     axis('tight')
 
     # labels
-    xlabel('X [AU]')
-    ylabel('Y [AU]')
+    if not km:
+        xlabel('X [AU]')
+        ylabel('Y [AU]')
+    else:
+        xlabel('X [km]')
+        ylabel('Y [km]')
 
     # add a colorbar
     cb = colorbar(cc, pad=0.07)

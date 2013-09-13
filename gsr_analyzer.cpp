@@ -59,7 +59,7 @@ void GsrAnalyzer::analyze(Event& event) {
   // make a run of axes searching algorithm, save the results in the gsr
   // structure
   LOG4CPLUS_DEBUG(logger, "searching for optimal axes with 1 degree step");
-  GsrResults gsr = loopAxes(event, 0, 0.5, 90, 0, 0.5, 360);
+  GsrResults gsr = loopAxes(event, 0, 1, 90, 0, 1, 360);
 
   detectAxes(event, gsr);
 //  detectAxesByResidue(event, gsr);
@@ -92,6 +92,7 @@ void GsrAnalyzer::analyze(Event& event) {
   // initialize and save the Pt(A) curve
   LOG4CPLUS_DEBUG(logger, "initializing the Pt(A) curve");
   gsr.curve = GsrCurve(event, gsr.axes);
+  gsr.APthCurve = Curve(gsr.curve.cols().x, event.dataNarrow().cols().Pth);
   LOG4CPLUS_DEBUG(logger, "initializing the branches of the Pt(A) curve");
   gsr.curve.initBranches("extremums").computeResidue();
 
@@ -325,7 +326,7 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
            << acos(axes.z.dot(event.pmvab().axes.z))*180/M_PI << ", "
            << atan2(axes.z.dot(event.pmvab().axes.y), axes.z.dot(event.pmvab().axes.x))*180/M_PI
            << endl;
-      if (eigenValues(0) < 1e-2 and criterionHS > 3) {
+      if (eigenValues(0) < 1e-3 and criterionHS > 3) {
         gsr.axes = axes;
       } else {
         cout << "MHS" << endl;
@@ -339,8 +340,8 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
           VectorXd Bx = (data.cols().Bx.array()/data.cols().By.array()*(x.array()*k).sin()/k/L).matrix();
           VectorXd Bz = (data.cols().Bz.array()/data.cols().By.array()*(x.array()*k).sin()/k/L).matrix();
           // remove spikes by applying median filtering
-          Bx = Filter::median1D(Bx, 25);
-          Bz = Filter::median1D(Bz, 25);
+//          Bx = Filter::median1D(Bx, 25);
+//          Bz = Filter::median1D(Bz, 25);
           Matrix2d M = Matrix2d::Zero(); // initialize 2x2 matrix with zeros
           M(0,0) = (Bz.array()*Bz.array()).matrix().mean()-Bz.mean()*Bz.mean();
           M(0,1) = (Bz.array()*Bx.array()).matrix().mean()-Bz.mean()*Bx.mean();
@@ -366,7 +367,7 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
                  << endl;
           }
         }
-        if (lambda < 1e-7 && criterionMHS > criterionHS) {
+        if (lambda < 1e-7/* && criterionMHS > criterionHS*/) {
           gsr.axes = axes;
         } else {
           goto residuals;
@@ -667,8 +668,8 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // project the data into optimized coordinate system
   data.project(gsr.axes);
 
-  cout << data.cols().Vx/1e3 << endl << endl;
-  cout << data.cols().Vy/1e3 << endl << endl;
+//  cout << data.cols().Vx/1e3 << endl << endl;
+//  cout << data.cols().Vy/1e3 << endl << endl;
 
   // compute the dx step
   double dx = -event.dht().Vht.dot(gsr.axes.x)*event.config().samplingInterval*
@@ -1011,11 +1012,15 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // fit it with exponent
 //  ExpFit ABzFit(Nx, A.data(), Bz.data());
 //  PosZeroExpFit ABzFit(Nx, A.data(), Bz.data());
-  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
+//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
 //  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 2, 2, 2);
-//  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), event.config().order,
-//                    event.config().fittingParameterCtr,
-//                    event.config().fittingParameterBdr);
+  Curve ABzCurveCopy = ABzCurve;
+  ABzCurveCopy.sort().unique();
+  PolyExpFit ABzFit(Nx, const_cast<double*>(ABzCurveCopy.cols().x.data()),
+                    const_cast<double*>(ABzCurveCopy.cols().y.data()),
+                    event.config().order,
+                    event.config().fittingParameterCtr,
+                    event.config().fittingParameterBdr);
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function
