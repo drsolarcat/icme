@@ -1,22 +1,10 @@
 
 # check where we are compiling the project
-ifeq ($(USERNAME),isavnin) # at work
+#ifeq ($(USERNAME),isavnin) # at work
 	CPLUS_INCLUDE_PATH=/home/isavnin/usr/local/include:/home/isavnin/usr/local/lib
 	LIBRARY_PATH=/home/isavnin/usr/local/lib
 	LD_LIBRARY_PATH=/home/isavnin/usr/local/lib
-endif
-
-#ifeq ($(USERNAME),inferno) # on my desktop
-#	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include
-#	LIBRARY_PATH=/home/inferno/usr/local/lib:/usr/local/MATLAB/R2010b/bin/glnxa64
-#	LD_LIBRARY_PATH=/home/inferno/usr/local/lib
 #endif
-
-ifeq ($(USERNAME),inferno) # on my laptop
-	CPLUS_INCLUDE_PATH=/home/inferno/usr/local/include:/home/isavnin/usr/local/epd/include/python2.7
-	LIBRARY_PATH=/home/inferno/usr/local/lib:/home/isavnin/usr/local/epd/lib
-	LD_LIBRARY_PATH=/home/inferno/usr/local/lib:/home/isavnin/usr/local/epd/lib
-endif
 
 # export the paths
 export CPLUS_INCLUDE_PATH LIBRARY_PATH

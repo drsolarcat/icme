@@ -282,20 +282,20 @@ int main(int argc, char* argv[]) {
                                 theta, phi,
                                 (*event).gsr().optTheta,
                                 (*event).gsr().optPhi,
-                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : NULL),
-                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : NULL),
-                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : NULL),
-                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : NULL)
+                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : 0),
+                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : 0),
+                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : 0),
+                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : 0)
                                 );
       // plot the combined residual map
       plotter.plotGsrResidueMap((*event).gsr().combinedResidue,
                                 theta, phi,
                                 (*event).gsr().optTheta,
                                 (*event).gsr().optPhi,
-                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : NULL),
-                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : NULL),
-                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : NULL),
-                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : NULL)
+                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : 0),
+                                (config.row(iEvent).toMva ? acos(abs(event->mvab().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : 0),
+                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.dot(event->pmvab().axes.z)))*180/M_PI : 0),
+                                (config.row(iEvent).toMva ? acos(abs(event->mvub().axes.y.cross(event->pmvab().axes.z).dot(event->pmvab().axes.x)))*180/M_PI+90 : 0)
                                 );
 
       // plot full Pt(A) through matplotlib

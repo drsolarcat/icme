@@ -12,7 +12,7 @@ GsrCurve::GsrCurve() {}
 
 // construct the Pt(A) curve
 GsrCurve::GsrCurve(Event& event, Axes axes) {
-  // step in x direction (sunword)
+  // step in x direction (sunward)
   const double dx = -event.dht().Vht.dot(axes.x)*
                      event.config().samplingInterval;
 
@@ -36,8 +36,8 @@ GsrCurve::GsrCurve(Event& event, Axes axes) {
     if (i > 0) { // perform numerical integration
       X.conservativeResize(i+1);
       X(i) = dx*i;
-//      _vectors.x(i) = integrator.Holoborodko(5, X, data.cols().By.head(i+1));
-      _vectors.x(i) = integrator.NewtonCotes(2, X, data.cols().By.head(i+1));
+      _vectors.x(i) = integrator.Holoborodko(5, X, data.cols().By.head(i+1));
+//      _vectors.x(i) = -integrator.NewtonCotes(2, X, data.cols().By.head(i+1));
     } else { // the first point of vector potential is 0
 //      _vectors.x(i) = 0; // it's already set to zero, do nothing
     }

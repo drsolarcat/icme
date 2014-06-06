@@ -27,8 +27,8 @@ class Plotter {
     void plotGsrResidueMap(const Eigen::MatrixXd&,
                            const Eigen::VectorXd&, const Eigen::VectorXd&,
                            double, double,
-                           double mvabTheta=NULL, double mvabPhi=NULL,
-                           double mvubTheta=NULL, double mvubPhi=NULL);
+                           double mvabTheta=0, double mvabPhi=0,
+                           double mvubTheta=0, double mvubPhi=0);
     // plot magnetic field map
     void plotGsrMagneticMap(const Eigen::MatrixXd&, const Eigen::MatrixXd&,
                             const Eigen::VectorXd&, const Eigen::VectorXd&,

@@ -10,6 +10,7 @@ from datetime import datetime
 from matplotlib.dates import date2num
 import sys, traceback
 import math
+import matplotlib
 
 # astronomical unit
 AU = 149597870700 # m
@@ -78,10 +79,10 @@ def plotGsrAdPt(AdPt):
 
 # plot Bz map for GSR
 def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa, Bx, By, xx, yy, zz):
-    km = True
+    km = False
     # draw negative contour lines in solid (dashed by default)
     rcParams['contour.negative_linestyle'] = 'solid'
-    figure()
+    figure(figsize=(10,6))
 
     if not km:
         X = X/AU
@@ -92,12 +93,13 @@ def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa, Bx, By, xx, yy, zz):
 
     # filled contour plot of Bz(x,y)
     cc = contourf(X, Y, transpose(reshape(Bz*1e9, (X.size,-1))), int((max(Bz)-min(Bz))*1e9/0.1))
+#    cc = contourf(X, Y, transpose(reshape(Bz*1e9, (X.size,-1))), arange(0,20,0.1))
     #cc.set_cmap('autumn')
     # remove gaps between the colored areas
     for c in cc.collections:
         c.set_antialiased(False)
     # line contour plot of A(x,y)
-    contour(X, Y, transpose(reshape(Axy, (X.size,-1))), 40, colors='k')
+    contour(X, Y, transpose(reshape(Axy, (X.size,-1))), 25, colors='k')
     # border line of the flux rope (Ab)
     contour(X, Y, transpose(reshape(Axy, (X.size,-1))), levels=[Ab], colors='w', linewidths=5)
 
@@ -109,20 +111,36 @@ def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa, Bx, By, xx, yy, zz):
     plot(mean(v[:,0]), mean(v[:,1]), '.w', markersize=12)
 
     # plot (Bx,By) quiver plot
-    quiver(X, zeros(X.size), -Bx*1e9, By*1e9, units='xy', angles='xy')
+    quiver(X, zeros(X.size), Bx*1e9, By*1e9, units='xy', angles='xy')
 
     # axes projection
     dx = (max(X)-min(X))/10;
+#    dy = dx
     dy = (max(Y)-min(Y))/10;
+#    xxx=[dot([1.5,0,0],xx), dot([1.5,0,0],yy), dot([1.5,0,0],zz)];
+#    yyy=[dot([0,1.5,0],xx), dot([0,1.5,0],yy), dot([0,1.5,0],zz)];
+#    zzz=[dot([0,0,1.5],xx), dot([0,0,1.5],yy), dot([0,0,1.5],zz)];
     xxx=[dot([1,0,0],xx), dot([1,0,0],yy), dot([1,0,0],zz)];
     yyy=[dot([0,1,0],xx), dot([0,1,0],yy), dot([0,1,0],zz)];
     zzz=[dot([0,0,1],xx), dot([0,0,1],yy), dot([0,0,1],zz)];
-    plot((1+array([0,xxx[0]]))*dx, (max(Y)/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
-    plot((1+array([0,yyy[0]]))*dx, (max(Y)/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
-    plot((1+array([0,zzz[0]]))*dx, (max(Y)/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
+#    plot((1.4+array([0,xxx[0]]))*dx, (max(Y)/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
+#    plot((1.4+array([0,yyy[0]]))*dx, (max(Y)/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
+#    plot((1.4+array([0,zzz[0]]))*dx, (max(Y)/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
+#    plot((1.2+array([0,xxx[0]]))*dx, (max(Y)/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
+#    plot((1.2+array([0,yyy[0]]))*dx, (max(Y)/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
+#    plot((1.2+array([0,zzz[0]]))*dx, (max(Y)/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
+    plot((1+array([0,xxx[0]]))*dx, (max(Y)/dy-1+0.8+array([0,xxx[1]]))*dy, '-c', linewidth=3)
+    plot((1+array([0,yyy[0]]))*dx, (max(Y)/dy-1+0.8+array([0,yyy[1]]))*dy, '-m', linewidth=3)
+    plot((1+array([0,zzz[0]]))*dx, (max(Y)/dy-1+0.8+array([0,zzz[1]]))*dy, '-y', linewidth=3)
 
     # tighten the axes
     axis('tight')
+
+    # equalize the axes
+#    gca().set_aspect('equal')
+#    gca().autoscale(tight=True)
+
+    matplotlib.rcParams.update({'font.size': 12})
 
     # labels
     if not km:
@@ -171,6 +189,7 @@ def plotGsrResidue(theta, phi, residue, optTheta, optPhi, mvabTheta=None, mvabPh
     ax1.axis["bottom"].get_helper().nth_coord_ticks=1
 
     # draw the filled contoured map in polar coordinates
+    ax1.contour(transpose(mat(theta))*mat(cos(phi*pi/180)), transpose(mat(theta))*mat(sin(phi*pi/180)), 1/transpose(reshape(residue, (phi.size,-1))), 100, lw=0.1)
     cc = ax1.contourf(transpose(mat(theta))*mat(cos(phi*pi/180)), transpose(mat(theta))*mat(sin(phi*pi/180)), 1/transpose(reshape(residue, (phi.size,-1))), 100)
     # remove gaps between the contour lines
     for c in cc.collections:
@@ -199,7 +218,7 @@ def plotGsrResidue(theta, phi, residue, optTheta, optPhi, mvabTheta=None, mvabPh
     cb = colorbar(cc, pad=0.07)
     cb.locator = MaxNLocator(14)
     cb.update_ticks()
-    cb.set_label(r"$\tilde{\mathcal{R}}$")
+    cb.set_label(r"$1/\tilde{\mathcal{R}}$")
 
     # save
     if toSave:

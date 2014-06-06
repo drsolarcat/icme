@@ -74,6 +74,7 @@ void GsrAnalyzer::analyze(Event& event) {
                    const_cast<double*>(dataTmp.cols().Bz.data()), 2);
   BzTmpFit.fit();
   if (BzTmpFit.c()[2] > 0) {
+    std::cout << "reversed" << std::endl;
     gsr.axes.z = -gsr.axes.z;
     gsr.axes.y = -gsr.axes.y;
   }
@@ -188,6 +189,11 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
   gsr.branchLength    = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
                                        int((maxPhi-minPhi)/dPhi)+1);
 
+  MatrixXd pressureResidue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+                                            int((maxPhi-minPhi)/dPhi)+1);
+  MatrixXd magneticResidue = MatrixXd::Zero(int((maxTheta-minTheta)/dTheta)+1,
+                                            int((maxPhi-minPhi)/dPhi)+1);
+
   // temporary quaternions for making axes rotations
   Quaterniond qTheta;
   Quaterniond qPhi;
@@ -227,9 +233,13 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
       curve.initBranches("extremums").computeResidue();
 
       // save residue into a matrix
-//      gsr.originalResidue(i,k) = bzCurve.originalResidue()+curve.originalResidue();
-//      gsr.combinedResidue(i,k) = bzCurve.combinedResidue()+curve.combinedResidue();
-//      gsr.branchLength(i,k) = bzCurve.branchLength()+curve.branchLength();
+//      gsr.originalResidue(i,k) = bzCurve.originalResidue();//+curve.originalResidue();
+//      gsr.combinedResidue(i,k) = bzCurve.combinedResidue();//+curve.combinedResidue();
+//      gsr.branchLength(i,k) = bzCurve.branchLength();//+curve.branchLength();
+
+//      pressureResidue(i,k) = curve.combinedResidue();
+//      magneticResidue(i,k) = bzCurve.combinedResidue();
+
       gsr.originalResidue(i,k) = curve.originalResidue();
       gsr.combinedResidue(i,k) = curve.combinedResidue();
       gsr.branchLength(i,k) = curve.branchLength();
@@ -239,6 +249,8 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
     theta += dTheta; // make a step in theta step
     i++; // move to the next row
   } // end iteration through theta angles
+
+//  gsr.combinedResidue = (pressureResidue.array()*magneticResidue.array()).matrix();
 
   return gsr; // return
 }
@@ -409,7 +421,7 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
                   event.dht().Vht).normalized();
     gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
   }
-
+/*
   if (event.dht().Vht.dot(gsr.axes.x) > 0) {
     gsr.axes.z = -gsr.axes.z;
     gsr.axes.x = -gsr.axes.x;
@@ -419,7 +431,7 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
     gsr.axes.y = -gsr.axes.y;
     gsr.axes.z = -gsr.axes.z;
   }
-
+*/
   gsr.optTheta = acos(gsr.axes.z.dot(event.pmvab().axes.z))*180/M_PI;
   gsr.optPhi = atan2(gsr.axes.z.dot(event.pmvab().axes.y), gsr.axes.z.dot(event.pmvab().axes.x))*180/M_PI;
 
@@ -665,8 +677,16 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // will have to project it onto new coordinate system
   Data data(event.dataNarrow());
 
+//  std::cout << Curve::resampled(data.cols().Bx, 15) << std::endl << std::endl;
+//  std::cout << Curve::resampled(data.cols().By, 15) << std::endl << std::endl;
+//  std::cout << Curve::resampled(data.cols().Bz, 15) << std::endl << std::endl;
+
   // project the data into optimized coordinate system
   data.project(gsr.axes);
+
+//  std::cout << Curve::resampled(data.cols().Bx, 15) << std::endl << std::endl;
+//  std::cout << Curve::resampled(data.cols().By, 15) << std::endl << std::endl;
+//  std::cout << Curve::resampled(data.cols().Bz, 15) << std::endl << std::endl;
 
 //  cout << data.cols().Vx/1e3 << endl << endl;
 //  cout << data.cols().Vy/1e3 << endl << endl;
@@ -722,11 +742,13 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
 
   // define Bx and By for quiver plot
   gsr.Bx = Curve::resampled(data.cols().Bx, Nx);
+//  std::cout << gsr.Bx << std::endl << std::endl;
   gsr.By = Curve::resampled(data.cols().By, Nx);
+//  std::cout << gsr.By << std::endl << std::endl;
 
   // initialize arrays for the branches
   double *AarrAll  = new double[2*Nx],
-         *PtArrAll = new double[2*Nx];
+          *PtArrAll = new double[2*Nx];
   // fill the arrays with values of the both branches
   for (int i = 0; i < 2*Nx; i++) {
     if (i < Nx) { // get values from the inward branch
@@ -931,6 +953,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   // fill initialize A and Bx values to the matrices, i.e. measured spacecraft
   // data
   Axy.row(NyDown) = A;
+//  std::cout << Bx << std::endl << std::endl;
   Bxy.row(NyDown) = Bx;
 
   // initialize vectors for some important derivatives
@@ -948,7 +971,7 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   for (int i = 1; i <= NyUp; i++) {
     // 2nd derivative of A by x using Holoborodko2 filter, smoothed with
     // weighted average prior to differenting
-    d2A_dx2 = differentiator.Holoborodko2(3,Axy.row(NyDown+i-1),dx);
+    d2A_dx2 = differentiator.Holoborodko2(5,Axy.row(NyDown+i-1),dx);
     // evaluate the 1st derivative of Pt by A using fitting curve
     for (int k = 0; k < Nx; k++) {
       // polyexp fitting
@@ -967,13 +990,14 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
     // smooth it with weighted average
     Bxy.row(NyDown+i) = Curve::weightedAverage(Bxy.row(NyDown+i),
                                                min(double(i)/double(NyUp),0.7));
+//    std::cout << Bxy.row(NyDown+i) << std::endl << std::endl;
   }
 
   // reconstruct the lower part of teh map using recursive solver,
   // everything is the same as for the upper part
   LOG4CPLUS_DEBUG(logger, "reconstructing the lower part of the map");
   for (int i = -1; i >= -NyDown; i--) {
-    d2A_dx2 = differentiator.Holoborodko2(3,Axy.row(NyDown+i+1),dx);
+    d2A_dx2 = differentiator.Holoborodko2(5,Axy.row(NyDown+i+1),dx);
     for (int k = 0; k < Nx; k++) {
       // polyexp fitting
       dPt_dA(k) = APtFit.df(Axy(NyDown+i+1, k));
@@ -1010,17 +1034,19 @@ GsrResults& GsrAnalyzer::computeMap(Event& event, GsrResults& gsr) {
   Curve ABzCurve(A, Bz);
 
   // fit it with exponent
-//  ExpFit ABzFit(Nx, A.data(), Bz.data());
+  ExpFit ABzFit(Nx, A.data(), Bz.data());
 //  PosZeroExpFit ABzFit(Nx, A.data(), Bz.data());
-//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 1);
+//  PolyFit ABzFit(Nx, A.data(), Bz.data(), 2);
 //  PolyExpFit ABzFit(Nx, A.data(), Bz.data(), 2, 2, 2);
-  Curve ABzCurveCopy = ABzCurve;
-  ABzCurveCopy.sort().unique();
-  PolyExpFit ABzFit(Nx, const_cast<double*>(ABzCurveCopy.cols().x.data()),
-                    const_cast<double*>(ABzCurveCopy.cols().y.data()),
-                    event.config().order,
-                    event.config().fittingParameterCtr,
-                    event.config().fittingParameterBdr);
+
+//  Curve ABzCurveCopy = ABzCurve;
+//  ABzCurveCopy.sort().unique();
+//  PolyExpFit ABzFit(Nx, const_cast<double*>(ABzCurveCopy.cols().x.data()),
+//                    const_cast<double*>(ABzCurveCopy.cols().y.data()),
+//                    event.config().order,
+//                    event.config().fittingParameterCtr,
+//                    event.config().fittingParameterBdr);
+
   ABzFit.fit();
   VectorXd BzFit = VectorXd::Zero(Nx); // vector of fitted Bz values
   // fill it by evaluating the fitting function
