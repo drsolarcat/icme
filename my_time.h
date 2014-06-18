@@ -25,9 +25,9 @@ namespace My {
       }
       Time(int, int, int, int, double); // initialize object with year,
                                      // day of year, hour, minute and second
-      Time(int year, int doy, int hour, int minute, int second) {
-        Time(year, doy, hour, minute, double(second));
-      }
+//      Time(int year, int doy, int hour, int minute, int second) {
+//        Time(year, doy, hour, minute, double(second));
+//      }
       Time(std::string); // initialize object with time string, the default
                          // format is yyyy-mm-dd HH:MM:SS
       Time(double); // initialize object with Unix timestamp

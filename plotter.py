@@ -91,6 +91,8 @@ def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa, Bx, By, xx, yy, zz):
         X = X/1e3
         Y = Y/1e3
 
+#    print transpose(reshape(Bz*1e9, (X.size,-1)))
+
     # filled contour plot of Bz(x,y)
     cc = contourf(X, Y, transpose(reshape(Bz*1e9, (X.size,-1))), int((max(Bz)-min(Bz))*1e9/0.1))
 #    cc = contourf(X, Y, transpose(reshape(Bz*1e9, (X.size,-1))), arange(0,20,0.1))
@@ -129,9 +131,9 @@ def plotGsrBzMap(X, Y, Axy, Bz, Ab, Aa, Bx, By, xx, yy, zz):
 #    plot((1.2+array([0,xxx[0]]))*dx, (max(Y)/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
 #    plot((1.2+array([0,yyy[0]]))*dx, (max(Y)/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
 #    plot((1.2+array([0,zzz[0]]))*dx, (max(Y)/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
-    plot((1+array([0,xxx[0]]))*dx, (max(Y)/dy-1+0.8+array([0,xxx[1]]))*dy, '-c', linewidth=3)
-    plot((1+array([0,yyy[0]]))*dx, (max(Y)/dy-1+0.8+array([0,yyy[1]]))*dy, '-m', linewidth=3)
-    plot((1+array([0,zzz[0]]))*dx, (max(Y)/dy-1+0.8+array([0,zzz[1]]))*dy, '-y', linewidth=3)
+    plot((1+array([0,xxx[0]]))*dx, (max(Y)/dy-1+array([0,xxx[1]]))*dy, '-c', linewidth=3)
+    plot((1+array([0,yyy[0]]))*dx, (max(Y)/dy-1+array([0,yyy[1]]))*dy, '-m', linewidth=3)
+    plot((1+array([0,zzz[0]]))*dx, (max(Y)/dy-1+array([0,zzz[1]]))*dy, '-y', linewidth=3)
 
     # tighten the axes
     axis('tight')
@@ -304,24 +306,24 @@ def plotData(year, month, day, hour, minute, second,
         for i in xrange(len(year)):
             integral,decimal = math.modf(second[i])
             dates.append(date2num(datetime(year[i], month[i], day[i],
-                                  hour[i], minute[i], int(second[i])))+decimal/24/3600)
+                                  hour[i], minute[i], int(second[i]))))#+decimal/24/3600)
 
         integral,decimal = math.modf(second1mc)
-        date1mc = date2num(datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, int(second1mc)))+decimal/24/3600
+        date1mc = date2num(datetime(year1mc, month1mc, day1mc, hour1mc, minute1mc, int(second1mc)))#+decimal/24/3600
         integral,decimal = math.modf(second2mc)
-        date2mc = date2num(datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, int(second2mc)))+decimal/24/3600
+        date2mc = date2num(datetime(year2mc, month2mc, day2mc, hour2mc, minute2mc, int(second2mc)))#+decimal/24/3600
         integral,decimal = math.modf(second1fr)
-        date1fr = date2num(datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, int(second1fr)))+decimal/24/3600
+        date1fr = date2num(datetime(year1fr, month1fr, day1fr, hour1fr, minute1fr, int(second1fr)))#+decimal/24/3600
         integral,decimal = math.modf(second2fr)
-        date2fr = date2num(datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, int(second2fr)))+decimal/24/3600
+        date2fr = date2num(datetime(year2fr, month2fr, day2fr, hour2fr, minute2fr, int(second2fr)))#+decimal/24/3600
 
     #    major = HourLocator([0, 12])
-#        major = DayLocator()
-        major = MinuteLocator()
-#        minor = HourLocator()
-        minor = SecondLocator()
-#        majorFormat = DateFormatter('%Y-%m-%d')
-        majorFormat = DateFormatter('%M:%S')
+        major = DayLocator()
+#        major = MinuteLocator()
+        minor = HourLocator()
+#        minor = SecondLocator()
+        majorFormat = DateFormatter('%Y-%m-%d')
+#        majorFormat = DateFormatter('%M:%S')
 
         figure(figsize=[8,10])
         subplots_adjust(hspace=0.001)

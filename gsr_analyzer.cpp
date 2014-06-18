@@ -105,6 +105,7 @@ void GsrAnalyzer::analyze(Event& event) {
       event.config().spacecraft == "STB") {
     // convert from RTN to Stonyhurst
     Matrix3d rtn = getTransformationMatrix(event, "rtn", middleTime);
+//    std::cout << rtn << std::endl<< std::endl;
     Matrix3d heeq = getTransformationMatrix(event, "heeq", middleTime);
     gsr.heeqAxes.x = heeq*(rtn.inverse()*gsr.axes.x);
     gsr.heeqAxes.y = heeq*(rtn.inverse()*gsr.axes.y);
@@ -237,12 +238,13 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
 //      gsr.combinedResidue(i,k) = bzCurve.combinedResidue();//+curve.combinedResidue();
 //      gsr.branchLength(i,k) = bzCurve.branchLength();//+curve.branchLength();
 
-//      pressureResidue(i,k) = curve.combinedResidue();
-//      magneticResidue(i,k) = bzCurve.combinedResidue();
+      pressureResidue(i,k) = curve.combinedResidue();
+      magneticResidue(i,k) = bzCurve.combinedResidue();
 
       gsr.originalResidue(i,k) = curve.originalResidue();
-      gsr.combinedResidue(i,k) = curve.combinedResidue();
+//      gsr.combinedResidue(i,k) = curve.combinedResidue();
       gsr.branchLength(i,k) = curve.branchLength();
+      
       phi += dPhi; // make a step in phi
       k++; // move to the next column
     } // end iteration through phi angles
@@ -250,7 +252,7 @@ GsrResults GsrAnalyzer::loopAxes(Event& event,
     i++; // move to the next row
   } // end iteration through theta angles
 
-//  gsr.combinedResidue = (pressureResidue.array()*magneticResidue.array()).matrix();
+  gsr.combinedResidue = (pressureResidue.array()*magneticResidue.array()).matrix();
 
   return gsr; // return
 }
@@ -420,7 +422,12 @@ GsrResults& GsrAnalyzer::detectAxes(Event& event, GsrResults& gsr) {
     gsr.axes.x = (event.dht().Vht.dot(gsr.axes.z)*gsr.axes.z-
                   event.dht().Vht).normalized();
     gsr.axes.y = gsr.axes.z.cross(gsr.axes.x).normalized();
+    
+//    std::cout << gsr.axes.x << std::endl << std::endl;
+//    std::cout << gsr.axes.y << std::endl << std::endl;
+//    std::cout << gsr.axes.z << std::endl << std::endl;
   }
+//  std::cout << event.dht().Vht.dot(gsr.axes.x) << std::endl << std::endl;
 /*
   if (event.dht().Vht.dot(gsr.axes.x) > 0) {
     gsr.axes.z = -gsr.axes.z;
@@ -1105,11 +1112,11 @@ Matrix3d GsrAnalyzer::getTransformationMatrix(Event& event, string cs,
   dataPathStream << cs << ".dat";
   // stringstream to string
   string dataPath = dataPathStream.str();
-
   // open data file as a stream
   dataFileStream.open(dataPath.c_str());
   // check if the file was opened correctly
   if (dataFileStream.is_open()) {
+//    std::cout << "CS file opened" << std::endl;
     // start iterating through data file line, one timestamp at a time
     while (dataFileStream.good()) {
       // get line from the file as a string
@@ -1125,14 +1132,18 @@ Matrix3d GsrAnalyzer::getTransformationMatrix(Event& event, string cs,
         // parse the data from the stream of line of the data file
         dataFileLineStream >> year >> doy >> second >> flag;
         // initialize current Time object with time data
-        currentTime = Time(year, doy, 0, 0, 0);
+//        std::cout << year << "--" << second << std::endl;
+        currentTime = Time(year, doy, 0, 0, 0.0);
         currentTime.add(second, "second");
+//        std:: cout << abs(currentTime-middleTime) << std::endl;
         if (abs(currentTime-middleTime) < delta) {
+//          std::cout << "CS delta" << std::endl;
           delta = abs(currentTime-middleTime);
           dataFileLineStream >>
             tm(0,0) >> tm(0,1) >> tm(0,2) >>
             tm(1,0) >> tm(1,1) >> tm(1,2) >>
             tm(2,0) >> tm(2,1) >> tm(2,2);
+//            std::cout << "-- " <<  tm(0,0) << std::endl;
         } else {
           continue;
         }

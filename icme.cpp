@@ -320,6 +320,7 @@ int main(int argc, char* argv[]) {
 
       LOG4CPLUS_DEBUG(logger, "plotting magnetic field map");
       // plot magnetic field map
+//      std::cout << (*event).gsr().Bz << std::endl<<std::endl;
       plotter.plotGsrMagneticMap((*event).gsr().Axy,
                                  (*event).gsr().Bz,
                                  (*event).gsr().X,
@@ -332,7 +333,7 @@ int main(int argc, char* argv[]) {
     }
 
     // plot the in-situ data
-//    plotter.plotData(*event);
+    plotter.plotData(*event);
 
     // plot the in-situ data
 //    plotter.plotBrot(*event);
